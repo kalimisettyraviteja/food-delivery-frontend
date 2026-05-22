@@ -1,0 +1,86 @@
+<!-- Navbar -->
+<nav class="navbar navbar-light bg-white shadow-sm sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-orange" routerLink="/home">🍕 FoodDelivery</a>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-muted small">👋 {{ userName }}</span>
+      <button class="btn btn-orange btn-sm position-relative" data-bs-toggle="offcanvas" data-bs-target="#cartCanvas">
+        🛒 Cart
+        <span *ngIf="cartCount > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+          {{ cartCount }}
+        </span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Restaurant Header -->
+<div class="restaurant-hero" *ngIf="restaurant()">
+  <div class="container">
+    <a routerLink="/home" class="btn btn-sm btn-light mb-3">← Back</a>
+    <h2 class="fw-bold">{{ restaurant()!.name }}</h2>
+    <p class="mb-1 text-muted">📍 {{ restaurant()!.location }}</p>
+    <span class="badge bg-orange">{{ restaurant()!.cuisine }}</span>
+  </div>
+</div>
+
+<!-- Menu -->
+<div class="container my-4">
+  <h5 class="fw-bold mb-3">Menu</h5>
+
+  <p *ngIf="loading()" class="text-muted">Loading menu...</p>
+
+  <div class="row g-3" *ngIf="!loading()">
+    <div class="col-sm-6 col-md-4" *ngFor="let item of menuItems()">
+      <div class="menu-card card h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="veg-dot" [class.veg]="item.veg" [class.non]="!item.veg"></span>
+            <h6 class="card-title mb-0 fw-bold">{{ item.name }}</h6>
+          </div>
+          <p class="text-muted small mb-0">{{ item.veg ? 'Vegetarian' : 'Non-Vegetarian' }}</p>
+          <div class="d-flex justify-content-between align-items-center mt-auto pt-3">
+            <span class="fw-bold text-orange fs-6">₹{{ item.price }}</span>
+            <button class="btn btn-orange btn-sm" (click)="addToCart(item)">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="menuItems().length === 0" class="text-center text-muted py-5">
+      <div style="font-size:40px">🍽️</div>
+      <p>No menu items available</p>
+    </div>
+  </div>
+</div>
+
+<!-- Cart Offcanvas -->
+<div class="offcanvas offcanvas-end" id="cartCanvas">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold">🛒 Your Cart</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div *ngIf="cart().length === 0" class="text-center text-muted py-5">
+      <div style="font-size:40px">🛒</div>
+      <p class="mt-2">Your cart is empty</p>
+    </div>
+    <div *ngFor="let c of cart()" class="cart-item d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <div class="fw-semibold small">{{ c.item.name }}</div>
+        <div class="text-muted small">₹{{ c.item.price }} × {{ c.qty }}</div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="fw-bold">₹{{ c.item.price * c.qty }}</span>
+        <button class="btn btn-sm btn-outline-danger" (click)="removeFromCart(c.item.id!)">✕</button>
+      </div>
+    </div>
+    <div *ngIf="cart().length > 0" class="border-top pt-3 mt-3">
+      <div class="d-flex justify-content-between fw-bold fs-6">
+        <span>Total</span>
+        <span class="text-orange">₹{{ cartTotal }}</span>
+      </div>
+      <button class="btn btn-orange w-100 mt-3 fw-bold">Place Order</button>
+    </div>
+  </div>
+</div>

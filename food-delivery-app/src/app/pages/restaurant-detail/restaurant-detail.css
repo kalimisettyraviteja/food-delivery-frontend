@@ -1,0 +1,35 @@
+.text-orange  { color: #e85d04; }
+.btn-orange   { background: #e85d04; color: #fff; border: none; }
+.btn-orange:hover { background: #cf5200; color: #fff; }
+.bg-orange    { background: #e85d04 !important; }
+
+.restaurant-hero {
+  background: linear-gradient(135deg, #fff4ed, #ffe8d6);
+  padding: 32px 0 24px;
+  border-bottom: 1px solid #f0e0d0;
+}
+
+.menu-card {
+  border: 1.5px solid #f0f0f0;
+  border-radius: 12px;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.menu-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-color: #e85d04;
+}
+
+.veg-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%; flex-shrink: 0;
+}
+.veg-dot.veg { background: #16a34a; }
+.veg-dot.non { background: #dc2626; }
+
+.cart-item {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #f0f0f0;
+}

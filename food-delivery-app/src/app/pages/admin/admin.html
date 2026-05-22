@@ -1,0 +1,51 @@
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      🍕 <span>FoodDelivery</span>
+    </div>
+
+    <div class="sidebar-section-label">Management</div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="restaurants" routerLinkActive="active" class="nav-link-item">
+        <span class="nav-icon">🏪</span> Restaurants
+      </a>
+      <a routerLink="menu-items" routerLinkActive="active" class="nav-link-item">
+        <span class="nav-icon">🍽️</span> Menu Items
+      </a>
+      <a routerLink="users" routerLinkActive="active" class="nav-link-item">
+        <span class="nav-icon">👥</span> Users
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+        <div>
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <span class="topbar-title">Admin Panel</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="logout()">
+        Logout
+      </button>
+    </header>
+
+    <!-- Child routes render here -->
+    <div class="content-area">
+      <router-outlet />
+    </div>
+
+  </div>
+</div>

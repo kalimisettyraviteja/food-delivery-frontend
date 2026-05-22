@@ -1,0 +1,43 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">👥 Users</h4>
+    <p class="text-muted small mb-0">All registered users — {{ users().length }} total</p>
+  </div>
+  <button class="btn btn-outline-secondary btn-sm" (click)="load()">🔄 Refresh</button>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading()" class="text-muted">Loading users...</div>
+
+<!-- Table -->
+<div class="table-responsive" *ngIf="!loading()">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of users(); let i = index">
+        <td class="text-muted small">{{ i + 1 }}</td>
+        <td class="fw-semibold">{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.phone }}</td>
+        <td>
+          <span class="badge"
+            [class.bg-orange]="u.role === 'ADMIN'"
+            [class.bg-success]="u.role === 'USER'">
+            {{ u.role }}
+          </span>
+        </td>
+      </tr>
+      <tr *ngIf="users().length === 0">
+        <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

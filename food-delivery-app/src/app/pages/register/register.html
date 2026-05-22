@@ -1,0 +1,86 @@
+<!-- Top Bar -->
+<nav class="auth-topbar">
+  <div class="brand">
+    <span class="logo">🍕</span>
+    <span>FoodDelivery</span>
+  </div>
+  <a routerLink="/home" class="home-btn">🏠 Home</a>
+</nav>
+
+<div class="auth-page">
+  <!-- Left content -->
+  <div class="auth-left">
+    <div class="hero-content">
+      <div class="hero-badge">Fast • Fresh • Reliable</div>
+      <h1>Create your account and start ordering</h1>
+      <p>
+        Register once and get access to restaurant menus, cart, and a smoother food ordering experience.
+      </p>
+
+      <div class="feature-list">
+        <div>✅ Browse restaurants from home page</div>
+        <div>✅ Open menu after login</div>
+        <div>✅ Add food items to cart and order</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2>Create account</h2>
+      <p class="sub">Quick and free to sign up</p>
+
+      <div class="alert error" *ngIf="error">{{ error }}</div>
+      <div class="alert success" *ngIf="success">{{ success }}</div>
+
+      <form #regForm="ngForm" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label>Full Name</label>
+          <input
+            type="text"
+            name="name"
+            [(ngModel)]="name"
+            placeholder="Ravi Teja"
+            required />
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="you@example.com"
+            required />
+        </div>
+
+        <div class="field">
+          <label>Phone Number</label>
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            placeholder="+91 98765 43210"
+            required />
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="Min. 4 characters"
+            required minlength="4" />
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading || regForm.invalid">
+          {{ loading ? 'Creating...' : 'Create account' }}
+        </button>
+      </form>
+
+      <p class="switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+    </div>
+  </div>
+</div>

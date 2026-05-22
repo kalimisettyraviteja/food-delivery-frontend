@@ -1,0 +1,68 @@
+<!-- Top Bar -->
+<nav class="auth-topbar">
+  <div class="brand">
+    <span class="logo">🍕</span>
+    <span>FoodDelivery</span>
+  </div>
+  <a routerLink="/home" class="home-btn">🏠 Home</a>
+</nav>
+
+<div class="auth-page">
+  <!-- Left content -->
+  <div class="auth-left">
+    <div class="hero-content">
+      <div class="hero-badge">Fast • Fresh • Reliable</div>
+      <h1>Order your favorite food in minutes</h1>
+      <p>
+        Discover restaurants, explore menus, and enjoy a smooth ordering experience
+        from one clean food delivery app.
+      </p>
+
+      <div class="feature-list">
+        <div>✅ Browse restaurants without login</div>
+        <div>✅ View menus after login</div>
+        <div>✅ Add items to cart and place order</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to your account</p>
+
+      <div class="alert error" *ngIf="error">{{ error }}</div>
+
+      <form #loginForm="ngForm" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="you@example.com"
+            required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="••••••••"
+            required />
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading || loginForm.invalid">
+          {{ loading ? 'Signing in...' : 'Sign in' }}
+        </button>
+      </form>
+
+      <p class="switch">Don't have an account? <a routerLink="/register">Register</a></p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">🍽️ Menu Items</h4>
+    <p class="text-muted small mb-0">Select a restaurant to manage its menu</p>
+  </div>
+  <button class="btn btn-orange" (click)="openAdd()" [disabled]="!selectedRestId">
+    + Add Item
+  </button>
+</div>
+
+<!-- Toast -->
+<div *ngIf="successMsg" class="alert alert-success py-2 px-3 small mb-3">
+  ✅ {{ successMsg }}
+</div>
+
+<!-- Restaurant Selector Pills -->
+<div class="rest-pills mb-4">
+  <button
+    *ngFor="let r of restaurants()"
+    class="pill-btn"
+    [class.active]="selectedRestId === r.id"
+    (click)="selectRestaurant(r)">
+    🏪 {{ r.name }}
+  </button>
+</div>
+
+<!-- No restaurant selected -->
+<div *ngIf="!selectedRestId" class="empty-state">
+  <div style="font-size:48px">👆</div>
+  <p class="mt-2 text-muted">Select a restaurant above to view and manage its menu</p>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading()" class="row g-3">
+  <div class="col-md-4" *ngFor="let i of [1,2,3]">
+    <div class="skeleton-card"></div>
+  </div>
+</div>
+
+<!-- Menu Items Grid -->
+<div *ngIf="selectedRestId && !loading()">
+  <h6 class="fw-semibold text-muted mb-3">{{ selectedRestName }} — {{ menuItems().length }} items</h6>
+  <div class="row g-3">
+    <div class="col-sm-6 col-md-4" *ngFor="let m of menuItems()">
+      <div class="menu-card card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="veg-dot" [class.veg]="m.veg" [class.non]="!m.veg"></span>
+            <h6 class="fw-bold mb-0">{{ m.name }}</h6>
+          </div>
+          <p class="text-muted small mb-2">{{ m.veg ? '🟢 Vegetarian' : '🔴 Non-Vegetarian' }}</p>
+          <p class="fw-bold text-orange mb-0">₹{{ m.price }}</p>
+        </div>
+        <div class="card-footer bg-white border-0 d-flex gap-2 pt-0 pb-3 px-3">
+          <button class="btn btn-sm btn-outline-orange flex-fill" (click)="openEdit(m)">✏️ Edit</button>
+          <button class="btn btn-sm btn-outline-danger flex-fill" (click)="delete(m.id!, m.name)">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="menuItems().length === 0" class="col-12 text-center py-5 text-muted">
+      <div style="font-size:40px">🍽️</div>
+      <p class="mt-2">No menu items yet. Add the first item!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop-custom" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-box-header">
+      <h5 class="fw-bold mb-0">{{ isEdit ? '✏️ Edit' : '➕ Add' }} Menu Item</h5>
+      <span class="close-btn" (click)="closeModal()">✕</span>
+    </div>
+
+    <div *ngIf="errorMsg" class="alert alert-danger py-2 small">{{ errorMsg }}</div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Item Name</label>
+      <input type="text" class="form-control" [(ngModel)]="form.name"
+        name="itemName" placeholder="e.g. Masala Dosa" />
+    </div>
+    <div class="row g-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Price (₹)</label>
+        <input type="number" class="form-control" [(ngModel)]="form.price"
+          name="price" placeholder="149" />
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Type</label>
+        <select class="form-select" [(ngModel)]="form.veg" name="veg">
+          <option [ngValue]="true">🟢 Vegetarian</option>
+          <option [ngValue]="false">🔴 Non-Vegetarian</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end mt-4">
+      <button class="btn btn-light" (click)="closeModal()">Cancel</button>
+      <button class="btn btn-orange" (click)="save()">
+        {{ isEdit ? 'Update Item' : 'Save Item' }}
+      </button>
+    </div>
+  </div>
+</div>
