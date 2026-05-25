@@ -27,6 +27,7 @@ export interface LoginResponse {
   name: string;
   email: string;
   role: string;
+  token: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,5 +43,25 @@ export class UserService {
   }
   getAllUsers(): Observable<UserResponse[]> {
     return this.http.get<UserResponse[]>(this.base);
+  }
+
+   logout(): void {
+    // localStorage.removeItem('token');
+    // localStorage.removeItem('role');
+    // localStorage.removeItem('userName');
+    // localStorage.removeItem('userId');
+    localStorage.clear();
+  }
+
+   getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  getRole(): string | null {
+    return localStorage.getItem('role');
+  }
+
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('token');
   }
 }

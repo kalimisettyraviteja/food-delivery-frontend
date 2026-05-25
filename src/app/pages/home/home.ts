@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RestaurantService, Restaurant } from '../../core/services/restaurant';
+import { UserService } from '../../core/services/user';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +15,7 @@ import { RestaurantService, Restaurant } from '../../core/services/restaurant';
 export class Home implements OnInit {
   private svc    = inject(RestaurantService);
   private router = inject(Router);
+  private userService = inject(UserService);
 
   restaurants = signal<Restaurant[]>([]);
   filtered    = signal<Restaurant[]>([]);
@@ -56,7 +58,7 @@ export class Home implements OnInit {
   }
 
   logout() {
-    localStorage.clear();
+    this.userService.logout();
     this.router.navigate(['/login']);
   }
 }

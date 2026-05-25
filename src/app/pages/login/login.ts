@@ -15,17 +15,23 @@ export class Login {
   private userService = inject(UserService);
   private router = inject(Router);
 
-  email = ''; password = '';
-  loading = false; error = '';
+  email = '';
+  password = '';
+  loading = false;
+  error = '';
 
   onSubmit() {
-    this.loading = true; this.error = '';
+    this.loading = true;
+    this.error = '';
     this.userService.login({ email: this.email, password: this.password }).subscribe({
       next: (res) => {
 
+        localStorage.setItem('token', res.token);
         localStorage.setItem('role', res.role);
         localStorage.setItem('userName', res.name);
         localStorage.setItem('userId', String(res.id));
+
+        this.loading = false;
 
         if (res.role === 'ADMIN') {
           this.router.navigate(['/admin']);
