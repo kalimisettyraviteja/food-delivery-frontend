@@ -40,7 +40,7 @@ export class Login {
         }
       },
       error: (err) => {
-        this.error = err.error?.message || 'Invalid credentials';
+        this.error = err.error?.message || 'Something went wrong, Please try after some time';
         this.loading = false;
       }
     });

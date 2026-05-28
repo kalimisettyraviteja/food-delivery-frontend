@@ -9,7 +9,11 @@ export interface Restaurant {
   name: string;
   location: string;
   cuisine: string;
+  rating?: number;
+  deliveryTime?: number;
+  isActive?: boolean;
 }
+
 
 export interface MenuItem {
   id?: number;

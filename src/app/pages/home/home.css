@@ -7,8 +7,8 @@
 
 /* Hero */
 .hero-section {
-  background: linear-gradient(135deg, #fff4ed 0%, #ffe8d6 100%);
-  padding: 64px 0 48px;
+  background: linear-gradient(135deg, #ffe1cf 0%, #f7dac4 100%);
+  padding: 45px 0 35px;
 }
 .hero-title {
   font-size: 2.4rem;
@@ -88,4 +88,33 @@
   padding: 20px;
   text-align: center;
   margin-top: 40px;
+}
+
+
+.inactive-card {
+  filter: grayscale(100%);
+  opacity: 0.9;
+}
+
+.disabled-card {
+  cursor: not-allowed;
+}
+
+.disabled-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #d6d6d6;
+}
+
+.status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #343a40;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 2;
 }

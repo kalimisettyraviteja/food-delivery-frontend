@@ -23,7 +23,9 @@ export class Restaurants implements OnInit {
 
   form: Restaurant = { name: '', location: '', cuisine: '' };
 
-  ngOnInit() { this.loadAll(); }
+  ngOnInit() { 
+    this.loadAll(); 
+  }
 
   loadAll() {
     this.loading.set(true);
