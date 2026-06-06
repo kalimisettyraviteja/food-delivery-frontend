@@ -8,6 +8,7 @@ import { Users }            from './pages/admin/users/users';
 import { Home }             from './pages/home/home';
 import { RestaurantDetail } from './pages/restaurant-detail/restaurant-detail';
 import { roleGuard } from './guards/role-guard';
+import { Checkout } from './pages/checkout/checkout';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -19,6 +20,7 @@ export const routes: Routes = [
   
   { path: 'restaurant/:id', component: RestaurantDetail, canActivate: [roleGuard],
     data: { role: 'USER' } },
+  { path: 'checkout', component: Checkout, canActivate: [roleGuard], data: { role: 'USER' } },
 
 
   // Admin only
