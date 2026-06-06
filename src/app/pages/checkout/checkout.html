@@ -18,15 +18,15 @@
 </nav>
 
 <div class="checkout-page">
-  <div class="container py-3 py-lg-4">
+  <div class="checkout-container py-4 py-lg-4">
     <div class="checkout-shell">
 
       <div class="page-header mb-3">
-        <div>
-          <h1 class="page-title mb-1">Checkout</h1>
-          <p class="restaurant-text mb-0" *ngIf="cartService.restaurantName()">
-            {{ cartService.restaurantName() }}
-          </p>
+        <div class="title-wrap">
+          <div class="restaurant-badge" *ngIf="cartService.restaurantName()">
+            <i class="bi bi-shop"></i>
+            <span>{{ cartService.restaurantName() }}</span>
+          </div>
         </div>
       </div>
 
@@ -37,8 +37,9 @@
         <a routerLink="/home" class="btn btn-brand">Browse Restaurants</a>
       </div>
 
-      <div class="row g-3" *ngIf="cartService.cart().length > 0">
+      <div class="row g-3 align-items-start" *ngIf="cartService.cart().length > 0">
 
+        <!-- Left Side -->
         <div class="col-lg-7">
           <div class="checkout-stack">
 
@@ -75,12 +76,18 @@
               </div>
 
               <button type="button" class="btn btn-link-brand px-0 mt-2" (click)="addMoreItems()">
-                + Add more items from same restaurant
+                + Add more items
               </button>
             </section>
+          </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="col-lg-5">
+          <div class="right-panel-stack">
 
             <!-- Coupon Section -->
-            <section class="checkout-card">
+            <section class="checkout-card coupon-side-card">
               <div class="section-head align-items-start">
                 <div>
                   <h5 class="section-title mb-1">Offers & Coupons</h5>
@@ -118,85 +125,84 @@
                 <button type="button" class="remove-coupon-btn" (click)="removeCoupon()">Remove</button>
               </div>
             </section>
+
+            <!-- Bill Summary -->
+            <aside class="checkout-card summary-card">
+              <div class="summary-top">
+                <h5 class="section-title mb-1">Bill Summary</h5>
+                <p class="section-subtitle mb-0">Final payable amount for this order.</p>
+              </div>
+
+              <div class="summary-block">
+                <div class="summary-row">
+                  <span>Subtotal</span>
+                  <strong>₹{{ subtotal() }}</strong>
+                </div>
+
+                <div class="summary-row">
+                  <span>Discount</span>
+                  <strong class="text-success">− ₹{{ discountAmount() }}</strong>
+                </div>
+
+                <div class="summary-row">
+                  <span>Delivery Charge</span>
+                  <strong>₹{{ deliveryCharge() }}</strong>
+                </div>
+
+                <div class="summary-row total-row">
+                  <span>Total</span>
+                  <strong>₹{{ finalTotal() }}</strong>
+                </div>
+              </div>
+
+              <div
+                class="payment-trigger"
+                data-bs-toggle="modal"
+                data-bs-target="#paymentModal"
+              >
+                <div class="payment-trigger-left">
+                  <div class="payment-trigger-icon">
+                    <ng-container *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d55a06" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </ng-container>
+
+                    <ng-container *ngIf="selectedPaymentMethod() === 'PHONEPE'">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739b7" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1"/></svg>
+                    </ng-container>
+
+                    <ng-container *ngIf="selectedPaymentMethod() === 'GPAY'">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+                    </ng-container>
+
+                    <ng-container *ngIf="selectedPaymentMethod() === 'PAYTM'">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00baf2" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                    </ng-container>
+                  </div>
+
+                  <div>
+                    <div class="payment-trigger-label">Payment Method</div>
+                    <div class="payment-trigger-value">{{ getPaymentLabel(selectedPaymentMethod()) }}</div>
+                  </div>
+                </div>
+
+                <span class="payment-trigger-change">Change →</span>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-brand btn-place-order w-100"
+                (click)="placeOrder()"
+                [disabled]="placingOrder()"
+              >
+                {{ placingOrder() ? 'Processing...' : (selectedPaymentMethod() === 'CASH_ON_DELIVERY' ? 'Place Order' : 'Pay Now') }}
+              </button>
+
+              <p class="summary-note mb-0">
+                By continuing, you agree to the items, applied offers, and selected payment method.
+              </p>
+            </aside>
+
           </div>
-        </div>
-
-        <!-- Bill Summary -->
-        <div class="col-lg-5">
-          <aside class="checkout-card summary-card">
-            <div class="summary-top">
-              <h5 class="section-title mb-1">Bill Summary</h5>
-              <p class="section-subtitle mb-0">Final payable amount for this order.</p>
-            </div>
-
-            <div class="summary-block">
-              <div class="summary-row">
-                <span>Subtotal</span>
-                <strong>₹{{ subtotal() }}</strong>
-              </div>
-
-              <div class="summary-row">
-                <span>Discount</span>
-                <strong class="text-success">− ₹{{ discountAmount() }}</strong>
-              </div>
-
-              <div class="summary-row">
-                <span>Delivery Charge</span>
-                <strong>₹{{ deliveryCharge() }}</strong>
-              </div>
-
-              <div class="summary-row total-row">
-                <span>Total</span>
-                <strong>₹{{ finalTotal() }}</strong>
-              </div>
-            </div>
-
-            <div
-              class="payment-trigger"
-              data-bs-toggle="modal"
-              data-bs-target="#paymentModal"
-            >
-              <div class="payment-trigger-left">
-                <div class="payment-trigger-icon">
-                  <ng-container *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d55a06" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                  </ng-container>
-
-                  <ng-container *ngIf="selectedPaymentMethod() === 'PHONEPE'">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739b7" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1"/></svg>
-                  </ng-container>
-
-                  <ng-container *ngIf="selectedPaymentMethod() === 'GPAY'">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
-                  </ng-container>
-
-                  <ng-container *ngIf="selectedPaymentMethod() === 'PAYTM'">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00baf2" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                  </ng-container>
-                </div>
-
-                <div>
-                  <div class="payment-trigger-label">Payment Method</div>
-                  <div class="payment-trigger-value">{{ getPaymentLabel(selectedPaymentMethod()) }}</div>
-                </div>
-              </div>
-
-              <span class="payment-trigger-change">Change →</span>
-            </div>
-
-            <button
-              type="button"
-              class="btn btn-brand btn-place-order w-100"
-              (click)="placeOrder()"
-              [disabled]="placingOrder()"
-            >
-              {{ placingOrder() ? 'Processing...' : (selectedPaymentMethod() === 'CASH_ON_DELIVERY' ? 'Place Order' : 'Pay Now') }}
-            </button>
-
-            <p class="summary-note mb-0">
-              By continuing, you agree to the items, applied offers, and selected payment method.
-            </p>
-          </aside>
         </div>
       </div>
     </div>

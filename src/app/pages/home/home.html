@@ -1,10 +1,10 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-  <div class="container">
+  <div class="home-wrap d-flex justify-content-between align-items-center">
     <a class="navbar-brand fw-bold text-orange" routerLink="/home">🍕 FoodDelivery</a>
     <div class="d-flex align-items-center gap-3">
       <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/login"    class="btn btn-outline-orange btn-sm">Sign in</a>
+        <a routerLink="/login" class="btn btn-outline-orange btn-sm">Sign in</a>
         <a routerLink="/register" class="btn btn-orange btn-sm">Register</a>
       </ng-container>
       <ng-container *ngIf="isLoggedIn">
@@ -17,92 +17,99 @@
 
 <!-- Hero -->
 <section class="hero-section">
-  <div class="container text-center">
+  <div class="home-wrap text-center">
     <h1 class="hero-title">Hungry? We've got you.</h1>
     <p class="hero-sub">Discover restaurants near you and order your favourite food</p>
     <div class="search-bar mx-auto">
       <input
-        type="text" class="form-control form-control-lg"
-        placeholder="🔍  Search by name, cuisine or location..."
-        [(ngModel)]="searchText" (ngModelChange)="onSearch()" />
+        type="text"
+        class="form-control form-control-lg"
+        placeholder="🔍 Search by name, cuisine or location..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()"
+      />
     </div>
   </div>
 </section>
 
 <!-- Restaurants Grid -->
-<section class="w-100">
-    <div class="container my-3">
+<section class="restaurant-section">
+  <div class="home-wrap my-3">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">All Restaurants <span class="text-muted fs-6 fw-normal">({{ filtered().length }} found)</span></h4>
-  </div>
-
-  <!-- Loading -->
-  <div *ngIf="loading()" class="row g-4">
-    <div class="col-md-4" *ngFor="let i of [1,2,3,4,5,6]">
-      <div class="card skeleton-card"></div>
+    <div class="d-flex justify-content-between align-items-center mb-4 section-head-wrap">
+      <h4 class="fw-bold mb-0">
+        All Restaurants
+        <span class="text-muted fs-6 fw-normal">({{ filtered().length }} found)</span>
+      </h4>
     </div>
-  </div>
 
-  <!-- Cards -->
-  <div class="row g-4" *ngIf="!loading()">
-  <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
-    <div
-      class="restaurant-card card h-100"
-      [class.inactive-card]="isLoggedIn && r.isActive === false"
-      [class.disabled-card]="isLoggedIn && r.isActive === false"
-      (click)="openRestaurant(r)"
-    >
-      <div class="card-banner">
-        <span class="cuisine-badge">{{ r.cuisine }}</span>
-
-        <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
-          Currently Unavailable
-        </span>
+    <!-- Loading -->
+    <div *ngIf="loading()" class="row g-4">
+      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="card skeleton-card"></div>
       </div>
+    </div>
 
-      <div class="card-body">
-        <h6 class="card-title fw-bold mb-1">{{ r.name }}</h6>
-        <p class="card-text text-muted small mb-2">📍 {{ r.location }}</p>
-        <p class="card-text small text-muted">🍴 {{ r.cuisine }} cuisine</p>
-
-        <p *ngIf="r.deliveryTime" class="card-text small text-muted mb-1">
-          ⏱ {{ r.deliveryTime }} mins
-        </p>
-
-        <p *ngIf="r.rating" class="card-text small text-muted mb-0">
-          ⭐ {{ r.rating }}
-        </p>
-      </div>
-
-      <div class="card-footer bg-white border-0 pb-3">
-        <button
-          class="btn btn-sm w-100"
-          [ngClass]="isLoggedIn && r.isActive === false ? 'btn-secondary' : 'btn-orange'"
-          [disabled]="isLoggedIn && r.isActive === false"
+    <!-- Cards -->
+    <div class="row g-4" *ngIf="!loading()">
+      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
+        <div
+          class="restaurant-card card h-100"
+          [class.inactive-card]="isLoggedIn && r.isActive === false"
+          [class.disabled-card]="isLoggedIn && r.isActive === false"
+          (click)="openRestaurant(r)"
         >
-          {{
-            !isLoggedIn
-              ? 'Login to View Menu'
-              : r.isActive === false
-              ? 'Currently Unavailable'
-              : 'View Menu →'
-          }}
-        </button>
+          <div class="card-banner">
+            <span class="cuisine-badge">{{ r.cuisine }}</span>
+
+            <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
+              Currently Unavailable
+            </span>
+          </div>
+
+          <div class="card-body">
+            <h6 class="card-title fw-bold mb-1">{{ r.name }}</h6>
+            <p class="card-text text-muted small mb-2">📍 {{ r.location }}</p>
+            <p class="card-text small text-muted">🍴 {{ r.cuisine }} cuisine</p>
+
+            <p *ngIf="r.deliveryTime" class="card-text small text-muted mb-1">
+              ⏱ {{ r.deliveryTime }} mins
+            </p>
+
+            <p *ngIf="r.rating" class="card-text small text-muted mb-0">
+              ⭐ {{ r.rating }}
+            </p>
+          </div>
+
+          <div class="card-footer bg-white border-0 pb-3">
+            <button
+              class="btn btn-sm w-100"
+              [ngClass]="isLoggedIn && r.isActive === false ? 'btn-secondary' : 'btn-orange'"
+              [disabled]="isLoggedIn && r.isActive === false"
+            >
+              {{
+                !isLoggedIn
+                  ? 'Login to View Menu'
+                  : r.isActive === false
+                  ? 'Currently Unavailable'
+                  : 'View Menu →'
+              }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="filtered().length === 0" class="text-center py-5 text-muted">
+        <div style="font-size:48px">🍽️</div>
+        <p class="mt-2">No restaurants found for "{{ searchText }}"</p>
       </div>
     </div>
   </div>
-
-  <div *ngIf="filtered().length === 0" class="text-center py-5 text-muted">
-    <div style="font-size:48px">🍽️</div>
-    <p class="mt-2">No restaurants found for "{{ searchText }}"</p>
-  </div>
-</div>
-</div>
-
 </section>
 
 <!-- Footer -->
 <footer class="footer">
-  <p class="mb-0 text-muted small">© 2026 FoodDelivery · Built with ❤️ in Chennai</p>
+  <div class="home-wrap">
+    <p class="mb-0 text-muted small">© 2026 FoodDelivery · Built with ❤️ in Chennai</p>
+  </div>
 </footer>

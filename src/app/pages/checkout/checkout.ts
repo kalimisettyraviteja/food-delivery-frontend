@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CartService } from '../../core/services/cart';
@@ -18,6 +18,8 @@ type UiCoupon = Coupon & {
   eligible: boolean;
   amountNeeded: number;
 };
+
+declare const bootstrap: any;
 
 @Component({
   selector: 'app-checkout',
@@ -44,6 +46,9 @@ export class Checkout {
   appliedCoupon = signal<Coupon | null>(null);
   discountAmount = signal(0);
 
+  private couponRecalcTimer: any = null;
+  private isRevalidatingCoupon = false;
+
   subtotal = computed(() => this.cartService.cartTotal());
   deliveryCharge = computed(() => this.cartService.cart().length > 0 ? 40 : 0);
 
@@ -52,23 +57,41 @@ export class Checkout {
   );
 
   globalCouponsUi = computed<UiCoupon[]>(() =>
-    this.globalCoupons().map(c => ({
-      ...c,
-      eligible: this.subtotal() >= c.minOrderAmount,
-      amountNeeded: Math.max(0, c.minOrderAmount - this.subtotal())
-    }))
+    this.globalCoupons()
+      .filter(c => c.scope === 'GLOBAL')
+      .map(c => ({
+        ...c,
+        eligible: this.subtotal() >= c.minOrderAmount,
+        amountNeeded: Math.max(0, c.minOrderAmount - this.subtotal())
+      }))
   );
 
   restaurantCouponsUi = computed<UiCoupon[]>(() =>
-    this.restaurantCoupons().map(c => ({
-      ...c,
-      eligible: this.subtotal() >= c.minOrderAmount,
-      amountNeeded: Math.max(0, c.minOrderAmount - this.subtotal())
-    }))
+    this.restaurantCoupons()
+      .filter(c => c.scope === 'RESTAURANT')
+      .map(c => ({
+        ...c,
+        eligible: this.subtotal() >= c.minOrderAmount,
+        amountNeeded: Math.max(0, c.minOrderAmount - this.subtotal())
+      }))
   );
 
   constructor() {
     this.loadCoupons();
+
+    effect(() => {
+      const coupon = this.appliedCoupon();
+      const subtotal = this.subtotal();
+
+      if (!coupon) return;
+
+      if (subtotal < coupon.minOrderAmount) {
+        this.clearCouponBecauseInvalid(coupon);
+        return;
+      }
+
+      this.scheduleCouponRevalidation(coupon.code);
+    });
   }
 
   loadCoupons() {
@@ -83,9 +106,7 @@ export class Checkout {
     }).subscribe({
       next: ({ global, restaurant }) => {
         this.globalCoupons.set(global || []);
-        this.restaurantCoupons.set(
-          (restaurant || []).filter(c => c.scope === 'RESTAURANT')
-        );
+        this.restaurantCoupons.set(restaurant || []);
         this.loadingCoupons.set(false);
       },
       error: () => {
@@ -96,45 +117,132 @@ export class Checkout {
   }
 
   applyCoupon() {
-    const couponCode = this.couponCode().trim().toUpperCase();
-    const restaurantId = this.cartService.restaurantId();
+    const code = this.couponCode().trim().toUpperCase();
 
-    if (!couponCode) {
+    if (!code) {
       this.couponMessage.set('Enter coupon code');
       return;
     }
 
-    if (!restaurantId) {
-      this.couponMessage.set('Restaurant not found');
-      return;
+    this.validateCouponWithBackend(code, true);
+  }
+
+  applySuggestedCoupon(coupon: Coupon) {
+    this.couponCode.set(coupon.code);
+    this.validateCouponWithBackend(coupon.code, true);
+  }
+
+  private findCouponByCode(code: string): Coupon | null {
+  const allCoupons = [...this.globalCoupons(), ...this.restaurantCoupons()];
+  return allCoupons.find(c => c.code.toUpperCase() === code.toUpperCase()) || null;
+}
+
+  validateCouponWithBackend(code: string, showSuccessMessage = true) {
+  const restaurantId = this.cartService.restaurantId();
+
+  if (!restaurantId) {
+    this.couponMessage.set('Restaurant not found for this cart');
+    return;
+  }
+
+  this.couponService.applyCoupon({
+    couponCode: code,
+    restaurantId,
+    orderAmount: this.subtotal()
+  }).subscribe({
+    next: (res: ApplyCouponResponse) => {
+      this.discountAmount.set(res.discountAmount || 0);
+
+      const allCoupons = [...this.globalCoupons(), ...this.restaurantCoupons()];
+      const found = allCoupons.find(c => c.code.toUpperCase() === code.toUpperCase()) || null;
+      this.appliedCoupon.set(found);
+
+      if (showSuccessMessage) {
+        this.couponMessage.set(res.message || 'Coupon applied successfully');
+      } else {
+        this.couponMessage.set(`Discount updated for coupon ${code}.`);
+      }
+
+      const modalEl = document.getElementById('offersModal');
+      if (modalEl) {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        modalInstance?.hide();
+      }
+    },
+    error: (err) => {
+      const existingCoupon = this.findCouponByCode(code);
+      
+      if (existingCoupon) {
+        const minOrderAmount = existingCoupon.minOrderAmount || 0;
+        const amountNeeded = Math.max(0, minOrderAmount - this.subtotal());
+
+        this.discountAmount.set(0);
+        this.appliedCoupon.set(null);
+
+        if (amountNeeded > 0) {
+          this.couponMessage.set(
+            `Add ₹${amountNeeded} more to apply coupon ${existingCoupon.code}. Minimum order value is ₹${minOrderAmount}.`
+          );
+        } else {
+          this.couponMessage.set(
+            err?.error?.message || `Coupon ${existingCoupon.code} is not applicable for this cart.`
+          );
+        }
+      } else {
+        this.discountAmount.set(0);
+        this.appliedCoupon.set(null);
+        this.couponMessage.set(
+          err?.error?.message || 'Invalid coupon code'
+        );
+      }
+    }
+  });
+}
+
+  scheduleCouponRevalidation(code: string) {
+    if (this.isRevalidatingCoupon) return;
+
+    if (this.couponRecalcTimer) {
+      clearTimeout(this.couponRecalcTimer);
     }
 
+    this.couponRecalcTimer = setTimeout(() => {
+      this.revalidateAppliedCoupon(code);
+    }, 300);
+  }
+
+  revalidateAppliedCoupon(code: string) {
+    const restaurantId = this.cartService.restaurantId();
+    if (!restaurantId || !this.appliedCoupon()) return;
+
+    this.isRevalidatingCoupon = true;
+
     this.couponService.applyCoupon({
-      couponCode,
+      couponCode: code,
       restaurantId,
       orderAmount: this.subtotal()
     }).subscribe({
       next: (res: ApplyCouponResponse) => {
         this.discountAmount.set(res.discountAmount || 0);
-        this.couponMessage.set(res.message || 'Coupon applied successfully');
-
-        const allCoupons = [...this.globalCoupons(), ...this.restaurantCoupons()];
-        const found = allCoupons.find(c => c.code === couponCode) || null;
-        this.appliedCoupon.set(found);
+        this.isRevalidatingCoupon = false;
       },
-      error: (err) => {
-        this.discountAmount.set(0);
-        this.appliedCoupon.set(null);
-        this.couponMessage.set(
-          err?.error?.message || 'Coupon is invalid or not applicable'
-        );
+      error: () => {
+        const currentCoupon = this.appliedCoupon();
+        if (currentCoupon) {
+          this.clearCouponBecauseInvalid(currentCoupon);
+        }
+        this.isRevalidatingCoupon = false;
       }
     });
   }
 
-  applySuggestedCoupon(coupon: Coupon) {
-    this.couponCode.set(coupon.code);
-    this.applyCoupon();
+  clearCouponBecauseInvalid(coupon: Coupon) {
+    this.discountAmount.set(0);
+    this.appliedCoupon.set(null);
+    this.couponCode.set('');
+    this.couponMessage.set(
+      `Coupon ${coupon.code} removed. Minimum order value ₹${coupon.minOrderAmount} is no longer met.`
+    );
   }
 
   removeCoupon() {
@@ -142,6 +250,11 @@ export class Checkout {
     this.couponMessage.set('');
     this.appliedCoupon.set(null);
     this.discountAmount.set(0);
+
+    if (this.couponRecalcTimer) {
+      clearTimeout(this.couponRecalcTimer);
+      this.couponRecalcTimer = null;
+    }
   }
 
   addMoreItems() {
@@ -154,53 +267,56 @@ export class Checkout {
     if (coupon.discountType === 'PERCENTAGE') {
       return `${coupon.discountValue}% off`;
     }
-    if (coupon.discountType === 'FREE_DELIVERY') {
-      return `Free delivery`;
-    }
     return `₹${coupon.discountValue} off`;
   }
 
-
   getPaymentLabel(method: PaymentMethod): string {
-  const labels: Record<PaymentMethod, string> = {
-    CASH_ON_DELIVERY: 'Cash on Delivery',
-    PHONEPE: 'PhonePe',
-    GPAY: 'Google Pay',
-    PAYTM: 'Paytm',
-    CARD: 'Card',
-    UPI: 'UPI'
-  };
-  return labels[method] || method;
-}
+    switch (method) {
+      case 'PHONEPE':
+        return 'PhonePe';
+      case 'GPAY':
+        return 'Google Pay';
+      case 'PAYTM':
+        return 'Paytm';
+      default:
+        return 'Cash on Delivery';
+    }
+  }
 
   placeOrder() {
     const restaurantId = this.cartService.restaurantId();
-    const restaurantName = this.cartService.restaurantName();
 
     if (this.cartService.cart().length === 0) {
       alert('Cart is empty');
       return;
     }
 
-    if (!restaurantId || !restaurantName) {
+    if (!restaurantId) {
       alert('Restaurant not found');
       return;
     }
 
+    const coupon = this.appliedCoupon();
+    if (coupon && this.subtotal() < coupon.minOrderAmount) {
+      this.clearCouponBecauseInvalid(coupon);
+      alert(`Coupon ${coupon.code} is no longer valid for the updated cart total.`);
+      return;
+    }
+
+    this.placingOrder.set(true);
+
     const payload: PlaceOrderRequest = {
       restaurantId,
-      restaurantName,
-      couponCode: this.appliedCoupon()?.code || null,
-      paymentMethod: this.selectedPaymentMethod(),
+      restaurantName: this.cartService.restaurantName(),
       items: this.cartService.cart().map(c => ({
         menuItemId: c.item.id!,
         itemName: c.item.name,
         price: c.item.price,
         quantity: c.qty
-      }))
+      })),
+      couponCode: this.appliedCoupon()?.code || null,
+      paymentMethod: this.selectedPaymentMethod()
     };
-
-    this.placingOrder.set(true);
 
     this.orderService.placeOrder(payload).subscribe({
       next: () => {
