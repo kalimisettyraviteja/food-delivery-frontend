@@ -19,6 +19,19 @@ export interface Coupon {
   expiryDate?: string | null;
 }
 
+export interface CouponPayload {
+  code: string;
+  description: string;
+  discountType: DiscountType;
+  discountValue: number;
+  maxDiscountAmount?: number | null;
+  minOrderAmount: number;
+  scope: CouponScope;
+  restaurantId?: number | null;
+  active: boolean;
+  expiryDate?: string | null;
+}
+
 export interface ApplyCouponRequest {
   couponCode: string;
   restaurantId: number;
@@ -40,17 +53,35 @@ export interface ApplyCouponResponse {
 })
 export class CouponService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/coupons';
+
+  private userApiUrl = 'http://localhost:8080/api/coupons';
+  private adminApiUrl = 'http://localhost:8080/api/admin/coupons';
 
   getGlobalCoupons(): Observable<Coupon[]> {
-    return this.http.get<Coupon[]>(`${this.apiUrl}/global`);
+    return this.http.get<Coupon[]>(`${this.userApiUrl}/global`);
   }
 
   getRestaurantCoupons(restaurantId: number): Observable<Coupon[]> {
-    return this.http.get<Coupon[]>(`${this.apiUrl}/restaurant/${restaurantId}`);
+    return this.http.get<Coupon[]>(`${this.userApiUrl}/restaurant/${restaurantId}`);
   }
 
   applyCoupon(payload: ApplyCouponRequest): Observable<ApplyCouponResponse> {
-    return this.http.post<ApplyCouponResponse>(`${this.apiUrl}/apply`, payload);
+    return this.http.post<ApplyCouponResponse>(`${this.userApiUrl}/apply`, payload);
+  }
+
+  getAllCoupons(): Observable<Coupon[]> {
+    return this.http.get<Coupon[]>(this.adminApiUrl);
+  }
+
+  createCoupon(payload: CouponPayload): Observable<Coupon> {
+    return this.http.post<Coupon>(this.adminApiUrl, payload);
+  }
+
+  updateCoupon(id: number, payload: CouponPayload): Observable<Coupon> {
+    return this.http.put<Coupon>(`${this.adminApiUrl}/${id}`, payload);
+  }
+
+  deleteCoupon(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.adminApiUrl}/${id}`);
   }
 }

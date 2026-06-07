@@ -1,0 +1,289 @@
+<form #couponForm="ngForm" class="coupon-page" (ngSubmit)="saveCoupon()">
+    <section class="hero-strip">
+        <div class="hero-left">
+            <div class="hero-icon">
+                <i class="bi bi-ticket-perforated-fill"></i>
+            </div>
+            <div>
+                <h2>{{ editingCouponId ? 'Edit Coupon' : 'Coupon Management' }}</h2>
+                <p>Create, update, and monitor discount coupons for your platform.</p>
+            </div>
+        </div>
+
+        <div class="hero-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submitting || couponForm.invalid">
+                <i class="bi" [class.bi-plus-circle]="!editingCouponId" [class.bi-check2-circle]="editingCouponId"></i>
+                {{ submitting ? 'Saving...' : (editingCouponId ? 'Update Coupon' : 'Create Coupon') }}
+            </button>
+
+            <button type="button" class="btn btn-light" (click)="resetForm()">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                Reset
+            </button>
+        </div>
+    </section>
+
+    <div *ngIf="error" class="alert-box alert-error">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <span>{{ error }}</span>
+    </div>
+
+    <div *ngIf="success" class="alert-box alert-success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ success }}</span>
+    </div>
+
+    <div class="coupon-layout">
+        <section class="editor-panel">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-eyebrow">Coupon Editor</span>
+                    <h3>{{ editingCouponId ? 'Update existing coupon' : 'Create a new coupon' }}</h3>
+                </div>
+                <span class="status-pill" [class.inactive]="!form.active">
+                    <i class="bi" [class.bi-check-circle-fill]="form.active"
+                        [class.bi-pause-circle-fill]="!form.active"></i>
+                    {{ form.active ? 'Active' : 'Inactive' }}
+                </span>
+            </div>
+
+            <div class="form-grid">
+                <div class="field field-full">
+                    <label for="code">
+                        <i class="bi bi-upc-scan"></i>
+                        Coupon Code <span>*</span>
+                    </label>
+                    <input id="code" type="text" name="code" [(ngModel)]="form.code" #code="ngModel" required
+                        minlength="3" maxlength="20" placeholder="Ex: SAVE20" />
+                    <small class="hint">Use uppercase short code for checkout input.</small>
+                    <div class="error-text" *ngIf="code.invalid && (code.dirty || code.touched)">
+                        <span *ngIf="code.errors?.['required']">Coupon code is required.</span>
+                        <span *ngIf="code.errors?.['minlength']">Coupon code must be at least 3 characters.</span>
+                    </div>
+                </div>
+
+                <div class="field field-full">
+                    <label for="description">
+                        <i class="bi bi-card-text"></i>
+                        Description <span>*</span>
+                    </label>
+                    <textarea id="description" name="description" [(ngModel)]="form.description" #description="ngModel"
+                        required minlength="5" rows="3" placeholder="Ex: Get 20% off on orders above ₹300"></textarea>
+                    <div class="error-text" *ngIf="description.invalid && (description.dirty || description.touched)">
+                        <span *ngIf="description.errors?.['required']">Description is required.</span>
+                        <span *ngIf="description.errors?.['minlength']">Description must be at least 5
+                            characters.</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="discountType">
+                        <i class="bi bi-tag-fill"></i>
+                        Discount Type <span>*</span>
+                    </label>
+                    <select id="discountType" name="discountType" [(ngModel)]="form.discountType"
+                        #discountType="ngModel" required>
+                        <option value="" disabled>Select type</option>
+                        <option *ngFor="let type of discountTypes" [value]="type">{{ type }}</option>
+                    </select>
+                    <div class="error-text"
+                        *ngIf="discountType.invalid && (discountType.dirty || discountType.touched)">
+                        Discount type is required.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="scope">
+                        <i class="bi bi-diagram-3-fill"></i>
+                        Scope <span>*</span>
+                    </label>
+                    <select id="scope" name="scope" [(ngModel)]="form.scope" #scope="ngModel" required>
+                        <option value="" disabled>Select scope</option>
+                        <option *ngFor="let scopeItem of scopes" [value]="scopeItem">{{ scopeItem }}</option>
+                    </select>
+                    <div class="error-text" *ngIf="scope.invalid && (scope.dirty || scope.touched)">
+                        Scope is required.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="discountValue">
+                        <i class="bi bi-percent"></i>
+                        {{ form.discountType === 'FREE_DELIVERY' ? 'Discount Value' : 'Discount Value' }} <span>*</span>
+                    </label>
+                    <input id="discountValue" type="number" name="discountValue" [(ngModel)]="form.discountValue"
+                        #discountValue="ngModel" required min="0" [readonly]="form.discountType === 'FREE_DELIVERY'"
+                        placeholder="Enter discount value" />
+                    <small class="hint" *ngIf="form.discountType === 'FREE_DELIVERY'">
+                        For free delivery coupons, this value can stay 0.
+                    </small>
+                    <div class="error-text"
+                        *ngIf="discountValue.invalid && (discountValue.dirty || discountValue.touched)">
+                        Discount value is required and cannot be negative.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="minOrderAmount">
+                        <i class="bi bi-cart-check-fill"></i>
+                        Minimum Order Amount <span>*</span>
+                    </label>
+                    <input id="minOrderAmount" type="number" name="minOrderAmount" [(ngModel)]="form.minOrderAmount"
+                        #minOrderAmount="ngModel" required min="0" placeholder="Enter minimum order amount" />
+                    <div class="error-text"
+                        *ngIf="minOrderAmount.invalid && (minOrderAmount.dirty || minOrderAmount.touched)">
+                        Minimum order amount is required and cannot be negative.
+                    </div>
+                </div>
+
+                <div class="field" *ngIf="form.discountType === 'PERCENTAGE'">
+                    <label for="maxDiscountAmount">
+                        <i class="bi bi-cash-stack"></i>
+                        Max Discount Amount <span>*</span>
+                    </label>
+                    <input id="maxDiscountAmount" type="number" name="maxDiscountAmount"
+                        [(ngModel)]="form.maxDiscountAmount" #maxDiscountAmount="ngModel" required min="0"
+                        placeholder="Enter max discount cap" />
+                    <div class="error-text"
+                        *ngIf="maxDiscountAmount.invalid && (maxDiscountAmount.dirty || maxDiscountAmount.touched)">
+                        Max discount amount is required for percentage coupons.
+                    </div>
+                </div>
+
+                <div class="field" [class.field-full]="form.discountType !== 'PERCENTAGE'">
+                    <label for="expiryDate">
+                        <i class="bi bi-calendar-event-fill"></i>
+                        Expiry Date <span>*</span>
+                    </label>
+                    <input id="expiryDate" type="date" name="expiryDate" [(ngModel)]="form.expiryDate"
+                        #expiryDate="ngModel" required />
+                    <div class="error-text" *ngIf="expiryDate.invalid && (expiryDate.dirty || expiryDate.touched)">
+                        Expiry date is required.
+                    </div>
+                </div>
+
+                <!-- <div class="field" *ngIf="form.scope === 'RESTAURANT'">
+                    <label for="restaurantId">
+                        <i class="bi bi-shop"></i>
+                        Restaurant ID <span>*</span>
+                    </label>
+                    <input id="restaurantId" type="number" name="restaurantId" [(ngModel)]="form.restaurantId"
+                        #restaurantId="ngModel" required min="1" placeholder="Enter restaurant ID" />
+                    <div class="error-text"
+                        *ngIf="restaurantId.invalid && (restaurantId.dirty || restaurantId.touched)">
+                        Restaurant ID is required for restaurant coupons.
+                    </div>
+                </div> -->
+
+                <div class="field" *ngIf="form.scope === 'RESTAURANT'">
+                    <label for="restaurantId">
+                        <i class="bi bi-shop"></i>
+                        Restaurant <span>*</span>
+                    </label>
+                    <select id="restaurantId" name="restaurantId" [(ngModel)]="form.restaurantId"
+                        #restaurantId="ngModel" required>
+                        <option [ngValue]="null" disabled>Select restaurant</option>
+                        <option *ngFor="let restaurant of restaurants" [ngValue]="restaurant.id">
+                            {{ restaurant.name }}
+                        </option>
+                    </select>
+                    <div class="error-text"
+                        *ngIf="restaurantId.invalid && (restaurantId.dirty || restaurantId.touched)">
+                        Restaurant selection is required for restaurant coupons.
+                    </div>
+                </div>
+
+                <div class="field field-full">
+                    <label class="toggle-label">
+                        <span>
+                            <i class="bi bi-toggles2"></i>
+                            Coupon Status
+                        </span>
+                        <div class="switch-wrap">
+                            <input type="checkbox" name="active" [(ngModel)]="form.active" />
+                            <span>{{ form.active ? 'Active' : 'Inactive' }}</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <section class="list-panel">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-eyebrow">Coupons List</span>
+                    <h3>All coupons</h3>
+                </div>
+                <div class="table-count">
+                    <i class="bi bi-collection"></i>
+                    {{ coupons.length }} Records
+                </div>
+            </div>
+
+            <div *ngIf="loading" class="empty-wrap">
+                <i class="bi bi-hourglass-split"></i>
+                <p>Loading coupons...</p>
+            </div>
+
+            <div *ngIf="!loading && coupons.length === 0" class="empty-wrap">
+                <i class="bi bi-inbox"></i>
+                <p>No coupons found.</p>
+            </div>
+
+            <div *ngIf="!loading && coupons.length > 0" class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Actions</th>
+                            <th>Code</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Scope</th>
+                            <th>Restaurant</th>
+                            <th>Min Order</th>
+                            <th>Status</th>
+                            <th>Expiry</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let coupon of coupons">
+                            <td class="actions">
+                                <button type="button" class="icon-btn edit" (click)="editCoupon(coupon)">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="icon-btn delete" (click)="deleteCoupon(coupon.id)">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </td>
+
+                            <td>
+                                <div class="code-chip">
+                                    <i class="bi bi-ticket-detailed"></i>
+                                    {{ coupon.code }}
+                                </div>
+                            </td>
+
+                            <td>{{ coupon.discountType }}</td>
+                            <td>{{ coupon.discountType === 'FREE_DELIVERY' ? 'FREE DELIVERY' : ('₹' +
+                                coupon.discountValue) }}</td>
+                            <td>{{ coupon.scope }}</td>
+                            <td>
+                                {{ coupon.scope === 'RESTAURANT' ? getRestaurantName(coupon.restaurantId) : '-' }}
+                            </td>
+                            <td>₹{{ coupon.minOrderAmount }}</td>
+                            <td>
+                                <span class="status-badge" [class.inactive]="!coupon.active">
+                                    <i class="bi" [class.bi-check-circle-fill]="coupon.active"
+                                        [class.bi-x-circle-fill]="!coupon.active"></i>
+                                    {{ coupon.active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>{{ coupon.expiryDate || '-' }}</td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</form>

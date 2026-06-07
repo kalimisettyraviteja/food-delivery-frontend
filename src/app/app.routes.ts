@@ -9,6 +9,7 @@ import { Home }             from './pages/home/home';
 import { RestaurantDetail } from './pages/restaurant-detail/restaurant-detail';
 import { roleGuard } from './guards/role-guard';
 import { Checkout } from './pages/checkout/checkout';
+import { Coupons } from './pages/admin/coupons/coupons';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -33,7 +34,9 @@ export const routes: Routes = [
       { path: '', redirectTo: 'restaurants', pathMatch: 'full' },
       { path: 'restaurants', component: Restaurants },
       { path: 'menu-items',  component: MenuItems },
-      { path: 'users',       component: Users }
+      { path: 'users',       component: Users },
+      { path: 'coupons', component: Coupons }
+
     ]
   },
   { path: '**', redirectTo: 'home' }

@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RestaurantService, Restaurant } from '../../core/services/restaurant';
 import { UserService } from '../../core/services/user';
+import { CartService } from '../../core/services/cart';
 
 @Component({
   selector: 'app-home',
@@ -16,6 +17,7 @@ export class Home implements OnInit {
   private svc = inject(RestaurantService);
   private router = inject(Router);
   private userService = inject(UserService);
+  private cartService = inject(CartService);
 
   restaurants = signal<Restaurant[]>([]);
   filtered = signal<Restaurant[]>([]);
@@ -93,6 +95,7 @@ export class Home implements OnInit {
 
   logout() {
     this.userService.logout();
+    this.cartService.clearCart();
     this.router.navigate(['/login']);
   }
 }
