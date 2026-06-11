@@ -1,0 +1,154 @@
+<div class="home-wrap orders-page py-4">
+  <div class="orders-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Order History</h3>
+      <p class="text-muted mb-0">Track your recent and past orders here.</p>
+    </div>
+
+    <div class="filter-chips d-flex flex-wrap gap-2">
+      <button class="chip-btn" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+      <button class="chip-btn" [class.active]="filter() === 'PLACED'" (click)="setFilter('PLACED')">Placed</button>
+      <button class="chip-btn" [class.active]="filter() === 'PREPARING'"
+        (click)="setFilter('PREPARING')">Preparing</button>
+      <button class="chip-btn" [class.active]="filter() === 'OUT_FOR_DELIVERY'"
+        (click)="setFilter('OUT_FOR_DELIVERY')">Out for delivery</button>
+      <button class="chip-btn" [class.active]="filter() === 'DELIVERED'"
+        (click)="setFilter('DELIVERED')">Delivered</button>
+      <button class="chip-btn" [class.active]="filter() === 'CANCELLED'"
+        (click)="setFilter('CANCELLED')">Cancelled</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading()" class="orders-loading">
+    <div class="order-skeleton" *ngFor="let i of [1,2,3]"></div>
+  </div>
+
+  <div *ngIf="!loading() && filteredOrders().length === 0" class="empty-orders text-center">
+    <div class="empty-icon">📦</div>
+    <h5 class="fw-semibold mt-3">No orders found</h5>
+    <p class="text-muted mb-0">Your orders will appear here once you place one.</p>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading() && filteredOrders().length > 0">
+    <div class="order-card" *ngFor="let order of filteredOrders(); trackBy: trackByOrderId">
+      <button class="order-top" type="button" (click)="toggleOrder(order.id)">
+        <div class="order-main">
+          <div class="order-title-row">
+            <h5 class="mb-1 fw-bold">{{ order.restaurantName }}</h5>
+            <span class="status-pill" [ngClass]="getStatusClass(order.status)">
+              {{ order.status.replaceAll('_', ' ') }}
+            </span>
+          </div>
+
+          <div class="order-meta">
+            <span>Order #{{ order.id }}</span>
+            <span>{{ order.createdAt | date:'medium' }}</span>
+            <span>{{ order.paymentMethod.replaceAll('_', ' ') }}</span>
+            <span>{{ order.paymentStatus }}</span>
+          </div>
+        </div>
+
+        <div class="order-side text-end">
+          <div class="order-total">₹{{ order.totalAmount }}</div>
+          <div class="order-toggle-text">
+            {{ expandedOrderId() === order.id ? 'Hide details' : 'View details' }}
+          </div>
+        </div>
+      </button>
+
+      <div class="order-detail-wrap" *ngIf="expandedOrderId() === order.id">
+        <div *ngIf="detailsLoadingId() === order.id" class="detail-loading">
+          Loading order details...
+        </div>
+
+        <ng-container *ngIf="getOrderDetails(order.id) as detail">
+          <div class="order-detail-grid">
+            <div class="detail-block">
+              <h6 class="detail-title">Items</h6>
+
+              <div class="item-row" *ngFor="let item of detail.items">
+                <div>
+                  <div class="fw-semibold">{{ item.itemName }}</div>
+                  <div class="text-muted small">₹{{ item.price }} × {{ item.quantity }}</div>
+                </div>
+                <div class="fw-semibold">₹{{ item.subtotal }}</div>
+              </div>
+            </div>
+
+            <div class="detail-block">
+              <h6 class="detail-title">Bill Details</h6>
+
+              <div class="bill-row">
+                <span>Original Amount</span>
+                <span>₹{{ detail.originalAmount }}</span>
+              </div>
+              <div class="bill-row">
+                <span>Discount</span>
+                <span>- ₹{{ detail.discountAmount }}</span>
+              </div>
+              <div class="bill-row">
+                <span>Delivery Charge</span>
+                <span>₹{{ detail.deliveryCharge }}</span>
+              </div>
+              <div class="bill-row total">
+                <span>Total Paid</span>
+                <span>₹{{ detail.totalAmount }}</span>
+              </div>
+
+              <div class="coupon-line" *ngIf="detail.couponCode">
+                Coupon applied: <strong>{{ detail.couponCode }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-box" *ngIf="detail.status === 'DELIVERED'">
+            <h6 class="detail-title mb-2">Rate your order</h6>
+
+            <div *ngIf="isReviewLoading(detail.id)" class="review-note">
+              Loading your review...
+            </div>
+
+            <ng-container *ngIf="!isReviewLoading(detail.id) && hasReview(detail.id); else reviewFormBlock">
+              <div class="submitted-review">
+                <div class="submitted-review-head">
+                  <span class="submitted-badge">Review submitted</span>
+                  <span class="submitted-stars">
+                    {{ getExistingReview(detail.id)?.rating }} ★
+                  </span>
+                </div>
+
+                <p class="submitted-text mb-0" *ngIf="getExistingReview(detail.id)?.reviewText">
+                  {{ getExistingReview(detail.id)?.reviewText }}
+                </p>
+
+                <p class="submitted-text muted mb-0" *ngIf="!getExistingReview(detail.id)?.reviewText">
+                  You rated this order without a written review.
+                </p>
+              </div>
+            </ng-container>
+
+            <ng-template #reviewFormBlock>
+              <div class="stars mb-3">
+                <button type="button" class="star-btn" *ngFor="let star of [1,2,3,4,5]"
+                  [class.active]="star <= (reviewRating()[detail.id] || 0)" (click)="setRating(detail.id, star)">
+                  ★
+                </button>
+              </div>
+
+              <textarea class="form-control" rows="3" placeholder="Write your review here..."
+                [value]="reviewText()[detail.id] || ''"
+                (input)="updateReview(detail.id, $any($event.target).value)"></textarea>
+
+              <div class="mt-3">
+                <button class="btn btn-orange" type="button" [disabled]="isSubmittingReview(detail.id)"
+                  (click)="submitReview(detail.id)">
+                  {{ isSubmittingReview(detail.id) ? 'Submitting...' : 'Submit Review' }}
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

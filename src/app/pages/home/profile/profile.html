@@ -1,0 +1,194 @@
+<div class="profile-shell">
+  <div class="profile-page" *ngIf="!loading; else loadingBlock">
+    <section class="profile-hero-card">
+      <div class="hero-left">
+        <div class="profile-photo-wrap">
+          <ng-container *ngIf="displayPhoto; else initialsAvatar">
+            <img [src]="displayPhoto" alt="Profile photo" class="profile-photo" />
+          </ng-container>
+
+          <ng-template #initialsAvatar>
+            <div class="profile-avatar-fallback">
+              {{ (profile?.name || 'U').charAt(0).toUpperCase() }}
+            </div>
+          </ng-template>
+
+          <button
+            type="button"
+            class="photo-edit-btn"
+            title="Change profile photo"
+            (click)="openFilePicker()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="edit-icon">
+              <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+            </svg>
+          </button>
+
+          <input
+            #fileInput
+            type="file"
+            class="hidden-file-input"
+            accept=".jpg,.jpeg,.png,.webp"
+            (change)="onFileSelected($event)"
+          />
+        </div>
+
+        <div class="hero-copy">
+          <div class="hero-copy-top">
+            <span class="mini-label">My profile</span>
+            <span class="role-badge">{{ profile?.role }}</span>
+          </div>
+
+          <h1>{{ profile?.name }}</h1>
+          <p>{{ profile?.email }}</p>
+
+          <div class="hero-meta">
+            
+
+            <div class="meta-chip" *ngIf="selectedFile">
+              <span class="meta-label">Selected file</span>
+              <span class="meta-value text-truncate">{{ selectedFile.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button class="btn btn-gradient" type="button" (click)="uploadPhoto()" [disabled]="uploading || !selectedFile">
+          {{ uploading ? 'Uploading...' : 'Upload photo' }}
+        </button>
+
+        <button class="btn btn-soft-danger" type="button" (click)="removePhoto()" [disabled]="removing || !hasSavedPhoto">
+          {{ removing ? 'Removing...' : 'Remove photo' }}
+        </button>
+      </div>
+    </section>
+
+    <div class="profile-content-grid">
+      <section class="content-card details-card">
+        <div class="card-head">
+          <span class="section-kicker">Account</span>
+          <h3>Personal details</h3>
+          <p>Keep your basic account information current.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" [(ngModel)]="form.name" />
+          </div>
+
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" [(ngModel)]="form.phone" />
+          </div>
+
+          <div class="form-group form-group-full">
+            <label>Email</label>
+            <input type="email" [value]="profile?.email || ''" disabled />
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-gradient" type="button" (click)="saveProfile()" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Save changes' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="content-card security-card">
+        <div class="security-top">
+          <div class="security-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0c-.69 0-1.386.17-2 .5A5.5 5.5 0 0 0 3 5.5V7H2.5A1.5 1.5 0 0 0 1 8.5v5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 13.5 7H13V5.5A5.5 5.5 0 0 0 10 .5 4.48 4.48 0 0 0 8 0zm4 7H4V5.5a4 4 0 1 1 8 0V7z"/>
+            </svg>
+          </div>
+
+          <div class="security-copy">
+            <span class="section-kicker">Security</span>
+            <h3>Password settings</h3>
+            <p>Change your password only when needed. Keep it strong and unique for better account security.</p>
+          </div>
+        </div>
+
+        <div class="security-note" *ngIf="!showChangePassword">
+          <div class="security-note-dot"></div>
+          <span>Your password is hidden for safety. Open the form only when you want to update it.</span>
+        </div>
+
+        <div class="security-action-bar">
+          <button
+            type="button"
+            class="btn btn-outline-warm btn-small"
+            (click)="toggleChangePassword()"
+          >
+            {{ showChangePassword ? 'Cancel' : 'Change password' }}
+          </button>
+        </div>
+
+        <div class="password-panel" *ngIf="showChangePassword">
+          <div class="password-panel-header">
+            <h4>Update password</h4>
+            <p>Enter your current password, then choose a new one.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Current password</label>
+            <input type="password" [(ngModel)]="passwordForm.currentPassword" />
+          </div>
+
+          <div class="form-group">
+            <label>New password</label>
+            <input type="password" [(ngModel)]="passwordForm.newPassword" />
+          </div>
+
+          <div class="form-group">
+            <label>Confirm new password</label>
+            <input type="password" [(ngModel)]="passwordForm.confirmPassword" />
+          </div>
+
+          <div class="password-tip">
+            Use a password that is hard to guess and different from your old one.
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-gradient" type="button" (click)="changePassword()" [disabled]="changingPassword">
+              {{ changingPassword ? 'Changing...' : 'Update password' }}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <ng-template #loadingBlock>
+    <div class="profile-page">
+      <div class="content-card loading-card">
+        <p>Loading profile...</p>
+      </div>
+    </div>
+  </ng-template>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div
+    #statusToast
+    class="toast align-items-center border-0"
+    [ngClass]="toastType === 'success' ? 'text-bg-success' : 'text-bg-danger'"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <div class="d-flex">
+      <div class="toast-body">
+        {{ toastMessage }}
+      </div>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+        aria-label="Close"
+      ></button>
+    </div>
+  </div>
+</div>

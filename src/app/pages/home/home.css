@@ -2,7 +2,6 @@
   display: block;
 }
 
-/* Layout */
 .home-wrap {
   width: min(1400px, calc(100% - 56px));
   margin: 0 auto;
@@ -20,9 +19,21 @@
   }
 }
 
-/* Orange theme */
 .text-orange {
   color: #e85d04;
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+
+.brand-emoji {
+  display: inline-block;
+  transform-origin: center;
+  animation: floatPizza 2.8s ease-in-out infinite;
 }
 
 .btn-orange {
@@ -47,142 +58,251 @@
   color: #fff;
 }
 
-/* Hero */
-.hero-section {
-  background: linear-gradient(135deg, #ffe1cf 0%, #f7dac4 100%);
-  padding: 45px 0 35px;
+.top-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 999px;
+  background: #fff6ef;
+  border: 1px solid #f7dfd0;
 }
 
-.hero-title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: #111;
-  margin-bottom: 10px;
+.top-user-photo,
+.account-avatar-img {
+  object-fit: cover;
+  border-radius: 50%;
 }
 
-.hero-sub {
-  color: #666;
-  font-size: 1rem;
-  margin-bottom: 28px;
+.top-user-photo {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(232, 93, 4, 0.15);
 }
 
-.search-bar {
-  max-width: 520px;
+.top-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f39a56, #e85d04);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 10px rgba(232, 93, 4, 0.18);
 }
 
-.search-bar .form-control {
-  border-radius: 50px;
-  padding: 14px 24px;
-  border: 1.5px solid #e0e0e0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+.top-user-name {
+  font-size: 14px;
+  color: #5b5b5b;
+  font-weight: 600;
+}
+
+.account-menu-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #eadfd6;
+  background: #fff;
+  color: #444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+}
+
+.account-menu-btn:hover {
+  background: #fff3eb;
+  color: #e85d04;
+  border-color: #f1c7a7;
+}
+
+.menu-icon {
+  transition: transform 0.2s ease;
+}
+
+.account-menu-btn:hover .menu-icon {
+  transform: scale(1.08);
+}
+
+.account-offcanvas {
+  border-top-left-radius: 22px;
+  border-bottom-left-radius: 22px;
+}
+
+.account-user-card {
+  background: linear-gradient(180deg, #fff8f3 0%, #ffffff 100%);
+  border: 1px solid #f3e1d6;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.account-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-avatar,
+.account-avatar-img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+}
+
+.account-avatar {
+  background: linear-gradient(135deg, #f39a56, #e85d04);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 18px rgba(232, 93, 4, 0.2);
+}
+
+.account-avatar-img {
+  border: 3px solid #fff;
+  box-shadow: 0 8px 18px rgba(232, 93, 4, 0.16);
+}
+
+.account-user-copy {
+  min-width: 0;
+}
+
+.account-name {
+  font-size: 16px;
+  color: #2f2f2f;
+}
+
+.account-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #333;
+  background: #f8f9fa;
+  border: 1px solid transparent;
+  text-align: left;
+  transition: 0.2s ease;
+}
+
+.account-link:hover {
+  background: #fff1e8;
+  color: #e85d04;
+  border-color: #f2d5c4;
+  transform: translateX(2px);
+}
+
+.account-link-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   font-size: 15px;
 }
 
-.search-bar .form-control:focus {
-  border-color: #e85d04;
-  box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.12);
+.icon-orange {
+  background: #fff1e8;
+  color: #e85d04;
 }
 
-/* Restaurant section */
-.restaurant-section {
+.icon-red {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.logout-link {
   width: 100%;
 }
 
-.section-head-wrap {
-  gap: 12px;
-  flex-wrap: wrap;
+.fa-bounce-hover,
+.fa-float-hover,
+.fa-wiggle-hover,
+.fa-slide-hover {
+  transition: transform 0.2s ease;
 }
 
-/* Restaurant Cards */
-.restaurant-card {
-  border: 1.5px solid #f0f0f0;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  overflow: hidden;
+.account-link:hover .fa-bounce-hover {
+  animation: iconBounce 0.6s ease;
 }
 
-.restaurant-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  border-color: #e85d04;
+.account-link:hover .fa-float-hover {
+  animation: iconFloat 0.7s ease;
 }
 
-.card-banner {
-  height: 120px;
-  background: linear-gradient(135deg, #ffe8d6, #ffd0b0);
-  display: flex;
-  align-items: flex-end;
-  padding: 10px 14px;
-  position: relative;
+.account-link:hover .fa-wiggle-hover {
+  animation: iconWiggle 0.55s ease;
 }
 
-.cuisine-badge {
-  background: #e85d04;
-  color: #fff;
-  padding: 3px 12px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 600;
+.account-link:hover .fa-slide-hover {
+  animation: iconSlide 0.45s ease;
 }
 
-.card-title {
-  font-size: 15px;
-  color: #111;
+@keyframes floatPizza {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-8deg);
+  }
 }
 
-/* Skeleton loader */
-.skeleton-card {
-  height: 220px;
-  border-radius: 14px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-  border: none;
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(1px);
+  }
 }
 
-@keyframes shimmer {
+@keyframes iconFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-8deg);
+  }
+}
+
+@keyframes iconWiggle {
+  0%, 100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes iconSlide {
   0% {
-    background-position: 200% 0;
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
   }
   100% {
-    background-position: -200% 0;
+    transform: translateX(0);
   }
-}
-
-/* Footer */
-.footer {
-  background: #f8f9fa;
-  border-top: 1px solid #eee;
-  padding: 20px 0;
-  text-align: center;
-  margin-top: 40px;
-}
-
-.inactive-card {
-  filter: grayscale(100%);
-  opacity: 0.9;
-}
-
-.disabled-card {
-  cursor: not-allowed;
-}
-
-.disabled-card:hover {
-  transform: none;
-  box-shadow: none;
-  border-color: #d6d6d6;
-}
-
-.status-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #343a40;
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  z-index: 2;
 }

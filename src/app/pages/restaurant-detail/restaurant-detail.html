@@ -4,21 +4,21 @@
     <a class="navbar-brand fw-bold text-orange mb-0" routerLink="/home">🍕 FoodDelivery</a>
 
     <div class="d-flex align-items-center gap-3 header-right">
-  <div class="nav-helper">
-    <div class="nav-helper-icon">
-      <i class="bi bi-shop-window"></i>
-    </div>
-    <div class="nav-helper-text">
-      <span class="nav-helper-label">Order from</span>
-      <strong>below menu</strong>
-    </div>
-  </div>
+      <div class="nav-helper">
+        <div class="nav-helper-icon">
+          <i class="bi bi-shop-window"></i>
+        </div>
+        <div class="nav-helper-text">
+          <span class="nav-helper-label">Order from</span>
+          <strong>below menu</strong>
+        </div>
+      </div>
 
-  <a routerLink="/home" class="back-nav-btn">
-    <i class="bi bi-arrow-left-short"></i>
-    Back
-  </a>
-</div>
+      <a routerLink="/home" class="back-nav-btn">
+        <i class="bi bi-arrow-left-short"></i>
+        Back
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -43,6 +43,8 @@
           <div class="meta-box" *ngIf="restaurant()!.rating != null">
             <div class="meta-label">Rating</div>
             <div class="meta-value">⭐ {{ restaurant()!.rating }}</div>
+            <div class="meta-value"> ({{ restaurant()!.ratingCount }}) reviews</div>
+
           </div>
 
           <div class="meta-box" *ngIf="restaurant()!.deliveryTime != null">
@@ -162,11 +164,11 @@
           <i class="bi bi-currency-rupee"></i>{{ cartService.cartTotal() }}
         </span>
       </div>
-       <div class="floating-arrow-icon">
-      <i class="bi bi-arrow-right-circle-fill"></i>
-    </div>
+      <div class="floating-arrow-icon">
+        <i class="bi bi-arrow-right-circle-fill"></i>
+      </div>
     </div>
 
-   
+
   </button>
 </div>

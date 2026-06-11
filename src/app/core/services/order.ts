@@ -42,6 +42,17 @@ export interface OrderItemResponse {
   subtotal: number;
 }
 
+export interface OrderSummaryResponse {
+  id: number;
+  restaurantName: string;
+  totalAmount: number;
+  couponCode?: string | null;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  status: OrderStatus;
+  createdAt: string;
+}
+
 export interface OrderResponse {
   id: number;
   userId: number;
@@ -71,8 +82,8 @@ export class OrderService {
     return this.http.post<OrderResponse>(this.apiUrl, payload);
   }
 
-  getMyOrders(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/my`);
+  getMyOrders(): Observable<OrderSummaryResponse[]> {
+    return this.http.get<OrderSummaryResponse[]>(`${this.apiUrl}/my`);
   }
 
   getOrderById(orderId: number): Observable<OrderResponse> {

@@ -1,99 +1,73 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { RestaurantService, Restaurant } from '../../core/services/restaurant';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { UserService } from '../../core/services/user';
 import { CartService } from '../../core/services/cart';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, RouterOutlet],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
-export class Home implements OnInit {
-  private svc = inject(RestaurantService);
+export class Home implements OnInit, OnDestroy {
   private router = inject(Router);
   private userService = inject(UserService);
   private cartService = inject(CartService);
 
-  restaurants = signal<Restaurant[]>([]);
-  filtered = signal<Restaurant[]>([]);
-  loading = signal(true);
-
-  searchText = '';
   isLoggedIn = false;
   userName = '';
   role = '';
+  profilePhotoUrl = '';
 
-  ngOnInit() {
-    this.isLoggedIn = !!localStorage.getItem('role');
+  ngOnInit(): void {
+    this.isLoggedIn = !!localStorage.getItem('token');
     this.userName = localStorage.getItem('userName') || '';
     this.role = localStorage.getItem('role') || '';
 
-    this.svc.getAll().subscribe({
-      next: (data) => {
-        this.restaurants.set(data);
-        this.applyRestaurantView();
-        this.loading.set(false);
+    if (this.isLoggedIn) {
+      this.loadProfilePhoto();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.clearProfilePhotoUrl();
+  }
+
+  loadProfilePhoto(): void {
+    this.userService.getProfile().subscribe({
+      next: (profile) => {
+        if (!profile?.id || !profile?.profilePhotoUrl) {
+          this.clearProfilePhotoUrl();
+          return;
+        }
+
+        this.userService.getProfilePhotoBlob(profile.id).subscribe({
+          next: (blob: Blob) => {
+            this.clearProfilePhotoUrl();
+            this.profilePhotoUrl = URL.createObjectURL(blob);
+          },
+          error: () => {
+            this.clearProfilePhotoUrl();
+          }
+        });
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.clearProfilePhotoUrl();
+      }
     });
   }
 
-  onSearch() {
-    this.applyRestaurantView();
+  clearProfilePhotoUrl(): void {
+    if (this.profilePhotoUrl) {
+      URL.revokeObjectURL(this.profilePhotoUrl);
+      this.profilePhotoUrl = '';
+    }
   }
 
-  applyRestaurantView() {
-    const q = this.searchText.trim().toLowerCase();
-    let data = this.restaurants();
-
-    if (!this.isLoggedIn) {
-      if (!q) {
-        this.filtered.set(data);
-      } else {
-        this.filtered.set(
-          data.filter(r =>
-            r.name.toLowerCase().includes(q) ||
-            r.cuisine.toLowerCase().includes(q) ||
-            r.location.toLowerCase().includes(q)
-          )
-        );
-      }
-      return;
-    }
-
-    if (!q) {
-      this.filtered.set(data.filter(r => r.isActive));
-      return;
-    }
-
-    this.filtered.set(
-      data.filter(r =>
-        r.name.toLowerCase().includes(q) ||
-        r.cuisine.toLowerCase().includes(q) ||
-        r.location.toLowerCase().includes(q)
-      )
-    );
-  }
-
-  openRestaurant(r: Restaurant) {
-    if (!this.isLoggedIn) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    if (!r.isActive) {
-      return;
-    }
-
-    this.router.navigate(['/restaurant', r.id]);
-  }
-
-  logout() {
+  logout(): void {
+    this.clearProfilePhotoUrl();
     this.userService.logout();
     this.cartService.clearCart();
     this.router.navigate(['/login']);

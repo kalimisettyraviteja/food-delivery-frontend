@@ -21,7 +21,7 @@ export class Restaurants implements OnInit {
   successMsg  = '';
   errorMsg    = '';
 
-  form: Restaurant = { name: '', location: '', cuisine: '' };
+  form: Restaurant = { name: '', location: '', cuisine: '', deliveryTime: 0 };
 
   ngOnInit() { 
     this.loadAll(); 
@@ -36,7 +36,7 @@ export class Restaurants implements OnInit {
   }
 
   openAdd() {
-    this.form  = { name: '', location: '', cuisine: '' };
+    this.form  = { name: '', location: '', cuisine: '', deliveryTime: 0 };
     this.isEdit = false;
     this.showModal = true;
   }

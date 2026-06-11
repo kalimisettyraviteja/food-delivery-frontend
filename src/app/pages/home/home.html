@@ -1,115 +1,106 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
   <div class="home-wrap d-flex justify-content-between align-items-center">
-    <a class="navbar-brand fw-bold text-orange" routerLink="/home">🍕 FoodDelivery</a>
+    <a class="navbar-brand fw-bold text-orange brand-logo" routerLink="/home/main">
+      <span class="brand-emoji">🍕</span>
+      <span>FoodDelivery</span>
+    </a>
+
     <div class="d-flex align-items-center gap-3">
       <ng-container *ngIf="!isLoggedIn">
         <a routerLink="/login" class="btn btn-outline-orange btn-sm">Sign in</a>
         <a routerLink="/register" class="btn btn-orange btn-sm">Register</a>
       </ng-container>
+
       <ng-container *ngIf="isLoggedIn">
-        <span class="text-muted small">👋 {{ userName }}</span>
-        <button class="btn btn-outline-secondary btn-sm" (click)="logout()">Logout</button>
+        <div class="top-user-chip d-none d-md-flex">
+          <ng-container *ngIf="profilePhotoUrl; else navTextAvatar">
+            <img [src]="profilePhotoUrl" alt="Profile" class="top-user-photo" />
+          </ng-container>
+
+          <ng-template #navTextAvatar>
+            <div class="top-user-avatar">
+              {{ userName.charAt(0).toUpperCase() }}
+            </div>
+          </ng-template>
+
+          <span class="top-user-name">👋 {{ userName }}</span>
+        </div>
+
+        <button
+          class="btn account-menu-btn btn-sm"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#accountMenu"
+          aria-controls="accountMenu"
+        >
+          <i class="fa-solid fa-bars-staggered menu-icon"></i>
+        </button>
       </ng-container>
     </div>
   </div>
 </nav>
 
-<!-- Hero -->
-<section class="hero-section">
-  <div class="home-wrap text-center">
-    <h1 class="hero-title">Hungry? We've got you.</h1>
-    <p class="hero-sub">Discover restaurants near you and order your favourite food</p>
-    <div class="search-bar mx-auto">
-      <input
-        type="text"
-        class="form-control form-control-lg"
-        placeholder="🔍 Search by name, cuisine or location..."
-        [(ngModel)]="searchText"
-        (ngModelChange)="onSearch()"
-      />
-    </div>
+<!-- Offcanvas -->
+<div
+  class="offcanvas offcanvas-end account-offcanvas"
+  tabindex="-1"
+  id="accountMenu"
+  aria-labelledby="accountMenuLabel"
+>
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title" id="accountMenuLabel">My Account</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-</section>
 
-<!-- Restaurants Grid -->
-<section class="restaurant-section">
-  <div class="home-wrap my-3">
+  <div class="offcanvas-body">
+    <div class="account-user-card mb-4">
+      <div class="account-user">
+        <ng-container *ngIf="profilePhotoUrl; else textAvatar">
+          <img [src]="profilePhotoUrl" alt="Profile" class="account-avatar-img" />
+        </ng-container>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 section-head-wrap">
-      <h4 class="fw-bold mb-0">
-        All Restaurants
-        <span class="text-muted fs-6 fw-normal">({{ filtered().length }} found)</span>
-      </h4>
-    </div>
+        <ng-template #textAvatar>
+          <div class="account-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+        </ng-template>
 
-    <!-- Loading -->
-    <div *ngIf="loading()" class="row g-4">
-      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let i of [1,2,3,4,5,6]">
-        <div class="card skeleton-card"></div>
-      </div>
-    </div>
-
-    <!-- Cards -->
-    <div class="row g-4" *ngIf="!loading()">
-      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
-        <div
-          class="restaurant-card card h-100"
-          [class.inactive-card]="isLoggedIn && r.isActive === false"
-          [class.disabled-card]="isLoggedIn && r.isActive === false"
-          (click)="openRestaurant(r)"
-        >
-          <div class="card-banner">
-            <span class="cuisine-badge">{{ r.cuisine }}</span>
-
-            <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
-              Currently Unavailable
-            </span>
-          </div>
-
-          <div class="card-body">
-            <h6 class="card-title fw-bold mb-1">{{ r.name }}</h6>
-            <p class="card-text text-muted small mb-2">📍 {{ r.location }}</p>
-            <p class="card-text small text-muted">🍴 {{ r.cuisine }} cuisine</p>
-
-            <p *ngIf="r.deliveryTime" class="card-text small text-muted mb-1">
-              ⏱ {{ r.deliveryTime }} mins
-            </p>
-
-            <p *ngIf="r.rating" class="card-text small text-muted mb-0">
-              ⭐ {{ r.rating }}
-            </p>
-          </div>
-
-          <div class="card-footer bg-white border-0 pb-3">
-            <button
-              class="btn btn-sm w-100"
-              [ngClass]="isLoggedIn && r.isActive === false ? 'btn-secondary' : 'btn-orange'"
-              [disabled]="isLoggedIn && r.isActive === false"
-            >
-              {{
-                !isLoggedIn
-                  ? 'Login to View Menu'
-                  : r.isActive === false
-                  ? 'Currently Unavailable'
-                  : 'View Menu →'
-              }}
-            </button>
-          </div>
+        <div class="account-user-copy">
+          <div class="fw-semibold account-name">{{ userName }}</div>
+          <div class="small text-muted">FoodDelivery User</div>
         </div>
       </div>
+    </div>
 
-      <div *ngIf="filtered().length === 0" class="text-center py-5 text-muted">
-        <div style="font-size:48px">🍽️</div>
-        <p class="mt-2">No restaurants found for "{{ searchText }}"</p>
-      </div>
+    <div class="account-menu">
+      <a routerLink="/home/orders" class="account-link" data-bs-dismiss="offcanvas">
+        <span class="account-link-icon icon-orange">
+          <i class="fa-solid fa-box-open fa-bounce-hover"></i>
+        </span>
+        <span>Order History</span>
+      </a>
+
+      <a routerLink="/home/profile" class="account-link" data-bs-dismiss="offcanvas">
+        <span class="account-link-icon icon-orange">
+          <i class="fa-solid fa-user-pen fa-float-hover"></i>
+        </span>
+        <span>Profile</span>
+      </a>
+
+      <a routerLink="/home/addresses" class="account-link" data-bs-dismiss="offcanvas">
+        <span class="account-link-icon icon-orange">
+          <i class="fa-solid fa-location-dot fa-wiggle-hover"></i>
+        </span>
+        <span>Saved Addresses</span>
+      </a>
+
+      <button class="account-link logout-link" type="button" (click)="logout()" data-bs-dismiss="offcanvas">
+        <span class="account-link-icon icon-red">
+          <i class="fa-solid fa-right-from-bracket fa-slide-hover"></i>
+        </span>
+        <span>Logout</span>
+      </button>
     </div>
   </div>
-</section>
+</div>
 
-<!-- Footer -->
-<footer class="footer">
-  <div class="home-wrap">
-    <p class="mb-0 text-muted small">© 2026 FoodDelivery · Built with ❤️ in Chennai</p>
-  </div>
-</footer>
+<router-outlet />

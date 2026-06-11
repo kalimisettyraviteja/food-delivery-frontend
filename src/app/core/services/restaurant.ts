@@ -10,6 +10,7 @@ export interface Restaurant {
   location: string;
   cuisine: string;
   rating?: number;
+  ratingCount?: number;
   deliveryTime?: number;
   isActive?: boolean;
 }
