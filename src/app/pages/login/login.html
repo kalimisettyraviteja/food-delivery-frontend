@@ -1,4 +1,3 @@
-<!-- Top Bar -->
 <nav class="auth-topbar">
   <div class="brand">
     <span class="logo">🍕</span>
@@ -8,7 +7,6 @@
 </nav>
 
 <div class="auth-page">
-  <!-- Left content -->
   <div class="auth-left">
     <div class="hero-content">
       <div class="hero-badge">Fast • Fresh • Reliable</div>
@@ -17,7 +15,6 @@
         Discover restaurants, explore menus, and enjoy a smooth ordering experience
         from one clean food delivery app.
       </p>
-
       <div class="feature-list">
         <div>✅ Browse restaurants without login</div>
         <div>✅ View menus after login</div>
@@ -26,15 +23,15 @@
     </div>
   </div>
 
-  <!-- Right form -->
   <div class="auth-right">
     <div class="auth-card">
-      <h2>Welcome back</h2>
-      <p class="sub">Sign in to your account</p>
+      <h2>Welcome</h2>
+      <p class="sub">Enter your email to continue</p>
 
-      <div class="alert error" *ngIf="error">{{ error }}</div>
+      <div class="alert error" *ngIf="authError">{{ authError }}</div>
+      <div class="alert success" *ngIf="authSuccess">{{ authSuccess }}</div>
 
-      <form #loginForm="ngForm" (ngSubmit)="onSubmit()">
+      <form #authForm="ngForm">
         <div class="field">
           <label for="email">Email</label>
           <input
@@ -42,27 +39,311 @@
             type="email"
             name="email"
             [(ngModel)]="email"
+            [readonly]="authStep !== 'EMAIL'"
             placeholder="you@example.com"
             required />
         </div>
 
-        <div class="field">
-          <label for="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            [(ngModel)]="password"
-            placeholder="••••••••"
-            required />
-        </div>
+        <button
+          *ngIf="authStep === 'EMAIL'"
+          type="button"
+          class="btn-primary"
+          [disabled]="loading || !email"
+          (click)="checkEmail()">
+          {{ loading ? 'Checking...' : 'Continue' }}
+        </button>
 
-        <button type="submit" class="btn-primary" [disabled]="loading || loginForm.invalid">
-          {{ loading ? 'Signing in...' : 'Sign in' }}
+        <ng-container *ngIf="authStep === 'LOGIN'">
+          <div class="field">
+            <label for="password">
+              <span>Password</span>
+              <button
+                type="button"
+                class="forgot-link-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#forgotPasswordModal"
+                (click)="openForgotModal()">
+                Forgot password?
+              </button>
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              placeholder="••••••••"
+              required />
+          </div>
+
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="loading || !password"
+            (click)="signIn()">
+            {{ loading ? 'Signing in...' : 'Sign in' }}
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="authStep === 'REGISTER' || authStep === 'PENDING_VERIFICATION'">
+          <div class="pending-box" *ngIf="authStep === 'PENDING_VERIFICATION'">
+            Email verification is pending for this address. Update your details if needed and continue to verify your email.
+          </div>
+
+          <div class="field">
+            <label for="fullName">Full Name</label>
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              [(ngModel)]="fullName"
+              placeholder="Enter your full name"
+              required />
+          </div>
+
+          <div class="field">
+            <label for="registerPassword">Password</label>
+            <input
+              id="registerPassword"
+              type="password"
+              name="registerPassword"
+              [(ngModel)]="password"
+              placeholder="At least 6 characters"
+              required
+              minlength="6" />
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              name="confirmPassword"
+              [(ngModel)]="confirmPassword"
+              placeholder="Re-enter password"
+              required />
+          </div>
+
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="loading"
+            (click)="sendRegistrationOtp()">
+            {{ loading ? 'Sending OTP...' : 'Verify Email & Create Account' }}
+          </button>
+
+          <button
+            *ngIf="verificationOtpSent"
+            type="button"
+            class="btn-secondary-custom"
+            (click)="openVerificationModal()">
+            {{ otpCountdown > 0 ? 'Continue verification' : 'Open verification popup' }}
+          </button>
+        </ng-container>
+
+        <button
+          *ngIf="authStep !== 'EMAIL'"
+          type="button"
+          class="btn-secondary-custom"
+          (click)="goBackToEmail()">
+          Change email
         </button>
       </form>
+    </div>
+  </div>
+</div>
 
-      <p class="switch">Don't have an account? <a routerLink="/register">Register</a></p>
+<!-- Verify Email Modal -->
+<div
+  class="modal fade"
+  id="verifyEmailModal"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+  aria-labelledby="verifyEmailModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content forgot-modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="verifyEmailModalLabel">Verify Email</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="sub">Enter the 6-digit OTP sent to <strong>{{ email }}</strong></p>
+        <p class="otp-timer" [class.expired]="otpCountdown === 0">
+          {{ otpCountdown > 0 ? ('OTP expires in ' + otpDisplayTime) : 'OTP expired' }}
+        </p>
+
+        <div class="alert error" *ngIf="otpError">{{ otpError }}</div>
+        <div class="alert success" *ngIf="otpSuccess">{{ otpSuccess }}</div>
+
+        <form #verifyEmailForm="ngForm" (ngSubmit)="verifyEmailAndCreateAccount()">
+          <div class="field">
+            <label for="verifyOtp" class="sr-only">OTP</label>
+            <input
+              id="verifyOtp"
+              type="text"
+              name="verifyOtp"
+              [(ngModel)]="otp"
+              placeholder="Enter 6-digit OTP"
+              aria-label="Enter 6-digit OTP"
+              required
+              maxlength="6" />
+          </div>
+
+          <button type="submit" class="btn-primary" [disabled]="loading || verifyEmailForm.invalid">
+            {{ loading ? 'Verifying...' : 'Verify Email & Create Account' }}
+          </button>
+        </form>
+
+        <p class="switch modal-switch">
+          Didn't receive?
+          <button
+            type="button"
+            class="link-btn"
+            [disabled]="!canResendOtp"
+            (click)="resendVerificationOtp()">
+            Resend OTP
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div
+  class="modal fade"
+  id="forgotPasswordModal"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+  aria-labelledby="forgotPasswordModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content forgot-modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="forgotPasswordModalLabel">Forgot Password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="steps">
+          <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+            <div class="step-circle">{{ currentStep > 1 ? '✓' : '1' }}</div>
+            <span>Email</span>
+          </div>
+
+          <div class="step-line" [class.done]="currentStep > 1"></div>
+
+          <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+            <div class="step-circle">{{ currentStep > 2 ? '✓' : '2' }}</div>
+            <span>OTP</span>
+          </div>
+
+          <div class="step-line" [class.done]="currentStep > 2"></div>
+
+          <div class="step" [class.active]="currentStep >= 3">
+            <div class="step-circle">3</div>
+            <span>Reset</span>
+          </div>
+        </div>
+
+        <div class="alert error" *ngIf="forgotError">{{ forgotError }}</div>
+        <div class="alert success" *ngIf="success">{{ success }}</div>
+
+        <ng-container *ngIf="currentStep === 1">
+          <p class="sub">Enter your registered email to receive an OTP.</p>
+
+          <form #step1Form="ngForm" (ngSubmit)="sendOtp()">
+            <div class="field">
+              <label for="forgotEmail">Email</label>
+              <input
+                id="forgotEmail"
+                type="email"
+                name="forgotEmail"
+                [(ngModel)]="forgotEmail"
+                placeholder="you@example.com"
+                required />
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="loading || step1Form.invalid">
+              {{ loading ? 'Sending OTP...' : 'Send OTP' }}
+            </button>
+          </form>
+        </ng-container>
+
+        <ng-container *ngIf="currentStep === 2">
+          <p class="sub">OTP sent to <strong>{{ forgotEmail }}</strong></p>
+          <p class="otp-timer" [class.expired]="otpCountdown === 0">
+            {{ otpCountdown > 0 ? ('OTP expires in ' + otpDisplayTime) : 'OTP expired' }}
+          </p>
+
+          <form #step2Form="ngForm" (ngSubmit)="verifyOtp()">
+            <div class="field">
+              <label for="otp" class="sr-only">OTP</label>
+              <input
+                id="otp"
+                type="text"
+                name="otp"
+                [(ngModel)]="forgotOtp"
+                placeholder="Enter 6-digit OTP"
+                aria-label="Enter 6-digit OTP"
+                required
+                maxlength="6" />
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="loading || step2Form.invalid">
+              {{ loading ? 'Verifying...' : 'Verify OTP' }}
+            </button>
+          </form>
+
+          <p class="switch modal-switch">
+            Didn't receive?
+            <button
+              type="button"
+              class="link-btn"
+              [disabled]="!canResendOtp"
+              (click)="resendOtp()">
+              Resend OTP
+            </button>
+          </p>
+        </ng-container>
+
+        <ng-container *ngIf="currentStep === 3">
+          <p class="sub">Choose a strong new password for your account.</p>
+
+          <form #step3Form="ngForm" (ngSubmit)="resetPassword()">
+            <div class="field">
+              <label for="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                type="password"
+                name="newPassword"
+                [(ngModel)]="newPassword"
+                placeholder="At least 6 characters"
+                required
+                minlength="6" />
+            </div>
+
+            <div class="field">
+              <label for="forgotConfirmPassword">Confirm Password</label>
+              <input
+                id="forgotConfirmPassword"
+                type="password"
+                name="forgotConfirmPassword"
+                [(ngModel)]="forgotConfirmPassword"
+                placeholder="Re-enter new password"
+                required />
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="loading || step3Form.invalid">
+              {{ loading ? 'Resetting...' : 'Reset Password' }}
+            </button>
+          </form>
+        </ng-container>
+      </div>
     </div>
   </div>
 </div>

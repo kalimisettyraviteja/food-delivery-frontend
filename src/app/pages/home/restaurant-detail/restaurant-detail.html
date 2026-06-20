@@ -1,0 +1,195 @@
+<div class="restaurant-top" *ngIf="restaurant()">
+  <div class="page-wrap">
+    <div class="restaurant-title-row">
+      <h1 class="restaurant-title">{{ restaurant()!.name }}</h1>
+    </div>
+
+    <div class="restaurant-summary-card">
+      <div class="summary-left">
+        <div class="summary-main-row">
+          <div class="summary-top-left">
+            <ng-container *ngIf="restaurant()!.rating != null; else newTag">
+              <span class="rating-badge">⭐ {{ restaurant()!.rating }}</span>
+              <span class="rating-count" *ngIf="restaurant()!.ratingCount != null">
+                ({{ restaurant()!.ratingCount }}) reviews
+              </span>
+            </ng-container>
+
+            <ng-template #newTag>
+              <span class="new-badge">NEW</span>
+            </ng-template>
+
+            <span class="cuisine-link">{{ restaurant()!.cuisine }}</span>
+          </div>
+
+          <div class="status-right">
+            <span class="status-pill" [class.status-open]="restaurant()!.isActive !== false"
+              [class.status-closed]="restaurant()!.isActive === false">
+              {{ restaurant()!.isActive === false ? 'Temporarily Closed' : 'Open' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="outlet-row">
+          <span class="outlet-label">Outlet</span> - {{ restaurant()!.location || 'Main Outlet' }}
+          <span class="delivery-time">• {{ restaurant()!.deliveryTime || '20-25' }} mins</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap menu-section">
+  <div class="menu-top-bar">
+    <div class="menu-heading-row">
+      <span class="menu-line"></span>
+      <span class="menu-heading-text">MENU</span>
+      <span class="menu-line"></span>
+    </div>
+
+    <div class="menu-search-row">
+      <div class="menu-search-box">
+        <input
+          type="text"
+          class="menu-search"
+          [value]="searchText()"
+          (input)="onSearch($any($event.target).value)"
+          placeholder="Search for dishes"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <div class="filter-toggle" [attr.data-active]="selectedFilter()">
+        <div class="filter-slider"></div>
+
+        <button type="button" class="filter-option" [class.active]="selectedFilter() === 'ALL'"
+          (click)="setFilter('ALL')">
+          All
+        </button>
+
+        <button type="button" class="filter-option veg" [class.active]="selectedFilter() === 'VEG'"
+          (click)="setFilter('VEG')">
+          <span class="filter-icon veg-dot"></span>
+          Veg
+        </button>
+
+        <button type="button" class="filter-option nonveg" [class.active]="selectedFilter() === 'NON_VEG'"
+          (click)="setFilter('NON_VEG')">
+          <span class="filter-icon nonveg-dot"></span>
+          Non-Veg
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="loading()" class="text-muted">Loading menu...</p>
+
+  <div *ngIf="!loading()" class="menu-list">
+    <div class="menu-item-card" *ngFor="let item of filteredMenuItems()">
+      <div class="menu-item-main">
+        <div class="item-left">
+          <div class="veg-indicator" [class.veg]="item.veg" [class.non]="!item.veg"></div>
+
+          <div class="menu-info">
+            <div class="item-name">{{ item.name }}</div>
+
+            <div class="type-price-row">
+              <span class="item-type" [class.veg-chip]="item.veg" [class.non-chip]="!item.veg">
+                {{ item.veg ? 'Vegetarian' : 'Non-Vegetarian' }}
+              </span>
+              <span class="price">₹{{ item.price }}</span>
+            </div>
+
+            <p class="item-desc desc-clamp" *ngIf="item.description; else noDesc">
+              {{ item.description }}
+            </p>
+            <ng-template #noDesc>
+              <p class="item-desc muted">No description provided.</p>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-item-media">
+        <div class="dish-image-box" *ngIf="item.image; else noImage">
+          <img
+            [src]="item.image"
+            [alt]="item.name"
+            class="dish-image"
+            (click)="openImagePreview(item.image, item.name)"
+          />
+        </div>
+
+        <ng-template #noImage>
+          <div class="dish-image-box placeholder">
+            <div class="placeholder-icon">🍽️</div>
+          </div>
+        </ng-template>
+
+        <div class="qty-area">
+          <ng-container *ngIf="getItemQty(item.id!) === 0; else qtyControls">
+            <button class="inline-add-btn" type="button" (click)="addToCart(item)">ADD</button>
+          </ng-container>
+
+          <ng-template #qtyControls>
+            <div class="qty-control">
+              <button class="qty-btn" (click)="decreaseQty(item.id!)">-</button>
+              <span>{{ getItemQty(item.id!) }}</span>
+              <button class="qty-btn" (click)="increaseQty(item.id!)">+</button>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="filteredMenuItems().length === 0" class="empty-state">
+      <div class="empty-icon">🍽️</div>
+      <p>No menu items available for selected filter</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content image-preview-modal">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">{{ previewTitle() }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2 text-center">
+        <img [src]="previewImage()" class="preview-image-large" [alt]="previewTitle()" *ngIf="previewImage()" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="scroll-top-btn" *ngIf="showScrollTop()" type="button" (click)="scrollToTop()">
+  ↑
+</button>
+
+<div class="floating-checkout" *ngIf="cartService.cartCount() > 0">
+  <button class="floating-checkout-btn" (click)="goToCheckout()">
+    <div class="floating-checkout-main-wrap">
+      <div class="floating-bag-icon">
+        <i class="bi bi-bag-check-fill"></i>
+      </div>
+
+      <div class="floating-checkout-content">
+        <span class="floating-mini-text">
+          <i class="bi bi-receipt-cutoff"></i>
+          {{ cartService.cartCount() }} item{{ cartService.cartCount() > 1 ? 's' : '' }} ready
+        </span>
+
+        <strong class="floating-main-text">Go to Checkout</strong>
+
+        <span class="floating-price-text">
+          <i class="bi bi-currency-rupee"></i>{{ cartService.cartTotal() }}
+        </span>
+      </div>
+    </div>
+
+    <div class="floating-arrow-icon">
+      <i class="bi bi-arrow-right-circle-fill"></i>
+    </div>
+  </button>
+</div>

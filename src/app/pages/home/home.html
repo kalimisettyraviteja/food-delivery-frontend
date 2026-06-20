@@ -1,53 +1,55 @@
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-  <div class="home-wrap d-flex justify-content-between align-items-center">
-    <a class="navbar-brand fw-bold text-orange brand-logo" routerLink="/home/main">
-      <span class="brand-emoji">🍕</span>
-      <span>FoodDelivery</span>
-    </a>
+<!-- Navbar -->
+<nav class="app-navbar sticky-top">
+  <div class="home-wrap">
+    <div class="app-navbar-shell">
+      <a class="navbar-brand brand-logo" routerLink="/home/main">
+        <span class="brand-mark">
+          <span class="brand-emoji">🍕</span>
+        </span>
 
-    <div class="d-flex align-items-center gap-3">
-      <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/login" class="btn btn-outline-orange btn-sm">Sign in</a>
-        <a routerLink="/register" class="btn btn-orange btn-sm">Register</a>
-      </ng-container>
 
-      <ng-container *ngIf="isLoggedIn">
-        <div class="top-user-chip d-none d-md-flex">
-          <ng-container *ngIf="profilePhotoUrl; else navTextAvatar">
-            <img [src]="profilePhotoUrl" alt="Profile" class="top-user-photo" />
-          </ng-container>
+        <span class="brand-copy">
+          <span class="brand-name">Cravyo</span>
+          <span class="brand-tag">Fresh food, fast mood</span>
+        </span>
+      </a>
 
-          <ng-template #navTextAvatar>
-            <div class="top-user-avatar">
-              {{ userName.charAt(0).toUpperCase() }}
-            </div>
-          </ng-template>
+      <div class="navbar-actions">
+        <ng-container *ngIf="!isLoggedIn">
+          <button type="button" class="btn nav-signin-btn" (click)="openAuthOffcanvas()">
+            Sign in
+          </button>
+        </ng-container>
 
-          <span class="top-user-name">👋 {{ userName }}</span>
-        </div>
+        <ng-container *ngIf="isLoggedIn">
+          <div class="top-user-chip d-none d-md-flex">
+            <ng-container *ngIf="profilePhotoUrl; else navTextAvatar">
+              <img [src]="profilePhotoUrl" alt="Profile" class="top-user-photo" />
+            </ng-container>
 
-        <button
-          class="btn account-menu-btn btn-sm"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#accountMenu"
-          aria-controls="accountMenu"
-        >
-          <i class="fa-solid fa-bars-staggered menu-icon"></i>
-        </button>
-      </ng-container>
+            <ng-template #navTextAvatar>
+              <div class="top-user-avatar">
+                {{ userName.charAt(0).toUpperCase() }}
+              </div>
+            </ng-template>
+
+            <span class="top-user-name">Hi, {{ userName }}</span>
+          </div>
+
+          <button class="btn account-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#accountMenu"
+            aria-controls="accountMenu" aria-label="Open account menu">
+            <i class="fa-solid fa-bars-staggered menu-icon"></i>
+          </button>
+        </ng-container>
+      </div>
+
     </div>
   </div>
 </nav>
-
-<!-- Offcanvas -->
-<div
-  class="offcanvas offcanvas-end account-offcanvas"
-  tabindex="-1"
-  id="accountMenu"
-  aria-labelledby="accountMenuLabel"
->
+<!-- Logged-in Account Offcanvas -->
+<div class="offcanvas offcanvas-end account-offcanvas" tabindex="-1" id="accountMenu"
+  aria-labelledby="accountMenuLabel">
   <div class="offcanvas-header border-bottom">
     <h5 class="offcanvas-title" id="accountMenuLabel">My Account</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -99,6 +101,327 @@
         </span>
         <span>Logout</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Offcanvas -->
+<div class="offcanvas offcanvas-end auth-offcanvas" tabindex="-1" id="authOffcanvas"
+  aria-labelledby="authOffcanvasLabel" data-bs-scroll="false" data-bs-backdrop="true">
+  <div class="offcanvas-header auth-offcanvas-header">
+    <div class="auth-top">
+      <button type="button" class="auth-close-btn" data-bs-dismiss="offcanvas" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="auth-header-visual">
+        <div class="auth-visual-circle">🍕</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="offcanvas-body auth-offcanvas-body">
+    <div class="auth-shell">
+      <!-- EMAIL STEP -->
+      <ng-container *ngIf="authStep === 'EMAIL'">
+        <h2 class="auth-title">Sign in</h2>
+        <p class="auth-switch-text">
+          or <button type="button" class="auth-switch-btn" (click)="goToRegisterDirect()">create an account</button>
+        </p>
+        <div class="auth-divider"></div>
+
+        <div class="alert error" *ngIf="authError">{{ authError }}</div>
+        <div class="alert success" *ngIf="authSuccess">{{ authSuccess }}</div>
+
+        <form #emailForm="ngForm" (ngSubmit)="checkEmail()">
+          <div class="auth-input-group">
+            <label for="authEmail">Email</label>
+            <input id="authEmail" type="email" name="authEmail" [(ngModel)]="email" placeholder="Enter your email"
+              required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || emailForm.invalid">
+            {{ loading ? 'Checking...' : 'Continue' }}
+          </button>
+        </form>
+      </ng-container>
+
+      <!-- LOGIN STEP -->
+      <ng-container *ngIf="authStep === 'LOGIN'">
+        <h2 class="auth-title">Login</h2>
+        <p class="auth-switch-text">
+          or <button type="button" class="auth-switch-btn" (click)="switchToRegister()">create an account</button>
+        </p>
+        <div class="auth-divider"></div>
+
+        <div class="alert error" *ngIf="authError">{{ authError }}</div>
+        <div class="alert success" *ngIf="authSuccess">{{ authSuccess }}</div>
+
+        <form #loginForm="ngForm" (ngSubmit)="signIn()">
+          <div class="auth-input-group">
+            <label for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" name="loginEmail" [(ngModel)]="email" readonly required />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" name="loginPassword" [(ngModel)]="password"
+              placeholder="Enter your password" required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || loginForm.invalid">
+            {{ loading ? 'Signing in...' : 'Login' }}
+          </button>
+        </form>
+
+        <button type="button" class="auth-inline-link auth-inline-link-block" (click)="startForgotPassword()">
+          Forgot password?
+        </button>
+
+        <button type="button" class="auth-secondary-btn" (click)="goBackToEmail()">
+          Change email
+        </button>
+      </ng-container>
+
+      <!-- REGISTER STEP -->
+      <ng-container *ngIf="authStep === 'REGISTER'">
+        <h2 class="auth-title">Sign up</h2>
+        <p class="auth-switch-text">
+          or <button type="button" class="auth-switch-btn" (click)="goBackToEmail()">login to your account</button>
+        </p>
+        <div class="auth-divider"></div>
+
+        <div class="alert error" *ngIf="authError">{{ authError }}</div>
+        <div class="alert success" *ngIf="authSuccess">{{ authSuccess }}</div>
+
+        <form #registerForm="ngForm" (ngSubmit)="sendRegistrationOtp()">
+          <div class="auth-input-group">
+            <label for="registerEmail">Email</label>
+            <input id="registerEmail" type="email" name="registerEmail" [(ngModel)]="email"
+              placeholder="Enter your email" required />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="fullName">Name</label>
+            <input id="fullName" type="text" name="fullName" [(ngModel)]="fullName" placeholder="Enter your name"
+              required />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="registerPassword">Password</label>
+            <input id="registerPassword" type="password" name="registerPassword" [(ngModel)]="password"
+              placeholder="At least 6 characters" required minlength="6" />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input id="confirmPassword" type="password" name="confirmPassword" [(ngModel)]="confirmPassword"
+              placeholder="Re-enter password" required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || registerForm.invalid">
+            {{ loading ? 'Sending OTP...' : 'Continue' }}
+          </button>
+        </form>
+
+        <button *ngIf="verificationOtpSent" type="button"
+          class="auth-inline-link auth-inline-link-block auth-inline-verification" (click)="openExistingOtpStep()">
+          Continue verification
+        </button>
+
+        <p class="auth-terms">
+          By creating an account, I accept the Terms & Conditions and Privacy Policy
+        </p>
+
+        <button type="button" class="auth-secondary-btn" (click)="goBackToEmail()">
+          Change email
+        </button>
+      </ng-container>
+
+      <!-- PENDING VERIFICATION STEP -->
+      <ng-container *ngIf="authStep === 'PENDING_VERIFICATION'">
+        <h2 class="auth-title">Verify account</h2>
+        <p class="auth-switch-text">Continue your pending registration</p>
+        <div class="auth-divider"></div>
+
+        <div class="pending-box">
+          Email verification is pending for <strong>{{ email }}</strong>.
+        </div>
+
+        <div class="alert error" *ngIf="authError">{{ authError }}</div>
+        <div class="alert success" *ngIf="authSuccess">{{ authSuccess }}</div>
+
+        <form #pendingForm="ngForm" (ngSubmit)="sendRegistrationOtp()">
+          <div class="auth-input-group">
+            <label for="pendingEmail">Email</label>
+            <input id="pendingEmail" type="email" name="pendingEmail" [(ngModel)]="email" placeholder="Enter your email"
+              required />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="pendingName">Name</label>
+            <input id="pendingName" type="text" name="pendingName" [(ngModel)]="fullName" placeholder="Enter your name"
+              required />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="pendingPassword">Password</label>
+            <input id="pendingPassword" type="password" name="pendingPassword" [(ngModel)]="password"
+              placeholder="At least 6 characters" required minlength="6" />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="pendingConfirmPassword">Confirm Password</label>
+            <input id="pendingConfirmPassword" type="password" name="pendingConfirmPassword"
+              [(ngModel)]="confirmPassword" placeholder="Re-enter password" required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || pendingForm.invalid">
+            {{ loading ? 'Sending OTP...' : 'Continue' }}
+          </button>
+        </form>
+
+        <button *ngIf="verificationOtpSent" type="button"
+          class="auth-inline-link auth-inline-link-block auth-inline-verification" (click)="openExistingOtpStep()">
+          Continue verification
+        </button>
+
+        <button type="button" class="auth-secondary-btn" (click)="goBackToEmail()">
+          Change email
+        </button>
+      </ng-container>
+
+      <!-- VERIFY EMAIL OTP STEP -->
+      <ng-container *ngIf="authStep === 'VERIFY_OTP'">
+        <h2 class="auth-title">Verify email</h2>
+        <p class="auth-switch-text">
+          OTP sent to <span class="auth-highlight">{{ email }}</span>
+        </p>
+        <div class="auth-divider"></div>
+
+        <p class="otp-timer" [class.expired]="otpCountdown === 0">
+          {{ otpCountdown > 0 ? ('OTP expires in ' + otpDisplayTime) : 'OTP expired' }}
+        </p>
+
+        <div class="alert error" *ngIf="otpError">{{ otpError }}</div>
+        <div class="alert success" *ngIf="otpSuccess">{{ otpSuccess }}</div>
+
+        <form #verifyOtpForm="ngForm" (ngSubmit)="verifyEmailAndCreateAccount()">
+          <div class="auth-input-group">
+            <label for="verifyOtp" class="sr-only">OTP</label>
+            <input id="verifyOtp" type="text" name="verifyOtp" [(ngModel)]="otp" placeholder="Enter 6-digit OTP"
+              aria-label="Enter 6-digit OTP" required maxlength="6" />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || verifyOtpForm.invalid">
+            {{ loading ? 'Verifying...' : 'Verify Email & Create Account' }}
+          </button>
+        </form>
+
+        <button type="button" class="auth-inline-link auth-inline-link-block" [disabled]="!canResendOtp"
+          (click)="resendVerificationOtp()">
+          Resend OTP
+        </button>
+
+        <button type="button" class="auth-secondary-btn" (click)="backFromOtp()">
+          Back
+        </button>
+      </ng-container>
+
+      <!-- FORGOT PASSWORD EMAIL STEP -->
+      <ng-container *ngIf="authStep === 'FORGOT_EMAIL'">
+        <h2 class="auth-title">Forgot password</h2>
+        <p class="auth-switch-text">Enter your registered email</p>
+        <div class="auth-divider"></div>
+
+        <div class="alert error" *ngIf="forgotError">{{ forgotError }}</div>
+        <div class="alert success" *ngIf="success">{{ success }}</div>
+
+        <form #forgotEmailForm="ngForm" (ngSubmit)="sendOtp()">
+          <div class="auth-input-group">
+            <label for="forgotEmail">Email</label>
+            <input id="forgotEmail" type="email" name="forgotEmail" [(ngModel)]="forgotEmail"
+              placeholder="Enter your email" required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || forgotEmailForm.invalid">
+            {{ loading ? 'Sending OTP...' : 'Continue' }}
+          </button>
+        </form>
+
+        <button type="button" class="auth-secondary-btn" (click)="switchToLogin()">
+          Back to login
+        </button>
+      </ng-container>
+
+      <!-- FORGOT PASSWORD OTP STEP -->
+      <ng-container *ngIf="authStep === 'FORGOT_OTP'">
+        <h2 class="auth-title">Enter OTP</h2>
+        <p class="auth-switch-text">
+          OTP sent to <span class="auth-highlight">{{ forgotEmail }}</span>
+        </p>
+        <div class="auth-divider"></div>
+
+        <p class="otp-timer" [class.expired]="otpCountdown === 0">
+          {{ otpCountdown > 0 ? ('OTP expires in ' + otpDisplayTime) : 'OTP expired' }}
+        </p>
+
+        <div class="alert error" *ngIf="forgotError">{{ forgotError }}</div>
+        <div class="alert success" *ngIf="success">{{ success }}</div>
+
+        <form #forgotOtpForm="ngForm" (ngSubmit)="verifyOtp()">
+          <div class="auth-input-group">
+            <label for="forgotOtp" class="sr-only">OTP</label>
+            <input id="forgotOtp" type="text" name="forgotOtp" [(ngModel)]="forgotOtp" placeholder="Enter 6-digit OTP"
+              aria-label="Enter 6-digit OTP" required maxlength="6" />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || forgotOtpForm.invalid">
+            {{ loading ? 'Verifying...' : 'Verify OTP' }}
+          </button>
+        </form>
+
+        <button type="button" class="auth-inline-link auth-inline-link-block" [disabled]="!canResendOtp"
+          (click)="resendOtp()">
+          Resend OTP
+        </button>
+
+        <button type="button" class="auth-secondary-btn" (click)="backToForgotEmail()">
+          Back
+        </button>
+      </ng-container>
+
+      <!-- RESET PASSWORD STEP -->
+      <ng-container *ngIf="authStep === 'RESET_PASSWORD'">
+        <h2 class="auth-title">Reset password</h2>
+        <p class="auth-switch-text">Choose a strong new password</p>
+        <div class="auth-divider"></div>
+
+        <div class="alert error" *ngIf="forgotError">{{ forgotError }}</div>
+        <div class="alert success" *ngIf="success">{{ success }}</div>
+
+        <form #resetForm="ngForm" (ngSubmit)="resetPassword()">
+          <div class="auth-input-group">
+            <label for="newPassword">New Password</label>
+            <input id="newPassword" type="password" name="newPassword" [(ngModel)]="newPassword"
+              placeholder="At least 6 characters" required minlength="6" />
+          </div>
+
+          <div class="auth-input-group">
+            <label for="forgotConfirmPassword">Confirm Password</label>
+            <input id="forgotConfirmPassword" type="password" name="forgotConfirmPassword"
+              [(ngModel)]="forgotConfirmPassword" placeholder="Re-enter new password" required />
+          </div>
+
+          <button type="submit" class="auth-primary-btn" [disabled]="loading || resetForm.invalid">
+            {{ loading ? 'Resetting...' : 'Reset Password' }}
+          </button>
+        </form>
+
+        <button type="button" class="auth-secondary-btn" (click)="backToForgotOtp()">
+          Back
+        </button>
+      </ng-container>
     </div>
   </div>
 </div>

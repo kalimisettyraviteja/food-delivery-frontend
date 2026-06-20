@@ -1,17 +1,45 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  phone: string;
+  confirmPassword: string;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface EmailCheckRequest {
+  email: string;
+}
+
+export interface EmailStatusResponse {
+  message: string;
+  nextStep: 'LOGIN' | 'REGISTER' | 'PENDING_VERIFICATION';
+  email: string;
+  name?: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export interface UpdateProfileRequest {
@@ -47,12 +75,36 @@ export class UserService {
   private http = inject(HttpClient);
   private base = 'http://localhost:8080/api/users';
 
-  register(req: RegisterRequest): Observable<UserResponse> {
-    return this.http.post<UserResponse>(`${this.base}/register`, req);
+  checkEmailStatus(req: EmailCheckRequest): Observable<EmailStatusResponse> {
+    return this.http.post<EmailStatusResponse>(`${this.base}/auth/email-status`, req);
+  }
+
+  register(req: RegisterRequest): Observable<string> {
+    return this.http.post(`${this.base}/register`, req, { responseType: 'text' });
+  }
+
+  verifyEmail(req: VerifyEmailRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.base}/verify-email`, req);
+  }
+
+  resendVerificationOtp(data: { email: string }): Observable<string> {
+    return this.http.post(`${this.base}/resend-verification`, data, { responseType: 'text' });
   }
 
   login(req: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.base}/login`, req);
+  }
+
+  forgotPassword(data: ForgotPasswordRequest): Observable<string> {
+    return this.http.post(`${this.base}/forgot-password`, data, { responseType: 'text' });
+  }
+
+  verifyResetOtp(data: { email: string; otp: string }): Observable<string> {
+    return this.http.post(`${this.base}/verify-reset-otp`, data, { responseType: 'text' });
+  }
+
+  resetPassword(data: ResetPasswordRequest): Observable<string> {
+    return this.http.post(`${this.base}/reset-password`, data, { responseType: 'text' });
   }
 
   getAllUsers(): Observable<UserResponse[]> {
@@ -90,13 +142,21 @@ export class UserService {
   }
 
   getProfilePhotoBlob(userId: number): Observable<Blob> {
-  return this.http.get(`${this.base}/${userId}/profile-photo`, {
-    responseType: 'blob'
-  });
-}
+    return this.http.get(`${this.base}/${userId}/profile-photo`, {
+      responseType: 'blob'
+    });
+  }
 
   logout(): void {
     localStorage.clear();
+  }
+
+  setSession(res: LoginResponse): void {
+    localStorage.setItem('token', res.token);
+    localStorage.setItem('role', res.role);
+    localStorage.setItem('userName', res.name);
+    localStorage.setItem('userId', String(res.id));
+    localStorage.setItem('email', res.email);
   }
 
   getToken(): string | null {
@@ -108,10 +168,20 @@ export class UserService {
   }
 
   getUserName(): string {
-    return localStorage.getItem('name') || '';
+    return localStorage.getItem('userName') || '';
   }
 
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
+  }
+
+
+  // Inside your UserService class — add this:
+  private _isLoggedIn$ = new BehaviorSubject<boolean>(this.isLoggedIn());
+  readonly isLoggedIn$ = this._isLoggedIn$.asObservable();
+
+  // Call this after login/logout to notify all subscribers
+  emitAuthChange(state: boolean): void {
+    this._isLoggedIn$.next(state);
   }
 }

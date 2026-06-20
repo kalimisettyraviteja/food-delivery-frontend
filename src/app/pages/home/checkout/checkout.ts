@@ -2,17 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { CartService } from '../../core/services/cart';
+import { CartService } from '../../../core/services/cart';
 import {
   ApplyCouponResponse,
   Coupon,
   CouponService
-} from '../../core/services/coupon';
+} from '../../../core/services/coupon';
 import {
   OrderService,
   PaymentMethod,
   PlaceOrderRequest
-} from '../../core/services/order';
+} from '../../../core/services/order';
 
 type UiCoupon = Coupon & {
   eligible: boolean;
@@ -260,7 +260,7 @@ export class Checkout {
   addMoreItems() {
     const restaurantId = this.cartService.restaurantId();
     if (!restaurantId) return;
-    this.router.navigate(['/restaurant', restaurantId]);
+    this.router.navigate(['/home/restaurant', restaurantId]);
   }
 
   getCouponBenefitText(coupon: Coupon): string {

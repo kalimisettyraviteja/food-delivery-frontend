@@ -3,76 +3,93 @@
   <div class="home-wrap text-center">
     <h1 class="hero-title">Hungry? We've got you.</h1>
     <p class="hero-sub">Discover restaurants near you and order your favourite food</p>
+
     <div class="search-bar mx-auto">
-      <input type="text" class="form-control form-control-lg" placeholder="🔍 Search by name, cuisine or location..."
-        [(ngModel)]="searchText" (ngModelChange)="onSearch()" />
+      <input type="text" class="form-control form-control-lg"
+        placeholder="🔍 Search by restaurants, cuisine or location..." [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()" />
     </div>
   </div>
 </section>
 
 <!-- Restaurants Grid -->
 <section class="restaurant-section">
-  <div class="home-wrap my-3">
-    <div class="d-flex justify-content-between align-items-center mb-4 section-head-wrap">
-      <h4 class="fw-bold mb-0">
-        All Restaurants
-        <span class="text-muted fs-6 fw-normal">({{ filtered().length }} found)</span>
-      </h4>
-    </div>
+  <div class="home-wrap my-4">
 
     <div *ngIf="loading()" class="row g-4">
-      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let i of [1,2,3,4,5,6]">
-        <div class="card skeleton-card"></div>
+      <div class="col-6 col-md-4 col-lg-3" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+        <div class="restaurant-card skeleton-shell">
+          <div class="skeleton-media"></div>
+          <div class="skeleton-line skeleton-line-lg"></div>
+          <div class="skeleton-line skeleton-line-md"></div>
+          <div class="skeleton-line skeleton-line-sm"></div>
+        </div>
       </div>
     </div>
 
     <div class="row g-4" *ngIf="!loading()">
-      <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
-        <div class="restaurant-card card h-100" [class.inactive-card]="isLoggedIn && r.isActive === false"
+      <div class="col-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
+        <article class="restaurant-card" [class.inactive-card]="isLoggedIn && r.isActive === false"
           [class.disabled-card]="isLoggedIn && r.isActive === false" (click)="openRestaurant(r)">
-          <div class="card-banner">
-            <span class="cuisine-badge">{{ r.cuisine }}</span>
 
-            <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
-              Currently Unavailable
-            </span>
+          <div class="restaurant-media-wrap">
+            <div class="restaurant-media">
+              <ng-container *ngIf="hasRestaurantImage(r); else defaultImageBlock">
+                <img class="restaurant-img" [src]="getRestaurantImage(r)" [alt]="r.name"
+                  (error)="onImageError($event)" />
+                <div class="media-overlay"></div>
+              </ng-container>
+
+              <ng-template #defaultImageBlock>
+                <div class="restaurant-fallback">
+                  <div class="fallback-pattern"></div>
+                  <div class="fallback-content">
+                    <div class="fallback-icon">🍽️</div>
+                  </div>
+                  <div class="media-overlay fallback-overlay"></div>
+                </div>
+              </ng-template>
+
+              <span class="cuisine-badge">{{ r.cuisine }}</span>
+
+              <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
+                Currently Unavailable
+              </span>
+
+              <div class="offer-strip">
+                {{ getOfferText(r) }}
+              </div>
+            </div>
           </div>
 
-          <div class="card-body">
-            <h6 class="card-title fw-bold mb-1">{{ r.name }}</h6>
-            <p class="card-text text-muted small mb-2">📍 {{ r.location }}</p>
-            <p class="card-text small text-muted">🍴 {{ r.cuisine }} cuisine</p>
+          <div class="restaurant-content">
+            <h3 class="restaurant-name" [title]="r.name">{{ r.name }}</h3>
 
-            <p *ngIf="r.deliveryTime" class="card-text small text-muted mb-1">
-              ⏱ {{ r.deliveryTime }} mins
+            <div class="restaurant-meta-row">
+
+              <ng-container *ngIf="(r.ratingCount ?? 0) > 0; else newBadge">
+                <span class="rating-star">★</span>
+                {{ r.rating ?? 0 }}
+              </ng-container>
+              <ng-template #newBadge>
+                <span class="new-badge">NEW</span>
+              </ng-template>
+
+              <span *ngIf="r.deliveryTime" class="meta-separator">•</span>
+              <span *ngIf="r.deliveryTime" class="delivery-time">{{ r.deliveryTime }} mins</span>
+            </div>
+
+            <p class="restaurant-cuisine" [title]="r.cuisine">
+              {{ r.cuisine }}
             </p>
 
-            <!-- <p *ngIf="r.rating" class="card-text small text-muted mb-0">
-              ⭐ {{ r.rating }}
-            </p> -->
-            <p *ngIf="r.rating !== undefined && r.rating !== null"
-              class="card-text small text-muted mb-0 restaurant-rating">
-              <span class="rating-value">⭐ {{ r.rating }}</span>
-              <span *ngIf="r.ratingCount">({{ r.ratingCount }} reviews)</span>
+
+            <p class="restaurant-location" [title]="r.location">
+              {{ r.location }}
             </p>
 
-
           </div>
-
-          <div class="card-footer bg-white border-0 pb-3">
-            <button class="btn btn-sm w-100"
-              [ngClass]="isLoggedIn && r.isActive === false ? 'btn-secondary' : 'btn-orange'"
-              [disabled]="isLoggedIn && r.isActive === false">
-              {{
-              !isLoggedIn
-              ? 'Login to View Menu'
-              : r.isActive === false
-              ? 'Currently Unavailable'
-              : 'View Menu →'
-              }}
-            </button>
-          </div>
-        </div>
+        </article>
       </div>
 
       <div *ngIf="filtered().length === 0" class="text-center py-5 text-muted">
@@ -82,6 +99,20 @@
     </div>
   </div>
 </section>
+
+<!-- Bootstrap Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap">
+  <div #signInToast id="signInToast" class="toast custom-toast align-items-center border-0" role="alert"
+    aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+    <div class="d-flex">
+      <div class="toast-body">
+        🔒 Please sign in to view this feature
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close">
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="footer">

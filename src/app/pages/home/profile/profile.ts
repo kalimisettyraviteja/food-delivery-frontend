@@ -61,16 +61,16 @@ export class Profile implements OnInit, OnDestroy {
   }
 
   toggleChangePassword(): void {
-  this.showChangePassword = !this.showChangePassword;
+    this.showChangePassword = !this.showChangePassword;
 
-  if (!this.showChangePassword) {
-    this.passwordForm = {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    };
+    if (!this.showChangePassword) {
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      };
+    }
   }
-}
 
   showToast(message: string, type: 'success' | 'error'): void {
     this.toastMessage = message;
@@ -170,6 +170,9 @@ export class Profile implements OnInit, OnDestroy {
 
     this.userService.updateProfile(this.form).subscribe({
       next: (res) => {
+
+        localStorage.setItem('userName', res.name);
+
         this.profile = res;
         this.form.name = res.name;
         this.form.phone = res.phone;
@@ -239,82 +242,49 @@ export class Profile implements OnInit, OnDestroy {
     });
   }
 
-  // changePassword(): void {
-  //   if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
-  //     this.showToast('Please fill all password fields.', 'error');
-  //     return;
-  //   }
 
-  //   if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-  //     this.showToast('New password and confirm password do not match.', 'error');
-  //     return;
-  //   }
-
-  //   this.changingPassword = true;
-
-  //   this.userService.changePassword(this.passwordForm).subscribe({
-  //     next: (res) => {
-  //       this.changingPassword = false;
-  //       this.passwordForm = {
-  //         currentPassword: '',
-  //         newPassword: '',
-  //         confirmPassword: ''
-  //       };
-  //       this.showToast(res || 'Password changed successfully.', 'success');
-  //     },
-  //     error: (err) => {
-  //       this.changingPassword = false;
-  //       this.showToast(err.error.message || 'Failed to change password.', 'error');
-  //     }
-  //   });
-  // }
-
-changePassword(): void {
-  if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
-    this.showToast('Please fill all password fields.', 'error');
-    return;
-  }
-
-  // if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-  //   this.showToast('New password and confirm password do not match.', 'error');
-  //   return;
-  // }
-
-  this.changingPassword = true;
-
-  this.userService.changePassword(this.passwordForm).subscribe({
-    next: (res) => {
-      this.changingPassword = false;
-      this.passwordForm = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      };
-      this.showChangePassword = false;
-      this.showToast(res || 'Password changed successfully.', 'success');
-    },
-    error: (err) => {
-      this.changingPassword = false;
-
-      let message = 'Failed to change password.';
-
-      if (err?.error) {
-        if (typeof err.error === 'string') {
-          try {
-            const parsed = JSON.parse(err.error);
-            message = parsed?.message || message;
-          } catch {
-            message = err.error || message;
-          }
-        } else if (typeof err.error === 'object') {
-          message = err.error?.message || message;
-        }
-      }
-
-      this.showToast(message, 'error');
+  changePassword(): void {
+    if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
+      this.showToast('Please fill all password fields.', 'error');
+      return;
     }
-  });
-}
+
+
+    this.changingPassword = true;
+
+    this.userService.changePassword(this.passwordForm).subscribe({
+      next: (res) => {
+        this.changingPassword = false;
+        this.passwordForm = {
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        };
+        this.showChangePassword = false;
+        this.showToast(res || 'Password changed successfully.', 'success');
+      },
+      error: (err) => {
+        this.changingPassword = false;
+
+        let message = 'Failed to change password.';
+
+        if (err?.error) {
+          if (typeof err.error === 'string') {
+            try {
+              const parsed = JSON.parse(err.error);
+              message = parsed?.message || message;
+            } catch {
+              message = err.error || message;
+            }
+          } else if (typeof err.error === 'object') {
+            message = err.error?.message || message;
+          }
+        }
+
+        this.showToast(message, 'error');
+      }
+    });
+  }
 
 
   get displayPhoto(): string {

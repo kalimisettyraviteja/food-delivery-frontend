@@ -1,22 +1,3 @@
-<!-- Header -->
-<nav class="navbar navbar-light bg-white shadow-sm sticky-top restaurant-navbar">
-  <div class="page-wrap d-flex justify-content-between align-items-center">
-    <a class="navbar-brand fw-bold text-orange mb-0" routerLink="/home">🍕 FoodDelivery</a>
-
-    <div class="d-flex align-items-center gap-3 header-right">
-      <div class="nav-helper">
-        <div class="nav-helper-icon">
-          <i class="bi bi-bag-check"></i>
-        </div>
-        <div class="nav-helper-text">
-          <span class="nav-helper-label">Review your</span>
-          <strong>checkout details</strong>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
-
 <div class="checkout-page">
   <div class="checkout-container py-4 py-lg-4">
     <div class="checkout-shell">
@@ -26,6 +7,18 @@
           <div class="restaurant-badge" *ngIf="cartService.restaurantName()">
             <i class="bi bi-shop"></i>
             <span>{{ cartService.restaurantName() }}</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="nav-helper">
+            <div class="nav-helper-icon">
+              <i class="bi bi-bag-check"></i>
+            </div>
+            <div class="nav-helper-text">
+              <span class="nav-helper-label">Review your</span>
+              <strong>checkout details</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -93,23 +86,15 @@
                   <h5 class="section-title mb-1">Offers & Coupons</h5>
                   <p class="section-subtitle mb-0">
                     Enter a code or
-                    <span
-                      class="view-offers-link"
-                      data-bs-toggle="modal"
-                      data-bs-target="#offersModal"
-                    >View Offers →</span>
+                    <span class="view-offers-link" data-bs-toggle="modal" data-bs-target="#offersModal">View Offers
+                      →</span>
                   </p>
                 </div>
               </div>
 
               <div class="coupon-entry">
-                <input
-                  type="text"
-                  class="form-control coupon-input"
-                  placeholder="Enter coupon code"
-                  [value]="couponCode()"
-                  (input)="couponCode.set($any($event.target).value)"
-                />
+                <input type="text" class="form-control coupon-input" placeholder="Enter coupon code"
+                  [value]="couponCode()" (input)="couponCode.set($any($event.target).value)" />
                 <button type="button" class="btn btn-brand" (click)="applyCoupon()">Apply</button>
               </div>
 
@@ -155,27 +140,35 @@
                 </div>
               </div>
 
-              <div
-                class="payment-trigger"
-                data-bs-toggle="modal"
-                data-bs-target="#paymentModal"
-              >
+              <div class="payment-trigger" data-bs-toggle="modal" data-bs-target="#paymentModal">
                 <div class="payment-trigger-left">
                   <div class="payment-trigger-icon">
                     <ng-container *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d55a06" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d55a06" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" />
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                      </svg>
                     </ng-container>
 
                     <ng-container *ngIf="selectedPaymentMethod() === 'PHONEPE'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739b7" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1"/></svg>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739b7" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" />
+                        <circle cx="12" cy="17" r="1" />
+                      </svg>
                     </ng-container>
 
                     <ng-container *ngIf="selectedPaymentMethod() === 'GPAY'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 12h8M12 8v8" />
+                      </svg>
                     </ng-container>
 
                     <ng-container *ngIf="selectedPaymentMethod() === 'PAYTM'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00baf2" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00baf2" stroke-width="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <path d="M2 10h20" />
+                      </svg>
                     </ng-container>
                   </div>
 
@@ -188,13 +181,10 @@
                 <span class="payment-trigger-change">Change →</span>
               </div>
 
-              <button
-                type="button"
-                class="btn btn-brand btn-place-order w-100"
-                (click)="placeOrder()"
-                [disabled]="placingOrder()"
-              >
-                {{ placingOrder() ? 'Processing...' : (selectedPaymentMethod() === 'CASH_ON_DELIVERY' ? 'Place Order' : 'Pay Now') }}
+              <button type="button" class="btn btn-brand btn-place-order w-100" (click)="placeOrder()"
+                [disabled]="placingOrder()">
+                {{ placingOrder() ? 'Processing...' : (selectedPaymentMethod() === 'CASH_ON_DELIVERY' ? 'Place Order' :
+                'Pay Now') }}
               </button>
 
               <p class="summary-note mb-0">
@@ -223,13 +213,8 @@
 
       <div class="modal-body">
         <div class="coupon-entry mb-3">
-          <input
-            type="text"
-            class="form-control coupon-input"
-            placeholder="Enter coupon code"
-            [value]="couponCode()"
-            (input)="couponCode.set($any($event.target).value)"
-          />
+          <input type="text" class="form-control coupon-input" placeholder="Enter coupon code" [value]="couponCode()"
+            (input)="couponCode.set($any($event.target).value)" />
           <button type="button" class="btn btn-brand" (click)="applyCoupon()" data-bs-dismiss="modal">Apply</button>
         </div>
 
@@ -260,15 +245,9 @@
                 </div>
 
                 <div class="coupon-card-action">
-                  <button
-                    type="button"
-                    class="btn"
-                    [class.btn-brand]="coupon.eligible"
-                    [class.btn-secondary-soft]="!coupon.eligible"
-                    [disabled]="!coupon.eligible"
-                    (click)="applySuggestedCoupon(coupon)"
-                    data-bs-dismiss="modal"
-                  >
+                  <button type="button" class="btn" [class.btn-brand]="coupon.eligible"
+                    [class.btn-secondary-soft]="!coupon.eligible" [disabled]="!coupon.eligible"
+                    (click)="applySuggestedCoupon(coupon)" data-bs-dismiss="modal">
                     {{ coupon.eligible ? 'Apply' : 'Locked' }}
                   </button>
                 </div>
@@ -296,15 +275,9 @@
                 </div>
 
                 <div class="coupon-card-action">
-                  <button
-                    type="button"
-                    class="btn"
-                    [class.btn-brand]="coupon.eligible"
-                    [class.btn-secondary-soft]="!coupon.eligible"
-                    [disabled]="!coupon.eligible"
-                    (click)="applySuggestedCoupon(coupon)"
-                    data-bs-dismiss="modal"
-                  >
+                  <button type="button" class="btn" [class.btn-brand]="coupon.eligible"
+                    [class.btn-secondary-soft]="!coupon.eligible" [disabled]="!coupon.eligible"
+                    (click)="applySuggestedCoupon(coupon)" data-bs-dismiss="modal">
                     {{ coupon.eligible ? 'Apply' : 'Locked' }}
                   </button>
                 </div>
@@ -312,10 +285,7 @@
             </div>
           </div>
 
-          <div
-            class="coupon-loading"
-            *ngIf="globalCouponsUi().length === 0 && restaurantCouponsUi().length === 0"
-          >
+          <div class="coupon-loading" *ngIf="globalCouponsUi().length === 0 && restaurantCouponsUi().length === 0">
             No coupons available right now.
           </div>
         </ng-container>
@@ -344,7 +314,10 @@
               [checked]="selectedPaymentMethod() === 'CASH_ON_DELIVERY'"
               (change)="selectedPaymentMethod.set('CASH_ON_DELIVERY')" />
             <div class="pay-icon cod-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
             </div>
             <div class="pay-label-wrap">
               <span class="pay-label">Cash on Delivery</span>
@@ -353,11 +326,14 @@
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'PHONEPE'">
-            <input type="radio" name="payMethod" value="PHONEPE"
-              [checked]="selectedPaymentMethod() === 'PHONEPE'"
+            <input type="radio" name="payMethod" value="PHONEPE" [checked]="selectedPaymentMethod() === 'PHONEPE'"
               (change)="selectedPaymentMethod.set('PHONEPE')" />
             <div class="pay-icon phonepe-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1"/><path d="M9 6h6"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" />
+                <circle cx="12" cy="17" r="1" />
+                <path d="M9 6h6" />
+              </svg>
             </div>
             <div class="pay-label-wrap">
               <span class="pay-label">PhonePe</span>
@@ -366,11 +342,13 @@
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'GPAY'">
-            <input type="radio" name="payMethod" value="GPAY"
-              [checked]="selectedPaymentMethod() === 'GPAY'"
+            <input type="radio" name="payMethod" value="GPAY" [checked]="selectedPaymentMethod() === 'GPAY'"
               (change)="selectedPaymentMethod.set('GPAY')" />
             <div class="pay-icon gpay-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12h8M12 8v8" />
+              </svg>
             </div>
             <div class="pay-label-wrap">
               <span class="pay-label">Google Pay</span>
@@ -379,11 +357,14 @@
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'PAYTM'">
-            <input type="radio" name="payMethod" value="PAYTM"
-              [checked]="selectedPaymentMethod() === 'PAYTM'"
+            <input type="radio" name="payMethod" value="PAYTM" [checked]="selectedPaymentMethod() === 'PAYTM'"
               (change)="selectedPaymentMethod.set('PAYTM')" />
             <div class="pay-icon paytm-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="7" cy="15" r="1"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+                <circle cx="7" cy="15" r="1" />
+              </svg>
             </div>
             <div class="pay-label-wrap">
               <span class="pay-label">Paytm</span>

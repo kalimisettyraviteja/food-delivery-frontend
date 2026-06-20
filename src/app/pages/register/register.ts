@@ -19,21 +19,21 @@ export class Register {
   loading = false; error = ''; success = '';
 
   onSubmit() {
-    this.loading = true; this.error = '';
-    this.userService.register({
-      name: this.name,
-      email: this.email,
-      phone: this.phone,
-      password: this.password
-    }).subscribe({
-      next: () => {
-        this.success = '✅ Account created! Redirecting to login...';
-        setTimeout(() => this.router.navigate(['/login']), 1500);
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Registration failed. Try again.';
-        this.loading = false;
-      }
-    });
+    // this.loading = true; this.error = '';
+    // this.userService.register({
+    //   name: this.name,
+    //   email: this.email,
+    //   phone: this.phone,
+    //   password: this.password
+    // }).subscribe({
+    //   next: () => {
+    //     this.success = '✅ Account created! Redirecting to login...';
+    //     setTimeout(() => this.router.navigate(['/login']), 1500);
+    //   },
+    //   error: (err) => {
+    //     this.error = err.error?.message || 'Registration failed. Try again.';
+    //     this.loading = false;
+    //   }
+    // });
   }
 }
