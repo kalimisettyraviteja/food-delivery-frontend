@@ -29,8 +29,8 @@ export interface MenuItem {
 export class RestaurantService {
   private http = inject(HttpClient);
 
-  private pub = 'http://localhost:8080/api/restaurants';
-  private admin = 'http://localhost:8080/api/admin/restaurants';
+  private pub = 'https://api-gateway-ftbf.onrender.com/api/restaurants';
+  private admin = 'https://api-gateway-ftbf.onrender.com/api/admin/restaurants';
 
   getAll(location?: string, cuisine?: string): Observable<Restaurant[]> {
     let params = new HttpParams();

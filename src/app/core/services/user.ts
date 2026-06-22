@@ -73,7 +73,7 @@ export interface LoginResponse {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:8080/api/users';
+  private base = 'https://api-gateway-ftbf.onrender.com/api/users';
 
   checkEmailStatus(req: EmailCheckRequest): Observable<EmailStatusResponse> {
     return this.http.post<EmailStatusResponse>(`${this.base}/auth/email-status`, req);

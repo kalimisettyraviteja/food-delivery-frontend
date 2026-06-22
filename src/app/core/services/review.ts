@@ -31,7 +31,7 @@ export interface RestaurantRatingSummaryResponse {
 })
 export class ReviewService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/reviews';
+  private apiUrl = 'https://api-gateway-ftbf.onrender.com/api/reviews';
 
   createReview(payload: CreateReviewRequest): Observable<ReviewResponse> {
     return this.http.post<ReviewResponse>(this.apiUrl, payload);

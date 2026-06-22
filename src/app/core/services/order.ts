@@ -76,7 +76,7 @@ export interface OrderResponse {
 })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/orders';
+  private apiUrl = 'https://api-gateway-ftbf.onrender.com/api/orders';
 
   placeOrder(payload: PlaceOrderRequest): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(this.apiUrl, payload);

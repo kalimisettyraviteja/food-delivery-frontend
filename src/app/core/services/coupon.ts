@@ -54,8 +54,8 @@ export interface ApplyCouponResponse {
 export class CouponService {
   private http = inject(HttpClient);
 
-  private userApiUrl = 'http://localhost:8080/api/coupons';
-  private adminApiUrl = 'http://localhost:8080/api/admin/coupons';
+  private userApiUrl = 'https://api-gateway-ftbf.onrender.com/api/coupons';
+  private adminApiUrl = 'https://api-gateway-ftbf.onrender.com/api/admin/coupons';
 
   getGlobalCoupons(): Observable<Coupon[]> {
     return this.http.get<Coupon[]>(`${this.userApiUrl}/global`);
