@@ -214,11 +214,6 @@ body.auth-offcanvas-open {
 
 }
 
-.auth-header-visual:hover {
-  animation: pizzaSpin 0.8s ease-in-out;
-  transform: scale(1.15);
-}
-
 
 .auth-visual-circle {
   width: 74px;
@@ -770,10 +765,6 @@ body.auth-offcanvas-open {
   transition: transform 0.3s ease;
 }
 
-.brand-mark:hover .brand-emoji {
-  animation: pizzaSpin 0.8s ease-in-out;
-  transform: scale(1.15);
-}
 
 @keyframes pizzaFloat {
   0% {
@@ -797,16 +788,3 @@ body.auth-offcanvas-open {
   }
 }
 
-@keyframes pizzaSpin {
-  0% {
-    transform: scale(1.05) rotate(0deg);
-  }
-
-  50% {
-    transform: scale(1.18) rotate(180deg);
-  }
-
-  100% {
-    transform: scale(1.15) rotate(360deg);
-  }
-}
