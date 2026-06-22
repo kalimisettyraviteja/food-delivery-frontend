@@ -208,6 +208,9 @@ body.auth-offcanvas-open {
   justify-content: flex-end;
   align-items: center;
   animation: pizzaFloat 2.4s ease-in-out infinite;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
 
 }
 
