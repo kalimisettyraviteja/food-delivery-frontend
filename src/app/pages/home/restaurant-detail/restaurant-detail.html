@@ -8,7 +8,7 @@
       <div class="summary-left">
         <div class="summary-main-row">
           <div class="summary-top-left">
-            <ng-container *ngIf="restaurant()!.rating != null; else newTag">
+              <ng-container *ngIf="restaurant()?.rating != null && restaurant()?.rating !== 0; else newTag">
               <span class="rating-badge">⭐ {{ restaurant()!.rating }}</span>
               <span class="rating-count" *ngIf="restaurant()!.ratingCount != null">
                 ({{ restaurant()!.ratingCount }}) reviews

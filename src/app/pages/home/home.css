@@ -513,7 +513,7 @@ body.auth-offcanvas-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+    overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
@@ -743,5 +743,49 @@ body.auth-offcanvas-open {
 
   .auth-primary-btn {
     font-size: 16px;
+  }
+}
+
+
+.brand-emoji {
+  display: inline-block;
+  font-size: 2rem;
+  transform-origin: center;
+  animation: pizzaFloat 2.4s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+
+.brand-mark:hover .brand-emoji {
+  animation: pizzaSpin 0.8s ease-in-out;
+  transform: scale(1.15);
+}
+
+@keyframes pizzaFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(6deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes pizzaSpin {
+  0% {
+    transform: scale(1.05) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.18) rotate(180deg);
+  }
+  100% {
+    transform: scale(1.15) rotate(360deg);
   }
 }
