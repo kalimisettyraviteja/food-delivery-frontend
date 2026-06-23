@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { RestaurantService, Restaurant } from '../../../core/services/restaurant';
 import { UserService } from '../../../core/services/user';
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, HostListener } from '@angular/core';
 declare var bootstrap: any;
 
 @Component({
@@ -27,24 +27,19 @@ export class HomeMain implements OnInit, OnDestroy {
 
   searchText = '';
   isLoggedIn = false;
+  showScrollTop = false;
+  hasLoadError = false;
   private toastInstance: any;
   private authSub!: Subscription;
 
   ngOnInit() {
-    // Subscribe to live auth state — updates instantly when user logs in/out
     this.authSub = this.userService.isLoggedIn$.subscribe(state => {
       this.isLoggedIn = state;
       this.applyRestaurantView();
     });
 
-    this.svc.getAll().subscribe({
-      next: (data) => {
-        this.restaurants.set(data);
-        this.applyRestaurantView();
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+    this.loadRestaurants();
+    this.updateScrollButton();
   }
 
   ngAfterViewInit() {
@@ -60,6 +55,45 @@ export class HomeMain implements OnInit, OnDestroy {
     if (this.authSub) {
       this.authSub.unsubscribe();
     }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    this.updateScrollButton();
+  }
+
+  updateScrollButton() {
+    this.showScrollTop = window.scrollY > 260;
+  }
+
+  scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+
+  loadRestaurants() {
+    this.loading.set(true);
+    this.hasLoadError = false;
+
+    this.svc.getAll().subscribe({
+      next: (data) => {
+        this.restaurants.set(data);
+        this.applyRestaurantView();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.restaurants.set([]);
+        this.filtered.set([]);
+        this.hasLoadError = true;
+        this.loading.set(false);
+      }
+    });
+  }
+
+  reloadRestaurants() {
+    this.loadRestaurants();
   }
 
   onSearch() {
@@ -124,7 +158,6 @@ export class HomeMain implements OnInit, OnDestroy {
 
     return 'Fresh food near you';
   }
-
 
   getRestaurantImage(r: any): string {
     return r.imageUrl || r.image || r.photo || r.bannerImage || r.coverImage || '';

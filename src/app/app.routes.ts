@@ -13,10 +13,14 @@ import { RestaurantDetail } from './pages/home/restaurant-detail/restaurant-deta
 import { roleGuard } from './guards/role-guard';
 import { Checkout } from './pages/home/checkout/checkout';
 import { Coupons } from './pages/admin/coupons/coupons';
+import { Test } from './test/test';
 
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
+  {
+    path: 'test', component: Test
+  },
 
   {
     path: 'home',

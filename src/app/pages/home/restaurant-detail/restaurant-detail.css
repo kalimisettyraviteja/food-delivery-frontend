@@ -582,7 +582,7 @@
   font-weight: 700;
 }
 
-.floating-arrow-icon {
+/* .floating-arrow-icon {
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -596,7 +596,49 @@
 .floating-arrow-icon i {
   font-size: 22px;
   color: #fff;
+} */
+
+/* Scroll top */
+.scroll-top-btn {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(16px);
+  width: 35px;
+  height: 35px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e85d04, #ff8a3d);
+  color: #fff;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 14px 30px rgba(232, 93, 4, 0.28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1060;
+  transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
 }
+
+.scroll-top-btn.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.scroll-top-btn:hover {
+  box-shadow: 0 18px 34px rgba(232, 93, 4, 0.34);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.scroll-top-btn:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+
 
 @keyframes newGlow {
   0%, 100% {

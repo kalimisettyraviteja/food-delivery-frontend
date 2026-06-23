@@ -163,8 +163,11 @@
   </div>
 </div>
 
-<button class="scroll-top-btn" *ngIf="showScrollTop()" type="button" (click)="scrollToTop()">
-  ↑
+
+<!-- Scroll To Top -->
+<button type="button" class="scroll-top-btn" [class.show]="showScrollTop()" (click)="scrollToTop()"
+  aria-label="Scroll to top">
+  <i class="fa-solid fa-arrow-up"></i>
 </button>
 
 <div class="floating-checkout" *ngIf="cartService.cartCount() > 0">

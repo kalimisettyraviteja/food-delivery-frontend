@@ -27,7 +27,31 @@
       </div>
     </div>
 
-    <div class="row g-4" *ngIf="!loading()">
+    <div *ngIf="!loading() && hasLoadError" class="empty-state-wrap">
+      <div class="empty-state-card empty-state-card-error">
+        <div class="empty-state-visual">
+          <div class="empty-bowl">🍽️</div>
+          <div class="empty-float empty-float-1">⚠️</div>
+          <div class="empty-float empty-float-2">📡</div>
+          <div class="empty-float empty-float-3">😕</div>
+        </div>
+
+        <h3 class="empty-state-title">Restaurants are taking a little longer</h3>
+
+        <p class="empty-state-text">
+          We couldn’t load restaurants right now. This may be a temporary server or network issue.
+          Please try again in a moment.
+        </p>
+
+        <div class="empty-state-actions">
+          <button type="button" class="empty-state-btn" (click)="reloadRestaurants()">
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4" *ngIf="!loading() && !hasLoadError">
       <div class="col-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
         <article class="restaurant-card" [class.inactive-card]="isLoggedIn && r.isActive === false"
           [class.disabled-card]="isLoggedIn && r.isActive === false" (click)="openRestaurant(r)">
@@ -66,7 +90,6 @@
             <h3 class="restaurant-name" [title]="r.name">{{ r.name }}</h3>
 
             <div class="restaurant-meta-row">
-
               <ng-container *ngIf="(r.ratingCount ?? 0) > 0; else newBadge">
                 <span class="rating-star">★</span>
                 {{ r.rating ?? 0 }}
@@ -83,22 +106,45 @@
               {{ r.cuisine }}
             </p>
 
-
             <p class="restaurant-location" [title]="r.location">
               {{ r.location }}
             </p>
-
           </div>
         </article>
       </div>
 
-      <div *ngIf="filtered().length === 0" class="text-center py-5 text-muted">
-        <div style="font-size:48px">🍽️</div>
-        <p class="mt-2">No restaurants found for "{{ searchText }}"</p>
+      <div *ngIf="filtered().length === 0" class="empty-state-wrap">
+        <div class="empty-state-card">
+          <div class="empty-state-visual">
+            <div class="empty-bowl">🍜</div>
+            <div class="empty-float empty-float-1">🍕</div>
+            <div class="empty-float empty-float-2">🍔</div>
+            <div class="empty-float empty-float-3">🌮</div>
+          </div>
+
+          <h3 class="empty-state-title">Oops! We couldn’t find that craving</h3>
+
+          <p class="empty-state-text">
+            No restaurants matched <span>"{{ searchText }}"</span>.
+            Try searching for a cuisine, restaurant name, or location.
+          </p>
+
+          <div class="empty-state-actions">
+            <button type="button" class="empty-state-btn" (click)="searchText=''; onSearch()">
+              Show all restaurants
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Scroll To Top -->
+<button type="button" class="scroll-top-btn" [class.show]="showScrollTop" (click)="scrollToTop()"
+  aria-label="Scroll to top">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
 
 <!-- Bootstrap Toast -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap">
@@ -114,9 +160,19 @@
   </div>
 </div>
 
+
 <!-- Footer -->
 <footer class="footer">
   <div class="home-wrap">
-    <p class="mb-0 text-muted small">© 2026 FoodDelivery · Built with ❤️ in Chennai</p>
+    <p class="mb-0 text-muted small">
+      © 2026 FoodDelivery · Built with ❤️ in Chennai ·
+      Contact:
+      <a href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com"
+         target="_blank"
+         rel="noopener noreferrer"
+         class="footer-mail">
+        cravyosupport@gmail.com
+      </a>
+    </p>
   </div>
 </footer>
