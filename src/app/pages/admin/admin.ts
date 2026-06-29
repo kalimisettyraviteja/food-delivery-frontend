@@ -1,8 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, HostListener, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-
 
 @Component({
   selector: 'app-admin',
@@ -13,9 +11,32 @@ import { Router } from '@angular/router';
 })
 export class Admin {
   private router = inject(Router);
-  userName = localStorage.getItem('userName') || 'Admin';
 
-  logout() {
+  userName = localStorage.getItem('userName') || 'Admin';
+  isSidebarOpen = false;
+
+  toggleSidebar(): void {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.isSidebarOpen = false;
+  }
+
+  handleNavClick(): void {
+    if (window.innerWidth <= 768) {
+      this.closeSidebar();
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth > 768) {
+      this.closeSidebar();
+    }
+  }
+
+  logout(): void {
     localStorage.clear();
     this.router.navigate(['/login']);
   }

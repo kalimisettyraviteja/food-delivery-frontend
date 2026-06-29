@@ -5,9 +5,13 @@
     <p class="hero-sub">Discover restaurants near you and order your favourite food</p>
 
     <div class="search-bar mx-auto">
-      <input type="text" class="form-control form-control-lg"
-        placeholder="🔍 Search by restaurants, cuisine or location..." [(ngModel)]="searchText"
-        (ngModelChange)="onSearch()" />
+      <input
+        type="text"
+        class="form-control form-control-lg"
+        placeholder="🔍 Search by restaurants, cuisine or location..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearch()"
+      />
     </div>
   </div>
 </section>
@@ -53,26 +57,35 @@
 
     <div class="row g-4" *ngIf="!loading() && !hasLoadError">
       <div class="col-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
-        <article class="restaurant-card" [class.inactive-card]="isLoggedIn && r.isActive === false"
-          [class.disabled-card]="isLoggedIn && r.isActive === false" (click)="openRestaurant(r)">
-
+        <article
+          class="restaurant-card"
+          [class.inactive-card]="isLoggedIn && r.isActive === false"
+          [class.disabled-card]="isLoggedIn && r.isActive === false"
+          (click)="openRestaurant(r)"
+        >
           <div class="restaurant-media-wrap">
             <div class="restaurant-media">
-              <ng-container *ngIf="hasRestaurantImage(r); else defaultImageBlock">
-                <img class="restaurant-img" [src]="getRestaurantImage(r)" [alt]="r.name"
-                  (error)="onImageError($event)" />
-                <div class="media-overlay"></div>
-              </ng-container>
+              <div class="restaurant-image-layer">
+                <ng-container *ngIf="hasRestaurantImage(r); else defaultImageBlock">
+                  <img
+                    class="restaurant-img"
+                    [src]="getRestaurantImage(r)"
+                    [alt]="r.name"
+                    (error)="onImageError($event)"
+                  />
+                  <div class="media-overlay"></div>
+                </ng-container>
 
-              <ng-template #defaultImageBlock>
-                <div class="restaurant-fallback">
-                  <div class="fallback-pattern"></div>
-                  <div class="fallback-content">
-                    <div class="fallback-icon">🍽️</div>
+                <ng-template #defaultImageBlock>
+                  <div class="restaurant-fallback">
+                    <div class="fallback-pattern"></div>
+                    <div class="fallback-content">
+                      <div class="fallback-icon">🍽️</div>
+                    </div>
+                    <div class="media-overlay fallback-overlay"></div>
                   </div>
-                  <div class="media-overlay fallback-overlay"></div>
-                </div>
-              </ng-template>
+                </ng-template>
+              </div>
 
               <span class="cuisine-badge">{{ r.cuisine }}</span>
 
@@ -141,25 +154,40 @@
 </section>
 
 <!-- Scroll To Top -->
-<button type="button" class="scroll-top-btn" [class.show]="showScrollTop" (click)="scrollToTop()"
-  aria-label="Scroll to top">
+<button
+  type="button"
+  class="scroll-top-btn"
+  [class.show]="showScrollTop"
+  (click)="scrollToTop()"
+  aria-label="Scroll to top"
+>
   <i class="fa-solid fa-arrow-up"></i>
 </button>
 
 <!-- Bootstrap Toast -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap">
-  <div #signInToast id="signInToast" class="toast custom-toast align-items-center border-0" role="alert"
-    aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+  <div
+    #signInToast
+    id="signInToast"
+    class="toast custom-toast align-items-center border-0"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+    data-bs-delay="2500"
+  >
     <div class="d-flex">
       <div class="toast-body">
         🔒 Please sign in to view this feature
       </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close">
-      </button>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+        aria-label="Close"
+      ></button>
     </div>
   </div>
 </div>
-
 
 <!-- Footer -->
 <footer class="footer">
@@ -167,11 +195,13 @@
     <p class="mb-0 text-muted small">
       © 2026 FoodDelivery · Built with ❤️ in Chennai ·
       Contact:
-      <a href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com"
-         target="_blank"
-         rel="noopener noreferrer"
-         class="footer-mail">
-        cravyosupport@gmail.com
+      <a
+        href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-mail"
+      >
+        [cravyosupport@gmail.com]
       </a>
     </p>
   </div>

@@ -1,172 +1,451 @@
-<div class="restaurant-top" *ngIf="restaurant()">
-  <div class="page-wrap">
-    <div class="restaurant-title-row">
-      <h1 class="restaurant-title">{{ restaurant()!.name }}</h1>
+<!-- Loading Skeleton -->
+<ng-container *ngIf="loading(); else loadedPage">
+  <div class="restaurant-top premium-top skeleton-page">
+    <div class="page-wrap">
+      <div class="restaurant-title-row premium-title-row">
+        <div class="restaurant-heading-wrap skeleton-heading-wrap">
+          <div class="sk sk-title"></div>
+          <div class="summary-top-left premium-meta-row">
+            <div class="sk sk-pill"></div>
+            <div class="sk sk-text sm"></div>
+            <div class="sk sk-dot"></div>
+            <div class="sk sk-text md"></div>
+          </div>
+        </div>
+
+        <div class="status-right premium-status-wrap">
+          <div class="sk sk-status"></div>
+        </div>
+      </div>
+
+      <div class="restaurant-summary-card premium-summary-card">
+        <div class="summary-left premium-summary-left">
+          <div class="summary-main-row premium-summary-main-row">
+            <div class="summary-main-info premium-main-info">
+              <div class="outlet-row premium-outlet-row">
+                <div class="sk sk-text xs"></div>
+                <div class="sk sk-text md"></div>
+                <div class="sk sk-text sm"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-offer-row premium-offer-row">
+            <div class="offer-copy-left premium-offer-copy">
+              <div class="sk sk-chip"></div>
+              <div class="sk sk-text lg"></div>
+            </div>
+
+            <div class="summary-coupon-strip premium-coupon-strip">
+              <div class="coupon-nav-wrap premium-coupon-nav-wrap">
+                <div class="sk sk-circle"></div>
+
+                <div class="coupon-strip-inline premium-coupon-inline skeleton-strip">
+                  <div class="sk sk-icon-box"></div>
+                  <div class="coupon-inline-main premium-coupon-main">
+                    <div class="coupon-primary-row premium-coupon-primary">
+                      <div class="sk sk-text md"></div>
+                      <div class="sk sk-chip small"></div>
+                    </div>
+                    <div class="coupon-secondary-row premium-coupon-secondary">
+                      <div class="sk sk-text sm"></div>
+                    </div>
+                  </div>
+                  <div class="sk sk-copy"></div>
+                </div>
+
+                <div class="sk sk-circle"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="restaurant-summary-card">
-      <div class="summary-left">
-        <div class="summary-main-row">
-          <div class="summary-top-left">
-              <ng-container *ngIf="restaurant()?.rating != null && restaurant()?.rating !== 0; else newTag">
-              <span class="rating-badge">⭐ {{ restaurant()!.rating }}</span>
+    <div class="page-wrap menu-section">
+      <div class="menu-top-bar">
+        <div class="menu-heading-row">
+          <span class="menu-line"></span>
+          <span class="menu-heading-text">MENU</span>
+          <span class="menu-line"></span>
+        </div>
+
+        <div class="menu-search-row">
+          <div class="menu-search-box">
+            <div class="sk sk-search"></div>
+          </div>
+
+          <div class="filter-toggle skeleton-filter-toggle">
+            <div class="sk sk-filter"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-list">
+        <div class="menu-item-card skeleton-menu-card" *ngFor="let i of [1,2,3,4,5,6]">
+          <div class="menu-item-main">
+            <div class="item-left">
+              <div class="sk sk-veg"></div>
+
+              <div class="menu-info">
+                <div class="sk sk-text item-title"></div>
+                <div class="type-price-row">
+                  <div class="sk sk-text xs"></div>
+                  <div class="sk sk-text xs"></div>
+                </div>
+                <div class="sk sk-text line"></div>
+                <div class="sk sk-text line short"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="menu-item-media">
+            <div class="dish-image-box">
+              <div class="sk sk-image"></div>
+            </div>
+
+            <div class="qty-area">
+              <div class="sk sk-add-btn"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #loadedPage>
+  <div class="restaurant-top premium-top" *ngIf="restaurant()">
+    <div class="page-wrap">
+      <div class="restaurant-title-row premium-title-row">
+        <div class="restaurant-heading-wrap">
+          <h1 class="restaurant-title premium-title">{{ restaurant()!.name }}</h1>
+
+          <div class="summary-top-left premium-meta-row">
+            <ng-container *ngIf="restaurant()?.rating != null && restaurant()?.rating !== 0; else newTag">
+              <span class="rating-badge premium-rating">⭐ {{ restaurant()!.rating }}</span>
               <span class="rating-count" *ngIf="restaurant()!.ratingCount != null">
-                ({{ restaurant()!.ratingCount }}) reviews
+                {{ restaurant()!.ratingCount }} reviews
               </span>
             </ng-container>
 
             <ng-template #newTag>
-              <span class="new-badge">NEW</span>
+              <span class="new-badge premium-new">
+                <span class="new-dot"></span>
+New              </span>
             </ng-template>
 
-            <span class="cuisine-link">{{ restaurant()!.cuisine }}</span>
-          </div>
-
-          <div class="status-right">
-            <span class="status-pill" [class.status-open]="restaurant()!.isActive !== false"
-              [class.status-closed]="restaurant()!.isActive === false">
-              {{ restaurant()!.isActive === false ? 'Temporarily Closed' : 'Open' }}
-            </span>
+            <span class="meta-dot">•</span>
+            <span class="cuisine-link premium-cuisine">{{ restaurant()!.cuisine }}</span>
           </div>
         </div>
 
-        <div class="outlet-row">
-          <span class="outlet-label">Outlet</span> - {{ restaurant()!.location || 'Main Outlet' }}
-          <span class="delivery-time">• {{ restaurant()!.deliveryTime || '20-25' }} mins</span>
+        <div class="status-right premium-status-wrap">
+          <span
+            class="status-pill premium-status-pill"
+            [class.status-open]="restaurant()!.isActive !== false"
+            [class.status-closed]="restaurant()!.isActive === false"
+          >
+            <span class="status-indicator-dot"></span>
+            {{ restaurant()!.isActive === false ? 'Temporarily Closed' : 'Open Now' }}
+          </span>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<div class="page-wrap menu-section">
-  <div class="menu-top-bar">
-    <div class="menu-heading-row">
-      <span class="menu-line"></span>
-      <span class="menu-heading-text">MENU</span>
-      <span class="menu-line"></span>
-    </div>
+      <div class="restaurant-summary-card premium-summary-card">
+        <div class="summary-left premium-summary-left">
+          <div class="summary-main-row premium-summary-main-row">
+            <div class="summary-main-info premium-main-info">
+              <div class="outlet-row premium-outlet-row">
+                <span class="outlet-label">Outlet</span>
+                <span class="outlet-value">{{ restaurant()!.location || 'Main Outlet' }}</span>
+                <span class="delivery-time premium-time">• {{ restaurant()!.deliveryTime || '20-25' }} mins</span>
+              </div>
+            </div>
+          </div>
 
-    <div class="menu-search-row">
-      <div class="menu-search-box">
-        <input
-          type="text"
-          class="menu-search"
-          [value]="searchText()"
-          (input)="onSearch($any($event.target).value)"
-          placeholder="Search for dishes"
-        />
-        <span class="search-icon">🔍</span>
-      </div>
-
-      <div class="filter-toggle" [attr.data-active]="selectedFilter()">
-        <div class="filter-slider"></div>
-
-        <button type="button" class="filter-option" [class.active]="selectedFilter() === 'ALL'"
-          (click)="setFilter('ALL')">
-          All
-        </button>
-
-        <button type="button" class="filter-option veg" [class.active]="selectedFilter() === 'VEG'"
-          (click)="setFilter('VEG')">
-          <span class="filter-icon veg-dot"></span>
-          Veg
-        </button>
-
-        <button type="button" class="filter-option nonveg" [class.active]="selectedFilter() === 'NON_VEG'"
-          (click)="setFilter('NON_VEG')">
-          <span class="filter-icon nonveg-dot"></span>
-          Non-Veg
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <p *ngIf="loading()" class="text-muted">Loading menu...</p>
-
-  <div *ngIf="!loading()" class="menu-list">
-    <div class="menu-item-card" *ngFor="let item of filteredMenuItems()">
-      <div class="menu-item-main">
-        <div class="item-left">
-          <div class="veg-indicator" [class.veg]="item.veg" [class.non]="!item.veg"></div>
-
-          <div class="menu-info">
-            <div class="item-name">{{ item.name }}</div>
-
-            <div class="type-price-row">
-              <span class="item-type" [class.veg-chip]="item.veg" [class.non-chip]="!item.veg">
-                {{ item.veg ? 'Vegetarian' : 'Non-Vegetarian' }}
-              </span>
-              <span class="price">₹{{ item.price }}</span>
+          <div class="summary-offer-row premium-offer-row" *ngIf="visibleCoupon() as coupon">
+            <div class="offer-copy-left premium-offer-copy">
+              <span class="offer-mini-label premium-offer-label">Deals for you</span>
+              <h3 class="offer-mini-title premium-offer-title">Save more on this restaurant order</h3>
             </div>
 
-            <p class="item-desc desc-clamp" *ngIf="item.description; else noDesc">
-              {{ item.description }}
-            </p>
-            <ng-template #noDesc>
-              <p class="item-desc muted">No description provided.</p>
+            <div
+              class="summary-coupon-strip premium-coupon-strip"
+              (mouseenter)="pauseCouponAutoSlide()"
+              (mouseleave)="resumeCouponAutoSlide()"
+            >
+              <div class="coupon-nav-wrap premium-coupon-nav-wrap">
+                <button
+                  type="button"
+                  class="coupon-nav-btn premium-nav-btn"
+                  (click)="prevCoupon(); pauseCouponAutoSlide()"
+                  aria-label="Previous coupon"
+                  title="Previous coupon"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <div class="coupon-strip-inline premium-coupon-inline" (click)="openCouponModal(coupon)">
+                  <div class="coupon-icon-box premium-coupon-icon">
+                    <i class="bi bi-percent"></i>
+                  </div>
+
+                  <div class="coupon-inline-main premium-coupon-main">
+                    <div class="coupon-primary-row premium-coupon-primary">
+                      <span class="single-coupon-badge premium-coupon-badge">{{ getCouponTypeLabel(coupon) }}</span>
+                      <span class="best-offer-badge premium-best-badge" *ngIf="coupon.id === bestCouponId()">Best offer</span>
+                    </div>
+
+                    <div class="coupon-secondary-row premium-coupon-secondary">
+                      <span class="single-coupon-code premium-coupon-code">USE {{ coupon.code }}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="copy-icon-btn premium-copy-btn"
+                    (click)="copyCouponCode(coupon.code, coupon.id, $event)"
+                    aria-label="Copy coupon code"
+                    title="Copy coupon"
+                  >
+                    <i
+                      class="bi"
+                      [class.bi-check2]="copiedCouponId() === coupon.id"
+                      [class.bi-copy]="copiedCouponId() !== coupon.id"
+                    ></i>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  class="coupon-nav-btn premium-nav-btn"
+                  (click)="nextCoupon(); pauseCouponAutoSlide()"
+                  aria-label="Next coupon"
+                  title="Next coupon"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-wrap menu-section">
+      <div class="menu-top-bar">
+        <div class="menu-heading-row">
+          <span class="menu-line"></span>
+          <span class="menu-heading-text">MENU</span>
+          <span class="menu-line"></span>
+        </div>
+
+        <div class="menu-search-row">
+          <div class="menu-search-box">
+            <input
+              type="text"
+              class="menu-search"
+              [value]="searchText()"
+              (input)="onSearch($any($event.target).value)"
+              placeholder="Search for dishes"
+            />
+            <span class="search-icon">🔍</span>
+          </div>
+
+          <div class="filter-toggle" [attr.data-active]="selectedFilter()">
+            <div class="filter-slider"></div>
+
+            <button
+              type="button"
+              class="filter-option"
+              [class.active]="selectedFilter() === 'ALL'"
+              (click)="setFilter('ALL')"
+            >
+              All
+            </button>
+
+            <button
+              type="button"
+              class="filter-option veg"
+              [class.active]="selectedFilter() === 'VEG'"
+              (click)="setFilter('VEG')"
+            >
+              <span class="filter-icon veg-dot"></span>
+              Veg
+            </button>
+
+            <button
+              type="button"
+              class="filter-option nonveg"
+              [class.active]="selectedFilter() === 'NON_VEG'"
+              (click)="setFilter('NON_VEG')"
+            >
+              <span class="filter-icon nonveg-dot"></span>
+              Non-Veg
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-list">
+        <div class="menu-item-card" *ngFor="let item of filteredMenuItems()">
+          <div class="menu-item-main">
+            <div class="item-left">
+              <div class="veg-indicator" [class.veg]="item.veg" [class.non]="!item.veg"></div>
+
+              <div class="menu-info">
+                <div class="item-name">{{ item.name }}</div>
+
+                <div class="type-price-row">
+                  <span class="item-type" [class.veg-chip]="item.veg" [class.non-chip]="!item.veg">
+                    {{ item.veg ? 'Vegetarian' : 'Non-Vegetarian' }}
+                  </span>
+                  <span class="price">₹{{ item.price }}</span>
+                </div>
+
+                <p class="item-desc desc-clamp" *ngIf="item.description; else noDesc">
+                  {{ item.description }}
+                </p>
+                <ng-template #noDesc>
+                  <p class="item-desc muted">No description provided.</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+
+          <div class="menu-item-media">
+            <div class="dish-image-box" *ngIf="item.image; else noImage">
+              <img
+                [src]="item.image"
+                [alt]="item.name"
+                class="dish-image"
+                (click)="openImagePreview(item.image, item.name)"
+              />
+            </div>
+
+            <ng-template #noImage>
+              <div class="dish-image-box placeholder">
+                <div class="placeholder-icon">🍽️</div>
+              </div>
             </ng-template>
-          </div>
-        </div>
-      </div>
 
-      <div class="menu-item-media">
-        <div class="dish-image-box" *ngIf="item.image; else noImage">
-          <img
-            [src]="item.image"
-            [alt]="item.name"
-            class="dish-image"
-            (click)="openImagePreview(item.image, item.name)"
-          />
-        </div>
+            <div class="qty-area">
+              <ng-container *ngIf="getItemQty(item.id!) === 0; else qtyControls">
+                <button class="inline-add-btn" type="button" (click)="addToCart(item)">ADD</button>
+              </ng-container>
 
-        <ng-template #noImage>
-          <div class="dish-image-box placeholder">
-            <div class="placeholder-icon">🍽️</div>
-          </div>
-        </ng-template>
-
-        <div class="qty-area">
-          <ng-container *ngIf="getItemQty(item.id!) === 0; else qtyControls">
-            <button class="inline-add-btn" type="button" (click)="addToCart(item)">ADD</button>
-          </ng-container>
-
-          <ng-template #qtyControls>
-            <div class="qty-control">
-              <button class="qty-btn" (click)="decreaseQty(item.id!)">-</button>
-              <span>{{ getItemQty(item.id!) }}</span>
-              <button class="qty-btn" (click)="increaseQty(item.id!)">+</button>
+              <ng-template #qtyControls>
+                <div class="qty-control">
+                  <button class="qty-btn" (click)="decreaseQty(item.id!)">-</button>
+                  <span>{{ getItemQty(item.id!) }}</span>
+                  <button class="qty-btn" (click)="increaseQty(item.id!)">+</button>
+                </div>
+              </ng-template>
             </div>
-          </ng-template>
+          </div>
+        </div>
+
+        <div *ngIf="filteredMenuItems().length === 0" class="empty-state">
+          <div class="empty-icon">🍽️</div>
+          <p>No menu items available for selected filter</p>
         </div>
       </div>
-    </div>
-
-    <div *ngIf="filteredMenuItems().length === 0" class="empty-state">
-      <div class="empty-icon">🍽️</div>
-      <p>No menu items available for selected filter</p>
     </div>
   </div>
-</div>
+</ng-template>
 
 <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content image-preview-modal">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title fw-bold">{{ previewTitle() }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          (click)="blurActiveElement()"
+        ></button>
       </div>
       <div class="modal-body pt-2 text-center">
-        <img [src]="previewImage()" class="preview-image-large" [alt]="previewTitle()" *ngIf="previewImage()" />
+        <img
+          [src]="previewImage()"
+          class="preview-image-large"
+          [alt]="previewTitle()"
+          *ngIf="previewImage()"
+        />
       </div>
     </div>
   </div>
 </div>
 
+<div class="modal fade" id="couponDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered coupon-sheet-dialog">
+    <div class="modal-content coupon-modal-sheet" *ngIf="selectedCoupon() as coupon">
+      <div class="modal-header border-0 pb-0 coupon-sheet-header">
+        <div class="coupon-modal-title-wrap">
+          <div class="coupon-modal-chip-row">
+            <span class="coupon-modal-code">{{ coupon.code }}</span>
 
-<!-- Scroll To Top -->
-<button type="button" class="scroll-top-btn" [class.show]="showScrollTop()" (click)="scrollToTop()"
-  aria-label="Scroll to top">
+            <button
+              type="button"
+              class="copy-icon-btn modal-icon-copy"
+              (click)="copyCouponCode(coupon.code, coupon.id, $event)"
+              aria-label="Copy coupon code"
+              title="Copy coupon"
+            >
+              <i
+                class="bi"
+                [class.bi-check2]="copiedCouponId() === coupon.id"
+                [class.bi-copy]="copiedCouponId() !== coupon.id"
+              ></i>
+            </button>
+          </div>
+
+          <span class="best-offer-badge solid" *ngIf="coupon.id === bestCouponId()">Best Offer</span>
+        </div>
+
+        <button
+          type="button"
+          class="coupon-modal-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          (click)="blurActiveElement()"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body coupon-sheet-body">
+        <h3 class="coupon-modal-offer">{{ getCouponTypeLabel(coupon) }}</h3>
+
+        <p class="coupon-modal-desc">
+          {{ coupon.description }}
+        </p>
+
+        <div class="coupon-sheet-divider"></div>
+
+        <h4 class="coupon-tnc-title">Terms and Conditions</h4>
+
+        <ul class="coupon-tnc-list">
+          <li>{{ getCouponMinOrderText(coupon) }}</li>
+          <li *ngIf="getCouponMaxDiscountText(coupon)">{{ getCouponMaxDiscountText(coupon) }}</li>
+          <li>Apply this coupon during checkout if eligible.</li>
+          <li>{{ getCouponExpiryText(coupon) }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button
+  type="button"
+  class="scroll-top-btn"
+  [class.show]="showScrollTop()"
+  (click)="scrollToTop()"
+  aria-label="Scroll to top"
+>
   <i class="fa-solid fa-arrow-up"></i>
 </button>
 

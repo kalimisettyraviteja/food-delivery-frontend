@@ -1,0 +1,235 @@
+<div class="orders-page">
+  <div class="orders-hero">
+    <div class="orders-hero__content">
+      <div class="orders-title-wrap">
+        <h2>Track and update order lifecycle</h2>
+        <p>Search orders and update statuses in one compact admin workspace.</p>
+      </div>
+
+      <button class="refresh-btn" (click)="loadOrders()" [disabled]="loading">
+        <span class="refresh-icon">↻</span>
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="sticky-search-bar">
+    <div class="sticky-search-inner">
+      <div class="toolbar-field search-field">
+        <label for="orderSearch">Search by Order ID</label>
+        <div class="input-shell">
+          <span class="input-icon">🔍</span>
+          <input id="orderSearch" type="text" placeholder="Ex: 12" [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()" />
+          <button *ngIf="searchTerm" type="button" class="clear-btn" (click)="clearSearch()">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="results-strip" *ngIf="!loading">
+        <span>{{ filteredOrders.length }} order(s) found</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="orders-board">
+    <ng-container *ngIf="loading">
+      <div class="desktop-table desktop-only">
+        <div class="table-head skeleton-head">
+          <span>Order</span>
+          <span>Restaurant</span>
+          <span>Total</span>
+          <span>Payment</span>
+          <span>Status</span>
+          <span class="created-header">
+            Created At
+            <button type="button" class="sort-icon-btn" disabled>
+              <span>↑</span>
+              <span>↓</span>
+            </button>
+          </span>
+          <span>Change</span>
+          <span>Action</span>
+        </div>
+
+        <div class="table-row skeleton-row" *ngFor="let _ of skeletonRows">
+          <div class="skeleton skeleton-text short"></div>
+          <div class="skeleton skeleton-text medium"></div>
+          <div class="skeleton skeleton-text short"></div>
+          <div class="skeleton skeleton-text medium"></div>
+          <div class="skeleton skeleton-pill"></div>
+          <div class="skeleton skeleton-text medium"></div>
+          <div class="skeleton skeleton-input"></div>
+          <div class="skeleton skeleton-button"></div>
+        </div>
+      </div>
+
+      <div class="mobile-cards mobile-only">
+        <div class="mobile-card skeleton-mobile-card" *ngFor="let _ of skeletonRows">
+          <div class="skeleton skeleton-text short"></div>
+          <div class="skeleton skeleton-text medium"></div>
+          <div class="skeleton skeleton-pill"></div>
+          <div class="skeleton skeleton-input"></div>
+          <div class="skeleton skeleton-button"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && filteredOrders.length === 0">
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No matching orders</h3>
+        <p>Try another order ID to find the required order quickly.</p>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && filteredOrders.length > 0">
+      <div class="desktop-table desktop-only">
+        <div class="table-head">
+          <span>Order</span>
+          <span>Restaurant</span>
+          <span>Total</span>
+          <span>Payment</span>
+          <span>Status</span>
+          <span class="created-header">
+            Created At
+            <button type="button" class="sort-icon-btn" (click)="toggleCreatedAtSort()"
+              [attr.aria-label]="sortBy === 'LATEST' ? 'Sort oldest first' : 'Sort latest first'"
+              [title]="sortBy === 'LATEST' ? 'Latest to Old' : 'Old to Latest'">
+              <span [class.active-arrow]="sortBy === 'OLDEST'">↑</span>
+              <span [class.active-arrow]="sortBy === 'LATEST'">↓</span>
+            </button>
+          </span>
+          <span>Change</span>
+          <span>Action</span>
+        </div>
+
+        <div class="table-row" *ngFor="let order of filteredOrders; trackBy: trackByOrderId">
+          <div class="cell order-cell">
+            <div class="primary-text">#{{ order.id }}</div>
+            <div class="secondary-text">Order ID</div>
+          </div>
+
+          <div class="cell">
+            <div class="primary-text restaurant-name">{{ order.restaurantName }}</div>
+            <div class="secondary-text">Restaurant</div>
+          </div>
+
+          <div class="cell">
+            <div class="primary-text amount">₹{{ order.totalAmount }}</div>
+            <div class="secondary-text">Grand total</div>
+          </div>
+
+          <div class="cell">
+            <div class="primary-text">{{ formatPaymentMethod(order.paymentMethod) }}</div>
+            <div class="secondary-text">{{ order.paymentStatus }}</div>
+          </div>
+
+          <div class="cell">
+            <span [class]="getStatusClass(order.status)">
+              {{ formatStatus(order.status) }}
+            </span>
+          </div>
+
+          <div class="cell">
+            <div class="primary-text">{{ order.createdAt | date:'dd MMM yyyy' }}</div>
+            <div class="secondary-text">{{ order.createdAt | date:'hh:mm a' }}</div>
+          </div>
+
+          <div class="cell">
+            <select [(ngModel)]="selectedStatuses[order.id]" class="status-select">
+              <option *ngFor="let status of statusOptions" [ngValue]="status">
+                {{ formatStatus(status) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="cell">
+            <button class="update-btn" (click)="updateStatus(order)"
+              [disabled]="selectedStatuses[order.id] === order.status || updatingOrderId === order.id">
+              {{ updatingOrderId === order.id ? 'Saving...' : 'Update' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-cards mobile-only">
+        <div class="mobile-sort-row">
+          <button type="button" class="mobile-sort-btn" (click)="toggleCreatedAtSort()">
+            Created At
+            <span class="mobile-sort-arrows">
+              <span [class.active-arrow]="sortBy === 'OLDEST'">↑</span>
+              <span [class.active-arrow]="sortBy === 'LATEST'">↓</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="mobile-card" *ngFor="let order of filteredOrders; trackBy: trackByOrderId">
+          <div class="mobile-card__top">
+            <div>
+              <div class="mobile-order-id">#{{ order.id }}</div>
+              <div class="mobile-restaurant">{{ order.restaurantName }}</div>
+            </div>
+
+            <span [class]="getStatusClass(order.status)">
+              {{ formatStatus(order.status) }}
+            </span>
+          </div>
+
+          <div class="mobile-meta">
+            <div class="meta-item">
+              <span class="meta-label">Total</span>
+              <span class="meta-value">₹{{ order.totalAmount }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-label">Payment</span>
+              <span class="meta-value">{{ formatPaymentMethod(order.paymentMethod) }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-label">Pay Status</span>
+              <span class="meta-value">{{ order.paymentStatus }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-label">Created</span>
+              <span class="meta-value">{{ order.createdAt | date:'dd MMM, hh:mm a' }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-actions">
+            <select [(ngModel)]="selectedStatuses[order.id]" class="status-select mobile-status-select">
+              <option *ngFor="let status of statusOptions" [ngValue]="status">
+                {{ formatStatus(status) }}
+              </option>
+            </select>
+
+            <button class="update-btn mobile-update-btn" (click)="updateStatus(order)"
+              [disabled]="selectedStatuses[order.id] === order.status || updatingOrderId === order.id">
+              {{ updatingOrderId === order.id ? 'Saving...' : 'Update Status' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="toast-stack">
+    <div *ngFor="let toast of toasts; trackBy: trackByToastId" class="toast-item" [ngClass]="toast.type">
+      <div class="toast-indicator"></div>
+      <div class="toast-content">
+        <div class="toast-title">{{ toast.type === 'success' ? 'Success' : 'Error' }}</div>
+        <div class="toast-message">{{ toast.message }}</div>
+      </div>
+      <button class="toast-close" (click)="removeToast(toast.id)">✕</button>
+    </div>
+  </div>
+
+
+  <button type="button" class="scroll-top-btn" [class.show]="showScrollTop" (click)="scrollToTop()"
+    aria-label="Scroll to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+</div>

@@ -4,7 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { RestaurantService, Restaurant } from '../../../core/services/restaurant';
 import { UserService } from '../../../core/services/user';
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, HostListener } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+  inject,
+  signal,
+  HostListener
+} from '@angular/core';
+
 declare var bootstrap: any;
 
 @Component({
@@ -14,7 +25,7 @@ declare var bootstrap: any;
   templateUrl: './home-main.html',
   styleUrl: './home-main.css'
 })
-export class HomeMain implements OnInit, OnDestroy {
+export class HomeMain implements OnInit, AfterViewInit, OnDestroy {
   private svc = inject(RestaurantService);
   private router = inject(Router);
   private userService = inject(UserService);
@@ -29,10 +40,13 @@ export class HomeMain implements OnInit, OnDestroy {
   isLoggedIn = false;
   showScrollTop = false;
   hasLoadError = false;
+
   private toastInstance: any;
   private authSub!: Subscription;
 
   ngOnInit() {
+    this.syncLoginState();
+
     this.authSub = this.userService.isLoggedIn$.subscribe(state => {
       this.isLoggedIn = state;
       this.applyRestaurantView();
@@ -60,6 +74,23 @@ export class HomeMain implements OnInit, OnDestroy {
   @HostListener('window:scroll')
   onWindowScroll() {
     this.updateScrollButton();
+  }
+
+  @HostListener('window:storage')
+  onStorageChange() {
+    this.syncLoginState();
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus() {
+    this.syncLoginState();
+  }
+
+  private syncLoginState() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    this.isLoggedIn = !!token && !!role;
+    this.applyRestaurantView();
   }
 
   updateScrollButton() {
@@ -106,11 +137,13 @@ export class HomeMain implements OnInit, OnDestroy {
 
     if (!this.isLoggedIn) {
       this.filtered.set(
-        !q ? data : data.filter(r =>
-          r.name.toLowerCase().includes(q) ||
-          r.cuisine.toLowerCase().includes(q) ||
-          r.location.toLowerCase().includes(q)
-        )
+        !q
+          ? data
+          : data.filter(r =>
+              r.name.toLowerCase().includes(q) ||
+              r.cuisine.toLowerCase().includes(q) ||
+              r.location.toLowerCase().includes(q)
+            )
       );
       return;
     }
@@ -119,10 +152,10 @@ export class HomeMain implements OnInit, OnDestroy {
       !q
         ? data.filter(r => r.isActive)
         : data.filter(r =>
-          r.name.toLowerCase().includes(q) ||
-          r.cuisine.toLowerCase().includes(q) ||
-          r.location.toLowerCase().includes(q)
-        )
+            r.name.toLowerCase().includes(q) ||
+            r.cuisine.toLowerCase().includes(q) ||
+            r.location.toLowerCase().includes(q)
+          )
     );
   }
 
@@ -174,12 +207,28 @@ export class HomeMain implements OnInit, OnDestroy {
     if (parent) parent.classList.add('image-failed');
   }
 
-  openRestaurant(r: Restaurant) {
+  private releaseActiveCard(): void {
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur();
+  }
+
+  openRestaurant(r: Restaurant, event?: MouseEvent) {
     if (!this.isLoggedIn) {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.releaseActiveCard();
       this.showSignInToast();
       return;
     }
-    if (!r.isActive) return;
+
+    if (!r.isActive) {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.releaseActiveCard();
+      return;
+    }
+
+    this.releaseActiveCard();
     this.router.navigate(['/home/restaurant', r.id]);
   }
 }

@@ -1,24 +1,37 @@
 <div class="admin-layout">
+  <div class="sidebar-backdrop" [class.show]="isSidebarOpen" (click)="closeSidebar()"></div>
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      🍕 <span>Cravyo</span>
+  <aside class="sidebar" [class.sidebar-open]="isSidebarOpen">
+    <div class="sidebar-top">
+      <div class="sidebar-brand">
+        🍕 <span>Cravyo</span>
+      </div>
+
+      <button class="sidebar-close-btn" type="button" (click)="closeSidebar()">
+        ✕
+      </button>
     </div>
 
     <div class="sidebar-section-label">Management</div>
 
     <nav class="sidebar-nav">
-      <a routerLink="restaurants" routerLinkActive="active" class="nav-link-item">
+      <a routerLink="restaurants" routerLinkActive="active" class="nav-link-item" (click)="handleNavClick()">
         <span class="nav-icon">🏪</span> Restaurants
       </a>
-      <a routerLink="menu-items" routerLinkActive="active" class="nav-link-item">
+
+      <a routerLink="menu-items" routerLinkActive="active" class="nav-link-item" (click)="handleNavClick()">
         <span class="nav-icon">🍽️</span> Menu Items
       </a>
-      <a routerLink="users" routerLinkActive="active" class="nav-link-item">
+
+      <a routerLink="users" routerLinkActive="active" class="nav-link-item" (click)="handleNavClick()">
         <span class="nav-icon">👥</span> Users
       </a>
-      <a routerLink="coupons" routerLinkActive="active" class="nav-link-item">
+
+      <a routerLink="orders" routerLinkActive="active" class="nav-link-item" (click)="handleNavClick()">
+        <span class="nav-icon">📦</span> Orders
+      </a>
+
+      <a routerLink="coupons" routerLinkActive="active" class="nav-link-item" (click)="handleNavClick()">
         <span class="nav-icon">🎟️</span> Coupons
       </a>
     </nav>
@@ -31,24 +44,25 @@
           <div class="user-role">Administrator</div>
         </div>
       </div>
+
+      <button class="sidebar-logout-btn" type="button" (click)="logout()">
+        Logout
+      </button>
     </div>
   </aside>
 
-  <!-- Main Content -->
   <div class="main-content">
-
-    <!-- Topbar -->
     <header class="topbar">
-      <span class="topbar-title">Admin Panel</span>
-      <button class="btn btn-sm btn-outline-danger" (click)="logout()">
-        Logout
-      </button>
+      <div class="topbar-left">
+        <button class="menu-toggle-btn" type="button" (click)="toggleSidebar()">
+          ☰
+        </button>
+        <span class="topbar-title">Admin Panel</span>
+      </div>
     </header>
 
-    <!-- Child routes render here -->
     <div class="content-area">
       <router-outlet />
     </div>
-
   </div>
 </div>

@@ -11,6 +11,7 @@ export type PaymentMethod =
   | 'UPI';
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+
 export type OrderStatus =
   | 'PLACED'
   | 'CONFIRMED'
@@ -71,22 +72,36 @@ export interface OrderResponse {
   items: OrderItemResponse[];
 }
 
+export interface UpdateOrderStatusRequest {
+  status: OrderStatus;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://api-gateway-ftbf.onrender.com/api/orders';
+
+  private userApiUrl = 'https://api-gateway-ftbf.onrender.com/api/orders';
+  private adminApiUrl = 'https://api-gateway-ftbf.onrender.com/api/admin/orders';
 
   placeOrder(payload: PlaceOrderRequest): Observable<OrderResponse> {
-    return this.http.post<OrderResponse>(this.apiUrl, payload);
+    return this.http.post<OrderResponse>(this.userApiUrl, payload);
   }
 
   getMyOrders(): Observable<OrderSummaryResponse[]> {
-    return this.http.get<OrderSummaryResponse[]>(`${this.apiUrl}/my`);
+    return this.http.get<OrderSummaryResponse[]>(`${this.userApiUrl}/my`);
   }
 
   getOrderById(orderId: number): Observable<OrderResponse> {
-    return this.http.get<OrderResponse>(`${this.apiUrl}/${orderId}`);
+    return this.http.get<OrderResponse>(`${this.userApiUrl}/${orderId}`);
+  }
+
+  getAllOrders(): Observable<OrderSummaryResponse[]> {
+    return this.http.get<OrderSummaryResponse[]>(this.adminApiUrl);
+  }
+
+  updateOrderStatus(orderId: number, payload: UpdateOrderStatusRequest): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.adminApiUrl}/${orderId}/status`, payload);
   }
 }

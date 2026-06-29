@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { Login } from './pages/login/login';
 import { Admin } from './pages/admin/admin';
 import { Restaurants } from './pages/admin/restaurants/restaurants';
 import { MenuItems } from './pages/admin/menu-items/menu-items';
@@ -14,6 +13,8 @@ import { roleGuard } from './guards/role-guard';
 import { Checkout } from './pages/home/checkout/checkout';
 import { Coupons } from './pages/admin/coupons/coupons';
 import { Test } from './test/test';
+import { AdminOrders } from './pages/admin/orders/orders';
+
 
 
 export const routes: Routes = [
@@ -28,7 +29,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'main', pathMatch: 'full' },
       { path: 'main', component: HomeMain },
-      { path: 'restaurant/:id', component: RestaurantDetail, canActivate: [roleGuard], data: { role: 'USER' }},
+      { path: 'restaurant/:id', component: RestaurantDetail, canActivate: [roleGuard], data: { role: 'USER' } },
       { path: 'checkout', component: Checkout, canActivate: [roleGuard], data: { role: 'USER' } },
 
       { path: 'orders', component: Orders, canActivate: [roleGuard], data: { role: 'USER' } },
@@ -52,6 +53,7 @@ export const routes: Routes = [
       { path: 'restaurants', component: Restaurants },
       { path: 'menu-items', component: MenuItems },
       { path: 'users', component: Users },
+      { path: 'orders', component: AdminOrders },
       { path: 'coupons', component: Coupons }
     ]
   },
