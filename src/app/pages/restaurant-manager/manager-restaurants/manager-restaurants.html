@@ -1,0 +1,460 @@
+<section class="restaurants-page">
+  <div class="restaurants-card">
+
+    <header class="page-header">
+      <div>
+        <h1>My restaurants</h1>
+
+        <p class="page-subtitle">
+          Manage your branches, restaurant details, availability and menus from one place.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="primary-button"
+          (click)="createRestaurant()"
+        >
+          <span class="button-icon">+</span>
+          <span>Create restaurant</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="summary-row" *ngIf="!loading">
+      <div class="summary-item">
+        <span class="summary-label">Total restaurants</span>
+        <strong>{{ restaurants.length }}</strong>
+      </div>
+
+      <div class="summary-item active-summary">
+        <span class="summary-label">Active</span>
+        <strong>{{ activeCount }}</strong>
+      </div>
+
+      <div class="summary-item inactive-summary">
+        <span class="summary-label">Inactive</span>
+        <strong>{{ inactiveCount }}</strong>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <label class="search-box">
+        <span class="search-icon">⌕</span>
+
+        <input
+          type="search"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="Search restaurant or location"
+          aria-label="Search restaurants"
+        />
+      </label>
+
+      <div
+        class="status-tabs"
+        role="tablist"
+        aria-label="Restaurant status"
+      >
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'ALL'"
+          (click)="setStatusFilter('ALL')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'ACTIVE'"
+          (click)="setStatusFilter('ACTIVE')"
+        >
+          Active
+        </button>
+
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'INACTIVE'"
+          (click)="setStatusFilter('INACTIVE')"
+        >
+          Inactive
+        </button>
+      </div>
+
+      <select
+        class="filter-select"
+        [(ngModel)]="cuisineFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="ALL">All cuisines</option>
+
+        <option
+          *ngFor="let cuisine of cuisines"
+          [value]="cuisine"
+        >
+          {{ cuisine }}
+        </option>
+      </select>
+
+      <select
+        class="filter-select"
+        [(ngModel)]="foodTypeFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="ALL">All food types</option>
+        <option value="PURE_VEG">Pure veg</option>
+        <option value="BOTH">Veg &amp; non-veg</option>
+      </select>
+    </div>
+
+    <div class="error-alert" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <div
+        class="loading-row"
+        *ngFor="let item of [1, 2, 3, 4]"
+      ></div>
+    </div>
+
+    <div
+      class="empty-state"
+      *ngIf="!loading && filteredRestaurants.length === 0"
+    >
+      <div class="empty-icon">⌂</div>
+
+      <h2>No restaurants found</h2>
+
+      <p>Try changing your filters or create a new restaurant.</p>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="createRestaurant()"
+      >
+        <span class="button-icon">+</span>
+        <span>Create restaurant</span>
+      </button>
+    </div>
+
+    <!-- Desktop table -->
+    <div
+      class="table-wrapper"
+      *ngIf="!loading && filteredRestaurants.length > 0"
+    >
+      <table class="restaurants-table">
+        <thead>
+          <tr>
+            <th>Restaurant</th>
+            <th>Cuisine</th>
+            <th>Food type</th>
+            <th>Status</th>
+            <th>Location</th>
+            <th class="actions-heading">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let restaurant of filteredRestaurants;
+              trackBy: trackByRestaurantId
+            "
+          >
+            <td>
+              <div class="restaurant-cell">
+                <div class="restaurant-image">
+                  <img
+                    *ngIf="restaurant.image"
+                    [src]="restaurant.image"
+                    [alt]="restaurant.name"
+                  />
+
+                  <span *ngIf="!restaurant.image">🍽</span>
+                </div>
+
+                <div>
+                  <div class="restaurant-name">
+                    {{ restaurant.name }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ restaurant.cuisine || '—' }}</td>
+
+            <td>
+              <span class="food-type">
+                {{ getFoodTypeLabel(restaurant) }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="isActive(restaurant)"
+              >
+                <span class="status-dot"></span>
+                {{ isActive(restaurant) ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="location-text location-desktop"
+                [title]="getLocation(restaurant)"
+              >
+                {{ getLocation(restaurant) }}
+              </span>
+            </td>
+
+            <td class="actions-cell">
+              <div class="action-menu-wrapper">
+                <button
+                  type="button"
+                  class="dots-button"
+                  (click)="toggleActions(restaurant.id, $event)"
+                  [attr.aria-expanded]="openActionId === restaurant.id"
+                  aria-label="Restaurant actions"
+                >
+                  ⋮
+                </button>
+
+                <div
+                  class="action-menu"
+                  *ngIf="openActionId === restaurant.id"
+                >
+                  <button
+                    type="button"
+                    (click)="editRestaurant(restaurant)"
+                  >
+                    <span>✎</span>
+                    <span>Edit restaurant</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="viewMenu(restaurant)"
+                  >
+                    <span>🍽</span>
+                    <span>View menu</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="manageCoupons(restaurant)"
+                  >
+                    <span>🏷</span>
+                    <span>Coupons</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="viewReviews(restaurant)"
+                  >
+                    <span>★</span>
+                    <span>Reviews &amp; ratings</span>
+                  </button>
+
+                  <div class="menu-divider"></div>
+
+                  <button
+                    type="button"
+                    class="delete-action"
+                    (click)="askDelete(restaurant)"
+                  >
+                    <span>⌫</span>
+                    <span>Delete restaurant</span>
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div
+      class="restaurant-cards"
+      *ngIf="!loading && filteredRestaurants.length > 0"
+    >
+      <article
+        class="restaurant-card"
+        *ngFor="
+          let restaurant of filteredRestaurants;
+          trackBy: trackByRestaurantId
+        "
+      >
+        <div class="mobile-card-header">
+          <div class="restaurant-cell">
+            <div class="restaurant-image">
+              <img
+                *ngIf="restaurant.image"
+                [src]="restaurant.image"
+                [alt]="restaurant.name"
+              />
+
+              <span *ngIf="!restaurant.image">🍽</span>
+            </div>
+
+            <div>
+              <div class="restaurant-name">
+                {{ restaurant.name }}
+              </div>
+            </div>
+          </div>
+
+          <div class="action-menu-wrapper">
+            <button
+              type="button"
+              class="dots-button"
+              (click)="toggleActions(restaurant.id, $event)"
+              [attr.aria-expanded]="openActionId === restaurant.id"
+              aria-label="Restaurant actions"
+            >
+              ⋮
+            </button>
+
+            <div
+              class="action-menu mobile-menu"
+              *ngIf="openActionId === restaurant.id"
+            >
+              <button
+                type="button"
+                (click)="editRestaurant(restaurant)"
+              >
+                <span>✎</span>
+                <span>Edit restaurant</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="viewMenu(restaurant)"
+              >
+                <span>🍽</span>
+                <span>View menu</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="manageCoupons(restaurant)"
+              >
+                <span>🏷</span>
+                <span>Coupons</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="viewReviews(restaurant)"
+              >
+                <span>★</span>
+                <span>Reviews &amp; ratings</span>
+              </button>
+
+              <div class="menu-divider"></div>
+
+              <button
+                type="button"
+                class="delete-action"
+                (click)="askDelete(restaurant)"
+              >
+                <span>⌫</span>
+                <span>Delete restaurant</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-card-details">
+          <div>
+            <span>Cuisine</span>
+            <strong>{{ restaurant.cuisine || '—' }}</strong>
+          </div>
+
+          <div>
+            <span>Food type</span>
+            <strong>{{ getFoodTypeLabel(restaurant) }}</strong>
+          </div>
+
+          <div>
+            <span>Location</span>
+
+            <strong
+              class="location-text location-mobile"
+              [title]="getLocation(restaurant)"
+            >
+              {{ getLocation(restaurant) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Status</span>
+
+            <strong>
+              <span
+                class="status-badge"
+                [class.active]="isActive(restaurant)"
+              >
+                <span class="status-dot"></span>
+                {{ isActive(restaurant) ? 'Active' : 'Inactive' }}
+              </span>
+            </strong>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <footer
+      class="list-footer"
+      *ngIf="!loading && filteredRestaurants.length > 0"
+    >
+      Showing {{ filteredRestaurants.length }} of {{ restaurants.length }} restaurants
+    </footer>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div
+    class="modal-backdrop"
+    *ngIf="restaurantToDelete"
+    (click)="cancelDelete()"
+  >
+    <section
+      class="delete-modal"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-icon">!</div>
+
+      <h2>Delete restaurant?</h2>
+
+      <p>
+        You are about to permanently delete
+        <strong>{{ restaurantToDelete.name }}</strong>
+        and all of its menu items. This action cannot be undone.
+      </p>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="cancelDelete()"
+        >
+          Keep restaurant
+        </button>
+
+        <button
+          type="button"
+          class="danger-button"
+          (click)="confirmDelete()"
+          [disabled]="deleting"
+        >
+          {{ deleting ? 'Deleting…' : 'Delete restaurant' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</section>

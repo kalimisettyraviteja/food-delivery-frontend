@@ -818,3 +818,10 @@
     font-size: 11.5px;
   }
 }
+
+
+.status-badge.picked-up {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+}

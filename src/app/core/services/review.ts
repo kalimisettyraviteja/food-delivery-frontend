@@ -15,7 +15,7 @@ export interface ReviewResponse {
   userId: number;
   userEmail: string;
   rating: number;
-  reviewText: string;
+  reviewText: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,24 +30,70 @@ export interface RestaurantRatingSummaryResponse {
   providedIn: 'root'
 })
 export class ReviewService {
-  private http = inject(HttpClient);
-  private apiUrl = 'https://api-gateway-ftbf.onrender.com/api/reviews';
+  private readonly http = inject(HttpClient);
 
-  createReview(payload: CreateReviewRequest): Observable<ReviewResponse> {
-    return this.http.post<ReviewResponse>(this.apiUrl, payload);
+  /*
+   * Customer review APIs:
+   * POST /api/reviews
+   * GET  /api/reviews/orders/{orderId}
+   */
+  private readonly customerApiUrl = 'http://localhost:8080/api/reviews';
+
+  /*
+   * Restaurant manager review APIs:
+   * GET /api/manager/reviews?restaurantId={restaurantId}
+   * GET /api/manager/reviews/summary?restaurantId={restaurantId}
+   */
+  private readonly managerApiUrl = 'http://localhost:8080/api/manager/reviews';
+
+  // -----------------------------------------------
+  // Customer review APIs
+  // -----------------------------------------------
+
+  createReview(
+    payload: CreateReviewRequest
+  ): Observable<ReviewResponse> {
+    return this.http.post<ReviewResponse>(
+      this.customerApiUrl,
+      payload
+    );
   }
 
-  getReviewByOrderId(orderId: number): Observable<ReviewResponse> {
-    return this.http.get<ReviewResponse>(`${this.apiUrl}/orders/${orderId}`);
+  getReviewByOrderId(
+    orderId: number
+  ): Observable<ReviewResponse | null> {
+    return this.http.get<ReviewResponse | null>(
+      `${this.customerApiUrl}/orders/${orderId}`
+    );
   }
 
-  getRestaurantReviews(restaurantId: number): Observable<ReviewResponse[]> {
-    return this.http.get<ReviewResponse[]>(`${this.apiUrl}/restaurants/${restaurantId}`);
+  // -----------------------------------------------
+  // Restaurant manager review APIs
+  // -----------------------------------------------
+
+  getManagerRestaurantReviews(
+    restaurantId: number
+  ): Observable<ReviewResponse[]> {
+    return this.http.get<ReviewResponse[]>(
+      this.managerApiUrl,
+      {
+        params: {
+          restaurantId: String(restaurantId)
+        }
+      }
+    );
   }
 
-  getRestaurantRatingSummary(restaurantId: number): Observable<RestaurantRatingSummaryResponse> {
+  getManagerRestaurantRatingSummary(
+    restaurantId: number
+  ): Observable<RestaurantRatingSummaryResponse> {
     return this.http.get<RestaurantRatingSummaryResponse>(
-      `${this.apiUrl}/restaurants/${restaurantId}/summary`
+      `${this.managerApiUrl}/summary`,
+      {
+        params: {
+          restaurantId: String(restaurantId)
+        }
+      }
     );
   }
 }

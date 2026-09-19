@@ -1,0 +1,546 @@
+:host {
+  background: #f7f8fc;
+  display: block;
+  min-height: 100%;
+}
+
+.manager-orders-page {
+  margin: 0 auto;
+  max-width: 1600px;
+}
+
+/* =================================================
+   Page header
+   ================================================= */
+
+.eyebrow {
+  color: #6c63ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: #20212a;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  color: #7c8191;
+  font-size: 0.92rem;
+}
+
+.header-actions .btn {
+  white-space: nowrap;
+}
+
+/* =================================================
+   Shared cards
+   ================================================= */
+
+.stat-card,
+.filter-card,
+.state-card,
+.desktop-orders,
+.order-card {
+  border-radius: 16px;
+}
+
+/* =================================================
+   Statistics
+   ================================================= */
+
+.stat-card .card-body {
+  align-items: center;
+  display: flex;
+  gap: 0.9rem;
+  min-height: 104px;
+  padding: 1rem;
+}
+
+.stat-icon {
+  align-items: center;
+  border-radius: 13px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.stat-icon-orders {
+  background: #ebeaff;
+  color: #645bdb;
+}
+
+.stat-icon-active {
+  background: #fff3d6;
+  color: #c88600;
+}
+
+.stat-icon-delivered {
+  background: #def7e8;
+  color: #198754;
+}
+
+.stat-icon-revenue {
+  background: #e0f3ff;
+  color: #1976d2;
+}
+
+.stat-label {
+  color: #858999;
+  font-size: 0.77rem;
+  font-weight: 600;
+}
+
+.stat-value {
+  color: #292c39;
+  font-size: 1.25rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* =================================================
+   Filters
+   ================================================= */
+
+.filter-card .card-body {
+  padding: 1.15rem 1.25rem;
+}
+
+.filter-card .form-label {
+  color: #4d5161;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+/* =================================================
+   Order ID search
+   Uses type="text" in HTML to prevent the browser's
+   native search clear button from appearing.
+   ================================================= */
+
+.order-id-search {
+  position: relative;
+}
+
+.order-id-search .form-control {
+  padding-left: 2.3rem;
+  padding-right: 2.7rem;
+}
+
+.order-id-search .form-control:focus {
+  border-color: rgba(108, 99, 255, 0.55);
+  box-shadow: 0 0 0 0.22rem rgba(108, 99, 255, 0.12);
+}
+
+.search-icon {
+  color: #8d92a0;
+  font-size: 0.86rem;
+  left: 0.8rem;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.clear-search-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: #8d92a0;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.72rem;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 0.42rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  z-index: 2;
+}
+
+.clear-search-button:hover {
+  background: #f0f1f5;
+  color: #454a58;
+}
+
+.clear-search-button:focus-visible {
+  outline: 2px solid #6c63ff;
+  outline-offset: 1px;
+}
+
+.filter-actions {
+  align-items: center;
+  min-height: 38px;
+}
+
+.order-count {
+  color: #74798a;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.order-count strong {
+  color: #363a48;
+}
+
+/* =================================================
+   Orders table
+   ================================================= */
+
+.desktop-orders {
+  overflow: hidden;
+}
+
+.table {
+  --bs-table-hover-bg: #fafaff;
+}
+
+.table thead th {
+  background: #f8f9fc;
+  border-bottom: 1px solid #eceef4;
+  color: #74798a;
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1rem 0.9rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  border-color: #f0f1f5;
+  padding: 1rem 0.9rem;
+  vertical-align: middle;
+}
+
+.order-number {
+  color: #252735;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.restaurant-name {
+  color: #303342;
+  font-size: 0.91rem;
+  font-weight: 650;
+}
+
+.amount {
+  color: #252735;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-select {
+  min-width: 155px;
+}
+
+/* =================================================
+   Status badges
+   ================================================= */
+
+.status-badge {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.48rem 0.7rem;
+  white-space: nowrap;
+}
+
+.status-placed {
+  background: #e9ecef;
+  color: #4f5561;
+}
+
+.status-confirmed {
+  background: #d9f2fa;
+  color: #06738d;
+}
+
+.status-preparing {
+  background: #fff0c9;
+  color: #986600;
+}
+
+.status-picked-up {
+  background: #e3edff;
+  color: #2359a7;
+}
+
+.status-out-for-delivery {
+  background: #e7e1ff;
+  color: #5f45b0;
+}
+
+.status-delivered {
+  background: #d9f5e4;
+  color: #187544;
+}
+
+.status-cancelled {
+  background: #fde2e4;
+  color: #b42332;
+}
+
+/* =================================================
+   Empty and loading states
+   ================================================= */
+
+.empty-icon {
+  align-items: center;
+  background: #eeedff;
+  border-radius: 50%;
+  color: #6c63ff;
+  display: inline-flex;
+  font-size: 1.5rem;
+  height: 58px;
+  justify-content: center;
+  margin: 0 auto;
+  width: 58px;
+}
+
+/* =================================================
+   Mobile order cards
+   ================================================= */
+
+.mobile-orders {
+  display: none;
+}
+
+.order-card {
+  background: #ffffff;
+}
+
+.order-card .card-body {
+  padding: 1rem;
+}
+
+.restaurant-block {
+  border-bottom: 1px solid #eff0f4;
+  padding-bottom: 0.85rem;
+}
+
+.order-meta-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.meta-label {
+  color: #858999;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.meta-value {
+  color: #373a47;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.order-total-row {
+  align-items: flex-start;
+  background: #fafbfe;
+  border-radius: 10px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.8rem;
+}
+
+.status-update-box {
+  background: #f8f9fc;
+  border: 1px solid #f0f1f5;
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
+.status-update-box .form-label {
+  color: #4d5161;
+  margin-bottom: 0.4rem;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
+/* =================================================
+   Status confirmation modal
+   ================================================= */
+
+.modal-backdrop-custom {
+  align-items: center;
+  background: rgba(22, 26, 37, 0.52);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1055;
+}
+
+.status-confirm-modal {
+  border-radius: 18px;
+  max-width: 460px;
+  width: 100%;
+}
+
+.modal-icon {
+  align-items: center;
+  background: #eeedff;
+  border-radius: 50%;
+  color: #6258dc;
+  display: inline-flex;
+  font-size: 1.35rem;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.modal-title {
+  color: #282b37;
+  font-weight: 700;
+}
+
+.status-change-preview {
+  align-items: center;
+  background: #fafbfe;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  padding: 0.85rem;
+}
+
+/* =================================================
+   Tablet
+   ================================================= */
+
+@media (max-width: 991.98px) {
+  .desktop-orders {
+    display: none;
+  }
+
+  .mobile-orders {
+    display: block;
+  }
+
+  .filter-actions {
+    justify-content: flex-start !important;
+  }
+}
+
+/* =================================================
+   Mobile
+   ================================================= */
+
+@media (max-width: 767.98px) {
+  .manager-orders-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.48rem;
+  }
+
+  .header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .header-actions .btn,
+  .header-actions a {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  .header-actions .btn-primary {
+    grid-column: 1 / -1;
+  }
+
+  .stat-card .card-body {
+    gap: 0.7rem;
+    min-height: 90px;
+    padding: 0.8rem;
+  }
+
+  .stat-icon {
+    border-radius: 11px;
+    font-size: 1.05rem;
+    height: 38px;
+    width: 38px;
+  }
+
+  .stat-label {
+    font-size: 0.69rem;
+  }
+
+  .stat-value {
+    font-size: 1.03rem;
+  }
+
+  .filter-card .card-body {
+    padding: 1rem;
+  }
+
+  .filter-actions {
+    justify-content: space-between !important;
+  }
+
+  .order-meta-grid {
+    gap: 0.75rem;
+  }
+
+  .status-confirm-modal {
+    margin-bottom: 0;
+  }
+}
+
+/* =================================================
+   Small phones
+   ================================================= */
+
+@media (max-width: 374.98px) {
+  .header-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions .btn-primary {
+    grid-column: auto;
+  }
+
+  .order-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-change-preview {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .status-change-preview .bi-arrow-right {
+    transform: rotate(90deg);
+  }
+
+  .filter-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

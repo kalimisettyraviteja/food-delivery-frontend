@@ -1,201 +1,588 @@
 <div class="checkout-page">
-  <div class="checkout-container py-4 py-lg-4">
+  <div class="checkout-container">
     <div class="checkout-shell">
 
-      <div class="page-header mb-3">
-        <div class="title-wrap">
-          <div class="restaurant-badge" *ngIf="cartService.restaurantName()">
-            <i class="bi bi-shop"></i>
-            <span>{{ cartService.restaurantName() }}</span>
-          </div>
+      <header class="checkout-hero" *ngIf="cartService.restaurantName()">
+        <div class="checkout-hero-icon">
+          <i class="bi bi-bag-check-fill"></i>
         </div>
 
-        <div class="header-right">
-          <div class="nav-helper">
-            <div class="nav-helper-icon">
-              <i class="bi bi-bag-check"></i>
-            </div>
-            <div class="nav-helper-text">
-              <span class="nav-helper-label">Review your</span>
-              <strong>checkout details</strong>
-            </div>
-          </div>
+        <div class="checkout-hero-copy">
+          <span class="hero-kicker">CHECKOUT</span>
+
+          <h1>{{ cartService.restaurantName() }}</h1>
+
+          <p class="checkout-hero-subtitle">
+            Review your order details before confirming.
+          </p>
         </div>
-      </div>
+
+        <div class="checkout-hero-safe">
+          <i class="bi bi-shield-check"></i>
+          <span>Secure checkout</span>
+        </div>
+      </header>
 
       <div *ngIf="cartService.cart().length === 0" class="empty-state-card">
-        <div class="empty-icon">🛒</div>
-        <h3 class="mb-2">Your cart is empty</h3>
-        <p class="text-muted mb-3">Add some food items before continuing to checkout.</p>
-        <a routerLink="/home" class="btn btn-brand">Browse Restaurants</a>
-      </div>
-
-      <div class="row g-3 align-items-start" *ngIf="cartService.cart().length > 0">
-
-        <!-- Left Side -->
-        <div class="col-lg-7">
-          <div class="checkout-stack">
-
-            <!-- Order Items -->
-            <section class="checkout-card">
-              <div class="section-head">
-                <div>
-                  <h5 class="section-title mb-1">Order Items</h5>
-                  <p class="section-subtitle mb-0">Review your selected dishes.</p>
-                </div>
-                <span class="item-badge">{{ cartService.cartCount() }} items</span>
-              </div>
-
-              <div class="cart-list">
-                <div class="cart-item" *ngFor="let c of cartService.cart()">
-                  <div class="cart-item-main">
-                    <div class="item-name">{{ c.item.name }}</div>
-                    <div class="item-meta">₹{{ c.item.price }} × {{ c.qty }}</div>
-                  </div>
-
-                  <div class="qty-pill">
-                    <button type="button" class="qty-btn" (click)="cartService.decreaseQty(c.item.id!)">−</button>
-                    <span class="qty-value">{{ c.qty }}</span>
-                    <button type="button" class="qty-btn" (click)="cartService.increaseQty(c.item.id!)">+</button>
-                  </div>
-
-                  <div class="item-price-wrap">
-                    <div class="item-price">₹{{ c.item.price * c.qty }}</div>
-                    <button type="button" class="remove-link" (click)="cartService.removeFromCart(c.item.id!)">
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" class="btn btn-link-brand px-0 mt-2" (click)="addMoreItems()">
-                + Add more items
-              </button>
-            </section>
-          </div>
+        <div class="empty-icon">
+          <i class="bi bi-bag-x"></i>
         </div>
 
-        <!-- Right Side -->
-        <div class="col-lg-5">
-          <div class="right-panel-stack">
+        <h2>Your cart is empty</h2>
 
-            <!-- Coupon Section -->
-            <section class="checkout-card coupon-side-card">
-              <div class="section-head align-items-start">
+        <p>
+          Add some delicious dishes before continuing to checkout.
+        </p>
+
+        <a routerLink="/home/main" class="btn btn-brand empty-browse-button">
+          <i class="bi bi-compass"></i>
+          Browse restaurants
+        </a>
+      </div>
+
+      <div class="checkout-layout" *ngIf="cartService.cart().length > 0">
+        <main class="checkout-main">
+
+          <!-- Delivery Address -->
+          <section class="checkout-card delivery-card">
+            <div class="section-head">
+              <div class="section-heading-group">
+                <span class="section-step">1</span>
+
                 <div>
-                  <h5 class="section-title mb-1">Offers & Coupons</h5>
-                  <p class="section-subtitle mb-0">
-                    Enter a code or
-                    <span class="view-offers-link" data-bs-toggle="modal" data-bs-target="#offersModal">View Offers
-                      →</span>
+                  <h2 class="section-title">
+                    Delivery address
+                  </h2>
+
+                  <p class="section-subtitle">
+                    Where should we deliver your food?
                   </p>
                 </div>
               </div>
 
-              <div class="coupon-entry">
-                <input type="text" class="form-control coupon-input" placeholder="Enter coupon code"
-                  [value]="couponCode()" (input)="couponCode.set($any($event.target).value)" />
-                <button type="button" class="btn btn-brand" (click)="applyCoupon()">Apply</button>
-              </div>
-
-              <div class="coupon-message" *ngIf="couponMessage()">
-                {{ couponMessage() }}
-              </div>
-
-              <div class="applied-coupon-card" *ngIf="appliedCoupon()">
-                <div>
-                  <div class="applied-label">Applied coupon</div>
-                  <div class="applied-code">{{ appliedCoupon()?.code }}</div>
-                </div>
-                <button type="button" class="remove-coupon-btn" (click)="removeCoupon()">Remove</button>
-              </div>
-            </section>
-
-            <!-- Bill Summary -->
-            <aside class="checkout-card summary-card">
-              <div class="summary-top">
-                <h5 class="section-title mb-1">Bill Summary</h5>
-                <p class="section-subtitle mb-0">Final payable amount for this order.</p>
-              </div>
-
-              <div class="summary-block">
-                <div class="summary-row">
-                  <span>Subtotal</span>
-                  <strong>₹{{ subtotal() }}</strong>
-                </div>
-
-                <div class="summary-row">
-                  <span>Discount</span>
-                  <strong class="text-success">− ₹{{ discountAmount() }}</strong>
-                </div>
-
-                <div class="summary-row">
-                  <span>Delivery Charge</span>
-                  <strong>₹{{ deliveryCharge() }}</strong>
-                </div>
-
-                <div class="summary-row total-row">
-                  <span>Total</span>
-                  <strong>₹{{ finalTotal() }}</strong>
-                </div>
-              </div>
-
-              <div class="payment-trigger" data-bs-toggle="modal" data-bs-target="#paymentModal">
-                <div class="payment-trigger-left">
-                  <div class="payment-trigger-icon">
-                    <ng-container *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d55a06" stroke-width="2">
-                        <rect x="2" y="7" width="20" height="14" rx="2" />
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                      </svg>
-                    </ng-container>
-
-                    <ng-container *ngIf="selectedPaymentMethod() === 'PHONEPE'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739b7" stroke-width="2">
-                        <rect x="5" y="2" width="14" height="20" rx="2" />
-                        <circle cx="12" cy="17" r="1" />
-                      </svg>
-                    </ng-container>
-
-                    <ng-container *ngIf="selectedPaymentMethod() === 'GPAY'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M8 12h8M12 8v8" />
-                      </svg>
-                    </ng-container>
-
-                    <ng-container *ngIf="selectedPaymentMethod() === 'PAYTM'">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00baf2" stroke-width="2">
-                        <rect x="2" y="5" width="20" height="14" rx="2" />
-                        <path d="M2 10h20" />
-                      </svg>
-                    </ng-container>
-                  </div>
-
-                  <div>
-                    <div class="payment-trigger-label">Payment Method</div>
-                    <div class="payment-trigger-value">{{ getPaymentLabel(selectedPaymentMethod()) }}</div>
-                  </div>
-                </div>
-
-                <span class="payment-trigger-change">Change →</span>
-              </div>
-
-              <button type="button" class="btn btn-brand btn-place-order w-100" (click)="placeOrder()"
-                [disabled]="placingOrder()">
-                {{ placingOrder() ? 'Processing...' : (selectedPaymentMethod() === 'CASH_ON_DELIVERY' ? 'Place Order' :
-                'Pay Now') }}
+              <button type="button" class="text-action-button" data-bs-toggle="offcanvas"
+                data-bs-target="#checkoutAddressOffcanvas" (click)="prepareCheckoutAddressChange()">
+                Change
               </button>
+            </div>
 
-              <p class="summary-note mb-0">
-                By continuing, you agree to the items, applied offers, and selected payment method.
-              </p>
-            </aside>
+            <ng-container *ngIf="activeAddress() as address; else noAddressBlock">
+              <div class="delivery-address-selected">
+                <div class="address-icon-box">
+                  <i class="bi bi-geo-alt-fill"></i>
+                </div>
 
-          </div>
-        </div>
+                <div class="address-content">
+                  <div class="address-heading-row">
+                    <span class="saved-address-label">
+                      {{ getAddressLabel(address) }}
+                    </span>
+
+                    <span class="saved-address-badge" *ngIf="address.isDefault">
+                      Default
+                    </span>
+                  </div>
+
+                  <strong class="saved-address-name">
+                    {{ address.receiverName }}
+                  </strong>
+
+                  <span class="saved-address-phone">
+                    {{ address.phoneNumber }}
+                  </span>
+
+                  <p class="saved-address-line">
+                    {{ getAddressLine(address) }}
+                  </p>
+                </div>
+
+                <i class="bi bi-check-circle-fill address-selected-check"></i>
+              </div>
+            </ng-container>
+
+            <ng-template #noAddressBlock>
+              <div class="delivery-note-box warning-box">
+                <i class="bi bi-exclamation-circle-fill"></i>
+
+                <div>
+                  <strong>No delivery address selected</strong>
+
+                  <span>
+                    Select a saved address before placing your order.
+                  </span>
+
+                  <button type="button" class="text-action-button warning-action" data-bs-toggle="offcanvas"
+                    data-bs-target="#checkoutAddressOffcanvas" (click)="prepareCheckoutAddressChange()">
+                    Select address
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="serviceability-warning" *ngIf="outOfRange() && activeAddress()">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+
+              <div>
+                <strong>
+                  Address is outside delivery range
+                </strong>
+
+                <span>
+                  This restaurant is
+                  {{ straightLineDistanceKm() | number:'1.1-1' }} km away.
+                  Please select an address within 15 km.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Cart Items -->
+          <section class="checkout-card order-items-card">
+            <div class="section-head">
+              <div class="section-heading-group">
+                <span class="section-step">2</span>
+
+                <div>
+                  <h2 class="section-title">Your order</h2>
+
+                  <p class="section-subtitle">
+                    Review items before placing the order.
+                  </p>
+                </div>
+              </div>
+
+              <span class="item-badge">
+                {{ cartService.cartCount() }} items
+              </span>
+            </div>
+
+            <div class="cart-list">
+              <article class="cart-item" *ngFor="let c of cartService.cart()">
+                <div class="food-type-marker">
+                  <span></span>
+                </div>
+
+                <div class="cart-item-main">
+                  <h3 class="item-name">
+                    {{ c.item.name }}
+                  </h3>
+
+                  <p class="item-meta">
+                    ₹{{ c.item.price }} per item
+                  </p>
+
+                  <button type="button" class="remove-link" (click)="cartService.removeFromCart(c.item.id!)">
+                    Remove
+                  </button>
+                </div>
+
+                <div class="cart-item-actions">
+                  <strong class="item-price">
+                    ₹{{ c.item.price * c.qty }}
+                  </strong>
+
+                  <div class="qty-pill">
+                    <button type="button" class="qty-btn" (click)="cartService.decreaseQty(c.item.id!)"
+                      aria-label="Decrease quantity">
+                      −
+                    </button>
+
+                    <span class="qty-value">
+                      {{ c.qty }}
+                    </span>
+
+                    <button type="button" class="qty-btn" (click)="cartService.increaseQty(c.item.id!)"
+                      aria-label="Increase quantity">
+                      +
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <button type="button" class="add-more-button" (click)="addMoreItems()">
+              <span class="add-more-icon">+</span>
+              Add more items
+            </button>
+          </section>
+
+          <!-- Mobile Coupon -->
+          <section class="checkout-card mobile-only coupon-mobile-card">
+            <div class="section-head">
+              <div class="section-heading-group">
+                <span class="section-step">3</span>
+
+                <div>
+                  <h2 class="section-title">
+                    Offers & coupons
+                  </h2>
+
+                  <p class="section-subtitle">
+                    Save more on this order.
+                  </p>
+                </div>
+              </div>
+
+              <button type="button" class="text-action-button" data-bs-toggle="modal" data-bs-target="#offersModal">
+                View offers
+              </button>
+            </div>
+
+            <div class="coupon-entry">
+              <input type="text" class="form-control coupon-input" placeholder="Enter coupon code"
+                [value]="couponCode()" (input)="couponCode.set($any($event.target).value)" />
+
+              <button type="button" class="btn btn-brand coupon-apply-button" (click)="applyCoupon()">
+                Apply
+              </button>
+            </div>
+
+            <div class="coupon-message" *ngIf="couponMessage()"
+              [class.coupon-message-error]="couponMessageType() === 'error'"
+              [class.coupon-message-success]="couponMessageType() === 'success'">
+              {{ couponMessage() }}
+            </div>
+
+            <div class="applied-coupon-card" *ngIf="appliedCoupon()">
+              <div class="applied-coupon-left">
+                <span class="coupon-success-icon">
+                  <i class="bi bi-patch-check-fill"></i>
+                </span>
+
+                <div>
+                  <span class="applied-label">
+                    Coupon applied
+                  </span>
+
+                  <strong class="applied-code">
+                    {{ appliedCoupon()?.code }}
+                  </strong>
+                </div>
+              </div>
+
+              <button type="button" class="remove-coupon-btn" (click)="removeCoupon()">
+                Remove
+              </button>
+            </div>
+          </section>
+        </main>
+
+        <aside class="checkout-sidebar">
+
+          <!-- Desktop Coupon -->
+          <section class="checkout-card coupon-side-card desktop-only">
+            <div class="coupon-title-row">
+              <div class="coupon-title-icon">
+                <i class="bi bi-ticket-perforated-fill"></i>
+              </div>
+
+              <div>
+                <h2 class="section-title">
+                  Offers & coupons
+                </h2>
+
+                <p class="section-subtitle">
+                  Save more on this order.
+                </p>
+              </div>
+
+              <button type="button" class="view-offers-button" data-bs-toggle="modal" data-bs-target="#offersModal">
+                View offers
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+
+            <div class="coupon-entry">
+              <input type="text" class="form-control coupon-input" placeholder="Enter coupon code"
+                [value]="couponCode()" (input)="couponCode.set($any($event.target).value)" />
+
+              <button type="button" class="btn btn-brand coupon-apply-button" (click)="applyCoupon()">
+                Apply
+              </button>
+            </div>
+
+            <div class="coupon-message" *ngIf="couponMessage()"
+              [class.coupon-message-error]="couponMessageType() === 'error'"
+              [class.coupon-message-success]="couponMessageType() === 'success'">
+              {{ couponMessage() }}
+            </div>
+
+            <div class="applied-coupon-card" *ngIf="appliedCoupon()">
+              <div class="applied-coupon-left">
+                <span class="coupon-success-icon">
+                  <i class="bi bi-patch-check-fill"></i>
+                </span>
+
+                <div>
+                  <span class="applied-label">
+                    Coupon applied
+                  </span>
+
+                  <strong class="applied-code">
+                    {{ appliedCoupon()?.code }}
+                  </strong>
+                </div>
+              </div>
+
+              <button type="button" class="remove-coupon-btn" (click)="removeCoupon()">
+                Remove
+              </button>
+            </div>
+          </section>
+
+          <!-- Summary -->
+          <section class="checkout-card summary-card">
+            <div class="summary-title-row">
+              <div>
+                <h2 class="section-title">Bill details</h2>
+
+                <p class="section-subtitle">
+                  Your final payable amount.
+                </p>
+              </div>
+
+              <span class="summary-receipt-icon">
+                <i class="bi bi-receipt"></i>
+              </span>
+            </div>
+
+            <div class="summary-block">
+              <div class="summary-row">
+                <span>Item total</span>
+                <strong>₹{{ subtotal() }}</strong>
+              </div>
+
+              <div class="summary-row discount-summary-row" *ngIf="discountAmount() > 0">
+                <span>Coupon discount</span>
+                <strong>− ₹{{ discountAmount() }}</strong>
+              </div>
+
+              <div class="summary-row">
+                <span>Delivery fee</span>
+                <strong>₹{{ deliveryCharge() }}</strong>
+              </div>
+
+              <div class="summary-total-row">
+                <span>To pay</span>
+                <strong>₹{{ finalTotal() }}</strong>
+              </div>
+            </div>
+
+            <div class="payment-trigger" data-bs-toggle="modal" data-bs-target="#paymentModal">
+              <div class="payment-trigger-left">
+                <div class="payment-trigger-icon">
+                  <ng-container *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
+                    <i class="bi bi-cash-stack cod-payment-icon"></i>
+                  </ng-container>
+
+                  <ng-container *ngIf="selectedPaymentMethod() === 'PHONEPE'">
+                    <i class="bi bi-phone-fill phonepe-payment-icon"></i>
+                  </ng-container>
+
+                  <ng-container *ngIf="selectedPaymentMethod() === 'GPAY'">
+                    <i class="bi bi-google gpay-payment-icon"></i>
+                  </ng-container>
+
+                  <ng-container *ngIf="selectedPaymentMethod() === 'PAYTM'">
+                    <i class="bi bi-wallet2 paytm-payment-icon"></i>
+                  </ng-container>
+                </div>
+
+                <div>
+                  <span class="payment-trigger-label">
+                    Payment method
+                  </span>
+
+                  <strong class="payment-trigger-value">
+                    {{ getPaymentLabel(selectedPaymentMethod()) }}
+                  </strong>
+                </div>
+              </div>
+
+              <span class="payment-trigger-change">
+                Change
+                <i class="bi bi-chevron-right"></i>
+              </span>
+            </div>
+
+            <button type="button" class="btn btn-brand btn-place-order w-100" (click)="placeOrder()"
+              [disabled]="placingOrder() || outOfRange() || !activeAddress()"
+              [class.btn-disabled-visual]="placingOrder() || outOfRange() || !activeAddress()">
+              <span *ngIf="!placingOrder()">
+                {{
+                outOfRange()
+                ? 'Out of delivery range'
+                : !activeAddress()
+                ? 'Select address first'
+                : (
+                selectedPaymentMethod() === 'CASH_ON_DELIVERY'
+                ? 'Place order'
+                : 'Pay now'
+                )
+                }}
+              </span>
+
+              <span *ngIf="placingOrder()" class="processing-order-text">
+                <span class="button-spinner"></span>
+                Processing order...
+              </span>
+            </button>
+
+            <p class="summary-note">
+              <i class="bi bi-shield-check"></i>
+              Your order is secure and protected by Cravyo.
+            </p>
+          </section>
+        </aside>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Mobile order bar -->
+<div class="mobile-order-bar" *ngIf="cartService.cart().length > 0">
+  <div class="mobile-order-total">
+    <span>Total</span>
+    <strong>₹{{ finalTotal() }}</strong>
+  </div>
+
+  <button type="button" class="btn btn-brand mobile-place-order-button" (click)="placeOrder()"
+    [disabled]="placingOrder() || outOfRange() || !activeAddress()">
+    {{
+    placingOrder()
+    ? 'Processing...'
+    : outOfRange()
+    ? 'Out of range'
+    : !activeAddress()
+    ? 'Select address'
+    : (
+    selectedPaymentMethod() === 'CASH_ON_DELIVERY'
+    ? 'Place order'
+    : 'Pay now'
+    )
+    }}
+  </button>
+</div>
+
+<!-- Checkout Address Drawer -->
+<div class="offcanvas offcanvas-end checkout-address-offcanvas" data-bs-scroll="true" tabindex="-1"
+  id="checkoutAddressOffcanvas" aria-labelledby="checkoutAddressOffcanvasLabel">
+  <div class="offcanvas-header checkout-address-header">
+    <div>
+      <p class="checkout-address-kicker">
+        DELIVERY LOCATION
+      </p>
+
+      <h5 class="offcanvas-title" id="checkoutAddressOffcanvasLabel">
+        Change delivery address
+      </h5>
+
+      <p class="checkout-address-subtitle">
+        Choose a saved address within 15 km of the restaurant.
+      </p>
+    </div>
+
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+
+  <div class="offcanvas-body checkout-address-body">
+    <div class="checkout-address-loading" *ngIf="loadingSavedAddresses()">
+      <span class="coupon-loader"></span>
+      Loading your saved addresses...
+    </div>
+
+    <div class="checkout-address-error" *ngIf="checkoutAddressError()">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ checkoutAddressError() }}</span>
+    </div>
+
+    <div class="checkout-address-options" *ngIf="!loadingSavedAddresses()">
+      <button type="button" class="checkout-address-option" *ngFor="let address of visibleSavedAddresses()"
+        [class.selected]="isCheckoutAddressSelected(address)" [class.out-of-range]="
+          selectedAddressId() === address.id &&
+          selectedCheckoutAddressOutOfRange()
+        " (click)="selectCheckoutAddress(address)">
+        <div class="checkout-address-option-icon">
+          <i class="bi bi-house-door-fill"></i>
+        </div>
+
+        <div class="checkout-address-option-copy">
+          <div class="checkout-address-option-top">
+            <span class="checkout-address-option-label">
+              {{ getAddressLabel(address) }}
+            </span>
+
+            <span class="checkout-address-default-badge" *ngIf="address.isDefault">
+              Default
+            </span>
+
+            <span class="checkout-address-selected-badge" *ngIf="isCheckoutAddressSelected(address)">
+              Selected
+            </span>
+          </div>
+
+          <strong>
+            {{ address.receiverName }}
+          </strong>
+
+          <span>
+            {{ address.phoneNumber }}
+          </span>
+
+          <p>
+            {{ getAddressLine(address) }}
+          </p>
+
+          <span class="checkout-address-distance" *ngIf="
+              isCheckoutAddressSelected(address) &&
+              selectedCheckoutAddressDistanceKm() !== null
+            " [class.invalid]="selectedCheckoutAddressOutOfRange()">
+            <i class="bi bi-signpost-split-fill"></i>
+            {{
+            selectedCheckoutAddressDistanceKm()
+            | number:'1.1-1'
+            }}
+            km from restaurant
+            <span *ngIf="selectedCheckoutAddressOutOfRange()">
+              — outside delivery range
+            </span>
+          </span>
+        </div>
+
+        <i class="bi bi-check-circle-fill checkout-address-check" *ngIf="isCheckoutAddressSelected(address)"></i>
+      </button>
+
+      <button type="button" class="checkout-show-more-button" *ngIf="hasMoreSavedAddresses()"
+        (click)="showMoreCheckoutAddresses()">
+        + Show more addresses
+      </button>
+
+      <div class="checkout-address-empty" *ngIf="savedAddressList().length === 0">
+        <i class="bi bi-geo-alt"></i>
+        <strong>No saved addresses found</strong>
+        <span>
+          Add an address from your profile to continue.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="checkout-address-footer">
+    <button type="button" class="btn btn-brand w-100 checkout-confirm-address-button"
+      (click)="confirmCheckoutAddressChange()" [disabled]="
+        savingCheckoutAddress() ||
+        loadingSavedAddresses() ||
+        selectedAddressId() === null ||
+        selectedCheckoutAddressOutOfRange()
+      ">
+      {{
+      savingCheckoutAddress()
+      ? 'Saving address...'
+      : selectedCheckoutAddressOutOfRange()
+      ? 'Address outside delivery range'
+      : 'Deliver to this address'
+      }}
+    </button>
   </div>
 </div>
 
@@ -204,88 +591,174 @@
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
     <div class="modal-content offers-modal-content">
       <div class="modal-header offers-modal-header">
-        <div>
-          <h5 class="modal-title fw-bold" id="offersModalLabel">Available Offers</h5>
-          <p class="modal-subtitle mb-0">Apply offers below or enter a code on checkout.</p>
+        <div class="modal-heading-wrap">
+          <div class="modal-title-icon">
+            <i class="bi bi-ticket-perforated-fill"></i>
+          </div>
+
+          <div>
+            <h5 class="modal-title" id="offersModalLabel">
+              Available offers
+            </h5>
+
+            <p class="modal-subtitle mb-0">
+              Apply an offer and save on your food order.
+            </p>
+          </div>
         </div>
+
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body">
-        <div class="coupon-entry mb-3">
+      <div class="modal-body offers-modal-body">
+        <div class="coupon-entry modal-coupon-entry">
           <input type="text" class="form-control coupon-input" placeholder="Enter coupon code" [value]="couponCode()"
             (input)="couponCode.set($any($event.target).value)" />
-          <button type="button" class="btn btn-brand" (click)="applyCoupon()" data-bs-dismiss="modal">Apply</button>
+
+          <button type="button" class="btn btn-brand coupon-apply-button" (click)="applyCoupon()">
+            Apply
+          </button>
         </div>
 
-        <div class="coupon-message" *ngIf="couponMessage()">{{ couponMessage() }}</div>
+        <div class="coupon-message" *ngIf="couponMessage()"
+          [class.coupon-message-error]="couponMessageType() === 'error'"
+          [class.coupon-message-success]="couponMessageType() === 'success'">
+          {{ couponMessage() }}
+        </div>
 
         <div class="coupon-loading" *ngIf="loadingCoupons()">
-          Loading available coupons...
+          <span class="coupon-loader"></span>
+          Loading available offers...
         </div>
 
         <ng-container *ngIf="!loadingCoupons()">
-          <div class="coupon-group" *ngIf="globalCouponsUi().length > 0">
-            <h6 class="coupon-group-title">Global Offers</h6>
+          <section class="coupon-group" *ngIf="globalCouponsUi().length > 0">
+            <div class="coupon-group-heading">
+              <span class="coupon-group-icon global-icon">
+                <i class="bi bi-globe2"></i>
+              </span>
+
+              <div>
+                <h6 class="coupon-group-title">
+                  Cravyo offers
+                </h6>
+
+                <p>Available on selected restaurants.</p>
+              </div>
+            </div>
+
             <div class="coupon-list">
-              <div class="coupon-card" *ngFor="let coupon of globalCouponsUi()">
+              <article class="coupon-card" *ngFor="let coupon of globalCouponsUi()">
                 <div class="coupon-card-content">
-                  <span class="coupon-chip chip-global">GLOBAL</span>
-                  <div class="coupon-code">{{ coupon.code }}</div>
-                  <div class="coupon-benefit">{{ getCouponBenefitText(coupon) }}</div>
-                  <div class="coupon-desc">{{ coupon.description || 'Offer available' }}</div>
+                  <span class="coupon-chip chip-global">
+                    CRAVYO
+                  </span>
 
-                  <div class="coupon-status eligible" *ngIf="coupon.eligible">
-                    Eligible on orders above ₹{{ coupon.minOrderAmount }}
-                  </div>
+                  <h6 class="coupon-code">
+                    {{ coupon.code }}
+                  </h6>
 
-                  <div class="coupon-status locked" *ngIf="!coupon.eligible">
-                    Add ₹{{ coupon.amountNeeded }} more to unlock
-                  </div>
+                  <strong class="coupon-benefit">
+                    {{ getCouponBenefitText(coupon) }}
+                  </strong>
+
+                  <p class="coupon-desc">
+                    {{ coupon.description || 'Offer available' }}
+                  </p>
+
+                  <span class="coupon-status eligible" *ngIf="coupon.eligible">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Eligible on orders above
+                    ₹{{ coupon.minOrderAmount }}
+                  </span>
+
+                  <span class="coupon-status locked" *ngIf="!coupon.eligible">
+                    <i class="bi bi-lock-fill"></i>
+                    Add ₹{{ coupon.amountNeeded }}
+                    more to unlock
+                  </span>
                 </div>
 
                 <div class="coupon-card-action">
                   <button type="button" class="btn" [class.btn-brand]="coupon.eligible"
                     [class.btn-secondary-soft]="!coupon.eligible" [disabled]="!coupon.eligible"
-                    (click)="applySuggestedCoupon(coupon)" data-bs-dismiss="modal">
+                    (click)="applySuggestedCoupon(coupon)">
                     {{ coupon.eligible ? 'Apply' : 'Locked' }}
                   </button>
                 </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="coupon-group" *ngIf="restaurantCouponsUi().length > 0">
+            <div class="coupon-group-heading">
+              <span class="coupon-group-icon restaurant-offer-icon">
+                <i class="bi bi-shop"></i>
+              </span>
+
+              <div>
+                <h6 class="coupon-group-title">
+                  Restaurant offers
+                </h6>
+
+                <p>
+                  Exclusive offers from
+                  {{ cartService.restaurantName() }}.
+                </p>
               </div>
             </div>
-          </div>
 
-          <div class="coupon-group" *ngIf="restaurantCouponsUi().length > 0">
-            <h6 class="coupon-group-title">Restaurant Offers</h6>
             <div class="coupon-list">
-              <div class="coupon-card restaurant-card" *ngFor="let coupon of restaurantCouponsUi()">
+              <article class="coupon-card restaurant-card" *ngFor="let coupon of restaurantCouponsUi()">
                 <div class="coupon-card-content">
-                  <span class="coupon-chip chip-restaurant">RESTAURANT</span>
-                  <div class="coupon-code">{{ coupon.code }}</div>
-                  <div class="coupon-benefit">{{ getCouponBenefitText(coupon) }}</div>
-                  <div class="coupon-desc">{{ coupon.description || 'Restaurant special offer' }}</div>
+                  <span class="coupon-chip chip-restaurant">
+                    RESTAURANT
+                  </span>
 
-                  <div class="coupon-status eligible" *ngIf="coupon.eligible">
-                    Eligible on orders above ₹{{ coupon.minOrderAmount }}
-                  </div>
+                  <h6 class="coupon-code">
+                    {{ coupon.code }}
+                  </h6>
 
-                  <div class="coupon-status locked" *ngIf="!coupon.eligible">
-                    Add ₹{{ coupon.amountNeeded }} more to unlock
-                  </div>
+                  <strong class="coupon-benefit">
+                    {{ getCouponBenefitText(coupon) }}
+                  </strong>
+
+                  <p class="coupon-desc">
+                    {{
+                    coupon.description ||
+                    'Restaurant special offer'
+                    }}
+                  </p>
+
+                  <span class="coupon-status eligible" *ngIf="coupon.eligible">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Eligible on orders above
+                    ₹{{ coupon.minOrderAmount }}
+                  </span>
+
+                  <span class="coupon-status locked" *ngIf="!coupon.eligible">
+                    <i class="bi bi-lock-fill"></i>
+                    Add ₹{{ coupon.amountNeeded }}
+                    more to unlock
+                  </span>
                 </div>
 
                 <div class="coupon-card-action">
                   <button type="button" class="btn" [class.btn-brand]="coupon.eligible"
                     [class.btn-secondary-soft]="!coupon.eligible" [disabled]="!coupon.eligible"
-                    (click)="applySuggestedCoupon(coupon)" data-bs-dismiss="modal">
+                    (click)="applySuggestedCoupon(coupon)">
                     {{ coupon.eligible ? 'Apply' : 'Locked' }}
                   </button>
                 </div>
-              </div>
+              </article>
             </div>
-          </div>
+          </section>
 
-          <div class="coupon-loading" *ngIf="globalCouponsUi().length === 0 && restaurantCouponsUi().length === 0">
+          <div class="coupon-loading no-coupon-message" *ngIf="
+              globalCouponsUi().length === 0 &&
+              restaurantCouponsUi().length === 0
+            ">
+            <i class="bi bi-ticket-perforated"></i>
             No coupons available right now.
           </div>
         </ng-container>
@@ -299,87 +772,180 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content payment-modal-content">
       <div class="modal-header payment-modal-header">
-        <div>
-          <h5 class="modal-title fw-bold" id="paymentModalLabel">Choose Payment Method</h5>
-          <p class="modal-subtitle mb-0">Select how you'd like to pay for this order.</p>
+        <div class="modal-heading-wrap">
+          <div class="modal-title-icon payment-title-icon">
+            <i class="bi bi-credit-card-2-front-fill"></i>
+          </div>
+
+          <div>
+            <h5 class="modal-title" id="paymentModalLabel">
+              Choose payment method
+            </h5>
+
+            <p class="modal-subtitle mb-0">
+              Select how you would like to pay.
+            </p>
+          </div>
         </div>
+
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body py-3">
+      <div class="modal-body payment-modal-body">
         <div class="payment-options">
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'CASH_ON_DELIVERY'">
             <input type="radio" name="payMethod" value="CASH_ON_DELIVERY"
               [checked]="selectedPaymentMethod() === 'CASH_ON_DELIVERY'"
               (change)="selectedPaymentMethod.set('CASH_ON_DELIVERY')" />
+
             <div class="pay-icon cod-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="7" width="20" height="14" rx="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
+              <i class="bi bi-cash-stack"></i>
             </div>
+
             <div class="pay-label-wrap">
-              <span class="pay-label">Cash on Delivery</span>
-              <span class="pay-sublabel">Pay when food arrives</span>
+              <span class="pay-label">
+                Cash on delivery
+              </span>
+
+              <span class="pay-sublabel">
+                Pay when your food arrives
+              </span>
             </div>
+
+            <i class="bi bi-check-circle-fill payment-selected-icon"
+              *ngIf="selectedPaymentMethod() === 'CASH_ON_DELIVERY'"></i>
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'PHONEPE'">
             <input type="radio" name="payMethod" value="PHONEPE" [checked]="selectedPaymentMethod() === 'PHONEPE'"
               (change)="selectedPaymentMethod.set('PHONEPE')" />
+
             <div class="pay-icon phonepe-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" />
-                <circle cx="12" cy="17" r="1" />
-                <path d="M9 6h6" />
-              </svg>
+              <i class="bi bi-phone-fill"></i>
             </div>
+
             <div class="pay-label-wrap">
               <span class="pay-label">PhonePe</span>
-              <span class="pay-sublabel">UPI based instant payment</span>
+
+              <span class="pay-sublabel">
+                UPI based instant payment
+              </span>
             </div>
+
+            <i class="bi bi-check-circle-fill payment-selected-icon" *ngIf="selectedPaymentMethod() === 'PHONEPE'"></i>
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'GPAY'">
             <input type="radio" name="payMethod" value="GPAY" [checked]="selectedPaymentMethod() === 'GPAY'"
               (change)="selectedPaymentMethod.set('GPAY')" />
+
             <div class="pay-icon gpay-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M8 12h8M12 8v8" />
-              </svg>
+              <i class="bi bi-google"></i>
             </div>
+
             <div class="pay-label-wrap">
               <span class="pay-label">Google Pay</span>
-              <span class="pay-sublabel">Pay via GPay UPI</span>
+
+              <span class="pay-sublabel">
+                Pay securely with GPay UPI
+              </span>
             </div>
+
+            <i class="bi bi-check-circle-fill payment-selected-icon" *ngIf="selectedPaymentMethod() === 'GPAY'"></i>
           </label>
 
           <label class="payment-option" [class.selected]="selectedPaymentMethod() === 'PAYTM'">
             <input type="radio" name="payMethod" value="PAYTM" [checked]="selectedPaymentMethod() === 'PAYTM'"
               (change)="selectedPaymentMethod.set('PAYTM')" />
+
             <div class="pay-icon paytm-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="5" width="20" height="14" rx="2" />
-                <path d="M2 10h20" />
-                <circle cx="7" cy="15" r="1" />
-              </svg>
+              <i class="bi bi-wallet2"></i>
             </div>
+
             <div class="pay-label-wrap">
               <span class="pay-label">Paytm</span>
-              <span class="pay-sublabel">Paytm wallet or UPI</span>
-            </div>
-          </label>
 
+              <span class="pay-sublabel">
+                Paytm wallet or UPI payment
+              </span>
+            </div>
+
+            <i class="bi bi-check-circle-fill payment-selected-icon" *ngIf="selectedPaymentMethod() === 'PAYTM'"></i>
+          </label>
         </div>
       </div>
 
       <div class="modal-footer payment-modal-footer">
-        <button type="button" class="btn btn-brand w-100" data-bs-dismiss="modal">
-          Confirm — {{ getPaymentLabel(selectedPaymentMethod()) }}
+        <button type="button" class="btn btn-brand w-100 payment-confirm-button" data-bs-dismiss="modal">
+          Confirm —
+          {{ getPaymentLabel(selectedPaymentMethod()) }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-notification" *ngIf="toast() as toast">
+  <div class="toast-icon" [ngClass]="{
+      'toast-icon-success': toast.type === 'success',
+      'toast-icon-error': toast.type === 'error',
+      'toast-icon-warning': toast.type === 'warning'
+    }">
+    <i class="bi" [ngClass]="{
+        'bi-check-circle-fill': toast.type === 'success',
+        'bi-x-circle-fill': toast.type === 'error',
+        'bi-exclamation-triangle-fill': toast.type === 'warning'
+      }"></i>
+  </div>
+
+  <div class="toast-content">
+    <span class="toast-text">
+      {{ toast.message }}
+    </span>
+  </div>
+</div>
+
+<!-- Celebration -->
+<div
+  class="celebration-overlay"
+  *ngIf="showCelebration()"
+>
+  <div
+    *ngFor="let piece of confettiPieces"
+    class="confetti-piece"
+    [style.left.%]="piece.left"
+    [style.animation-delay.s]="piece.delay"
+    [style.animation-duration.s]="piece.duration"
+    [style.background]="piece.color"
+    [style.width.px]="piece.size"
+    [style.height.px]="piece.size"
+  ></div>
+
+  <div class="success-order-card">
+    <div class="success-rings">
+      <span class="success-ring success-ring-one"></span>
+      <span class="success-ring success-ring-two"></span>
+
+      <div class="success-check-wrap">
+        <i class="bi bi-check-lg"></i>
+      </div>
+    </div>
+
+    <span class="success-kicker">
+      CRAVYO ORDER CONFIRMED
+    </span>
+
+    <h2>Yay! Your order is placed.</h2>
+
+    <p>
+      The restaurant has received your order.
+      Taking you to live tracking now.
+    </p>
+
+    <div class="success-order-progress">
+      <span></span>
     </div>
   </div>
 </div>

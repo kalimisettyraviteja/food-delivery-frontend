@@ -11,10 +11,13 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, Subject, of } from 'rxjs';
+import { takeUntil, catchError } from 'rxjs/operators';
+
 import { RestaurantService, MenuItem, Restaurant } from '../../../core/services/restaurant';
 import { CartService } from '../../../core/services/cart';
 import { CouponService, Coupon } from '../../../core/services/coupon';
-import { forkJoin } from 'rxjs';
+import { UserService } from '../../../core/services/user';
 
 declare var bootstrap: any;
 
@@ -29,9 +32,10 @@ type FilterType = 'ALL' | 'VEG' | 'NON_VEG';
 })
 export class RestaurantDetail implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
-  private svc = inject(RestaurantService);
+  private restaurantService = inject(RestaurantService);
   private router = inject(Router);
   private couponService = inject(CouponService);
+  private userService = inject(UserService);
 
   cartService = inject(CartService);
 
@@ -41,8 +45,10 @@ export class RestaurantDetail implements OnInit, AfterViewInit, OnDestroy {
 
   selectedFilter = signal<FilterType>('ALL');
   searchText = signal('');
+
   previewImage = signal('');
   previewTitle = signal('');
+
   showScrollTop = signal(false);
 
   coupons = signal<Coupon[]>([]);
@@ -50,128 +56,267 @@ export class RestaurantDetail implements OnInit, AfterViewInit, OnDestroy {
   copiedCouponId = signal<number | null>(null);
   selectedCoupon = signal<Coupon | null>(null);
 
-  private previewModal: any;
+  private imagePreviewModal: any;
   private couponDetailsModal: any;
-  private couponInterval: any;
-  private copyResetTimeout: any;
-  private couponModalEl: HTMLElement | null = null;
-  private imageModalEl: HTMLElement | null = null;
-  private isCouponPaused = false;
+  private couponSliderInterval: any;
+  private copySuccessTimeout: any;
+  private couponModalElement: HTMLElement | null = null;
+  private imageModalElement: HTMLElement | null = null;
+  private isCouponSliderPaused = false;
+  private destroy$ = new Subject<void>();
 
   filteredMenuItems = computed(() => {
     const items = this.menuItems();
     const filter = this.selectedFilter();
-    const q = this.searchText().trim().toLowerCase();
+    const searchValue = this.searchText().trim().toLowerCase();
 
     return items.filter(item => {
-      const matchSearch =
-        !q ||
-        item.name.toLowerCase().includes(q) ||
-        (item.description ?? '').toLowerCase().includes(q);
+      const matchesSearch =
+        !searchValue ||
+        item.name.toLowerCase().includes(searchValue) ||
+        (item.description ?? '').toLowerCase().includes(searchValue);
 
-      const matchFilter =
+      const matchesFilter =
         filter === 'ALL' ||
         (filter === 'VEG' && item.veg) ||
         (filter === 'NON_VEG' && !item.veg);
 
-      return matchSearch && matchFilter;
+      return matchesSearch && matchesFilter;
     });
   });
 
-  visibleCoupon = computed(() => {
-    const list = this.coupons();
-    if (!list.length) return null;
-    return list[this.currentCouponIndex()] ?? null;
+  activeCoupon = computed(() => {
+    const couponList = this.coupons();
+    if (!couponList.length) return null;
+    return couponList[this.currentCouponIndex()] ?? null;
   });
 
   bestCouponId = computed(() => {
-    const list = this.coupons();
-    if (!list.length) return null;
+    const couponList = this.coupons();
+    if (!couponList.length) return null;
 
-    const best = [...list].sort((a, b) => this.getCouponRankScore(b) - this.getCouponRankScore(a))[0];
-    return best?.id ?? null;
+    const bestCoupon = [...couponList].sort(
+      (a, b) => this.getCouponPriorityValue(b) - this.getCouponPriorityValue(a)
+    )[0];
+
+    return bestCoupon?.id ?? null;
   });
 
-  ngOnInit() {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+  ngOnInit(): void {
+    this.route.paramMap
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(paramMap => {
+        const restaurantId = Number(paramMap.get('id'));
 
-    this.svc.getAll().subscribe(list => {
-      this.restaurant.set(list.find(r => r.id === id) || null);
-    });
+        console.log('[DETAIL] route param restaurantId =>', restaurantId);
 
-    this.svc.getPublicMenu(id).subscribe({
-      next: (data) => {
-        this.menuItems.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+        if (!restaurantId) {
+          console.warn('[DETAIL] invalid restaurantId, redirecting to /home');
+          this.loading.set(false);
+          this.router.navigate(['/home']);
+          return;
+        }
 
-    this.loadCoupons(id);
+        this.loadRestaurantDetailsPage(restaurantId);
+      });
   }
 
-  ngAfterViewInit() {
-    const imageEl = document.getElementById('imagePreviewModal');
-    if (imageEl) {
-      this.imageModalEl = imageEl;
-      this.previewModal = bootstrap.Modal.getOrCreateInstance(imageEl);
+  ngAfterViewInit(): void {
+    const imageModal = document.getElementById('imagePreviewModal');
+    if (imageModal) {
+      this.imageModalElement = imageModal;
+      this.imagePreviewModal = bootstrap.Modal.getOrCreateInstance(imageModal);
 
-      imageEl.addEventListener('hide.bs.modal', this.handleModalHide);
-      imageEl.addEventListener('hidden.bs.modal', this.handleImageModalHidden);
+      imageModal.addEventListener('hide.bs.modal', this.handleModalHide);
+      imageModal.addEventListener('hidden.bs.modal', this.handleImageModalHidden);
     }
 
-    const couponEl = document.getElementById('couponDetailsModal');
-    if (couponEl) {
-      this.couponModalEl = couponEl;
-      this.couponDetailsModal = bootstrap.Modal.getOrCreateInstance(couponEl);
+    const couponModal = document.getElementById('couponDetailsModal');
+    if (couponModal) {
+      this.couponModalElement = couponModal;
+      this.couponDetailsModal = bootstrap.Modal.getOrCreateInstance(couponModal);
 
-      couponEl.addEventListener('show.bs.modal', this.handleCouponModalShow);
-      couponEl.addEventListener('shown.bs.modal', this.handleCouponModalShown);
-      couponEl.addEventListener('hide.bs.modal', this.handleModalHide);
-      couponEl.addEventListener('hidden.bs.modal', this.handleCouponModalHidden);
+      couponModal.addEventListener('show.bs.modal', this.handleCouponModalShow);
+      couponModal.addEventListener('shown.bs.modal', this.handleCouponModalShown);
+      couponModal.addEventListener('hide.bs.modal', this.handleModalHide);
+      couponModal.addEventListener('hidden.bs.modal', this.handleCouponModalHidden);
     }
   }
 
   ngOnDestroy(): void {
-    this.stopCouponAutoSlide();
+    this.destroy$.next();
+    this.destroy$.complete();
 
-    if (this.copyResetTimeout) {
-      clearTimeout(this.copyResetTimeout);
+    this.stopCouponSlider();
+
+    if (this.copySuccessTimeout) {
+      clearTimeout(this.copySuccessTimeout);
     }
 
-    if (this.couponModalEl) {
-      this.couponModalEl.removeEventListener('show.bs.modal', this.handleCouponModalShow);
-      this.couponModalEl.removeEventListener('shown.bs.modal', this.handleCouponModalShown);
-      this.couponModalEl.removeEventListener('hide.bs.modal', this.handleModalHide);
-      this.couponModalEl.removeEventListener('hidden.bs.modal', this.handleCouponModalHidden);
+    if (this.couponModalElement) {
+      this.couponModalElement.removeEventListener('show.bs.modal', this.handleCouponModalShow);
+      this.couponModalElement.removeEventListener('shown.bs.modal', this.handleCouponModalShown);
+      this.couponModalElement.removeEventListener('hide.bs.modal', this.handleModalHide);
+      this.couponModalElement.removeEventListener('hidden.bs.modal', this.handleCouponModalHidden);
     }
 
-    if (this.imageModalEl) {
-      this.imageModalEl.removeEventListener('hide.bs.modal', this.handleModalHide);
-      this.imageModalEl.removeEventListener('hidden.bs.modal', this.handleImageModalHidden);
+    if (this.imageModalElement) {
+      this.imageModalElement.removeEventListener('hide.bs.modal', this.handleModalHide);
+      this.imageModalElement.removeEventListener('hidden.bs.modal', this.handleImageModalHidden);
     }
   }
 
   @HostListener('window:scroll')
-  onWindowScroll() {
+  onWindowScroll(): void {
     this.showScrollTop.set(window.scrollY > 300);
   }
 
+  loadRestaurantDetailsPage(restaurantId: number): void {
+    this.loading.set(true);
+    this.menuItems.set([]);
+    this.coupons.set([]);
+    this.currentCouponIndex.set(0);
+    this.selectedCoupon.set(null);
+    this.stopCouponSlider();
+
+    const storedRestaurant = this.getStoredRestaurant();
+
+    console.log('[DETAIL] loadRestaurantDetailsPage start =>', {
+      restaurantId,
+      storedRestaurant
+    });
+
+    forkJoin({
+      restaurant: this.restaurantService.getById(restaurantId),
+      menu: this.restaurantService.getPublicMenu(restaurantId),
+      restaurantCoupons: this.couponService.getRestaurantCoupons(restaurantId).pipe(
+        catchError((error) => {
+          console.error('[DETAIL] Restaurant coupons failed =>', error);
+          return of([] as Coupon[]);
+        })
+      ),
+      globalCoupons: this.couponService.getGlobalCoupons().pipe(
+        catchError((error) => {
+          console.error('[DETAIL] Global coupons failed =>', error);
+          return of([] as Coupon[]);
+        })
+      )
+    }).subscribe({
+      next: ({ restaurant, menu, restaurantCoupons, globalCoupons }) => {
+        console.log('[DETAIL] getById restaurant response =>', restaurant);
+
+        const mergedRestaurant = this.mergeRestaurantData(storedRestaurant, restaurant);
+
+        console.log('[DETAIL] merged restaurant =>', mergedRestaurant);
+
+        this.restaurant.set(mergedRestaurant);
+        this.storeSelectedRestaurant(mergedRestaurant);
+
+        this.menuItems.set(menu);
+        console.log('[DETAIL] menu items loaded =>', menu);
+
+        const mergedCoupons = [...restaurantCoupons, ...globalCoupons];
+
+        const uniqueCoupons = mergedCoupons.filter(
+          (coupon, index, allCoupons) =>
+            index === allCoupons.findIndex(currentCoupon => currentCoupon.id === coupon.id)
+        );
+
+        const displayableCoupons = uniqueCoupons
+          .filter(coupon => this.canShowCoupon(coupon))
+          .sort((a, b) => this.getCouponPriorityValue(b) - this.getCouponPriorityValue(a));
+
+        this.coupons.set(displayableCoupons);
+        this.currentCouponIndex.set(0);
+
+        console.log('[DETAIL] final coupons =>', displayableCoupons);
+
+        if (displayableCoupons.length > 1) {
+          this.startCouponSlider();
+        }
+
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('[DETAIL] Failed to load restaurant detail page =>', error);
+        this.restaurant.set(null);
+        this.menuItems.set([]);
+        this.coupons.set([]);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private mergeRestaurantData(
+    storedRestaurant: Restaurant | null,
+    fetchedRestaurant: Restaurant
+  ): Restaurant {
+    if (!storedRestaurant || storedRestaurant.id !== fetchedRestaurant.id) {
+      return fetchedRestaurant;
+    }
+
+    return {
+      ...storedRestaurant,
+      ...fetchedRestaurant,
+      latitude: fetchedRestaurant.latitude ?? storedRestaurant.latitude ?? null,
+      longitude: fetchedRestaurant.longitude ?? storedRestaurant.longitude ?? null,
+      distanceKm: fetchedRestaurant.distanceKm ?? storedRestaurant.distanceKm ?? null,
+      estimatedMinutes: fetchedRestaurant.estimatedMinutes ?? storedRestaurant.estimatedMinutes ?? null,
+      image: fetchedRestaurant.image ?? storedRestaurant.image ?? null,
+      imageUrl: fetchedRestaurant.imageUrl ?? storedRestaurant.imageUrl ?? null
+    };
+  }
+
+  private storeSelectedRestaurant(restaurant: Restaurant): void {
+    if (!this.userService.isLoggedIn()) {
+      console.log('[DETAIL] user not logged in, clearing selectedRestaurant');
+      localStorage.removeItem('selectedRestaurant');
+      return;
+    }
+
+    console.log('[DETAIL] storing selectedRestaurant =>', restaurant);
+    localStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    console.log('[DETAIL] selectedRestaurant saved =>', localStorage.getItem('selectedRestaurant'));
+  }
+
+  private getStoredRestaurant(): Restaurant | null {
+    if (!this.userService.isLoggedIn()) {
+      localStorage.removeItem('selectedRestaurant');
+      return null;
+    }
+
+    const raw = localStorage.getItem('selectedRestaurant');
+    if (!raw) {
+      console.log('[DETAIL] no selectedRestaurant in localStorage');
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Restaurant;
+      console.log('[DETAIL] selectedRestaurant from localStorage =>', parsed);
+      return parsed;
+    } catch (error) {
+      console.error('[DETAIL] failed to parse selectedRestaurant =>', error);
+      localStorage.removeItem('selectedRestaurant');
+      return null;
+    }
+  }
+
   private handleCouponModalShow = () => {
-    this.blurActiveElement();
+    this.removeFocusFromActiveElement();
   };
 
   private handleCouponModalShown = () => {
-    this.pauseCouponAutoSlide();
+    this.pauseCouponSlider();
   };
 
   private handleCouponModalHidden = () => {
-    this.blurActiveElement();
-    this.resumeCouponAutoSlide();
+    this.removeFocusFromActiveElement();
+    this.resumeCouponSlider();
   };
 
   private handleImageModalHidden = () => {
-    this.blurActiveElement();
+    this.removeFocusFromActiveElement();
   };
 
   private handleModalHide = (event: Event) => {
@@ -181,171 +326,207 @@ export class RestaurantDetail implements OnInit, AfterViewInit, OnDestroy {
     if (modalElement && activeElement && modalElement.contains(activeElement)) {
       activeElement.blur();
     } else {
-      this.blurActiveElement();
+      this.removeFocusFromActiveElement();
     }
   };
 
-  loadCoupons(restaurantId: number): void {
-    forkJoin({
-      restaurantCoupons: this.couponService.getRestaurantCoupons(restaurantId),
-      globalCoupons: this.couponService.getGlobalCoupons()
-    }).subscribe({
-      next: ({ restaurantCoupons, globalCoupons }) => {
-        const merged = [...restaurantCoupons, ...globalCoupons];
-        const uniqueCoupons = merged.filter(
-          (coupon, index, arr) => index === arr.findIndex(c => c.id === coupon.id)
-        );
-
-        const validCoupons = uniqueCoupons
-          .filter(coupon => this.isCouponDisplayable(coupon))
-          .sort((a, b) => this.getCouponRankScore(b) - this.getCouponRankScore(a));
-
-        this.coupons.set(validCoupons);
-        this.currentCouponIndex.set(0);
-
-        if (validCoupons.length > 1) {
-          this.startCouponAutoSlide();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to load coupons', error);
-        this.coupons.set([]);
-      }
-    });
-  }
-
-  isCouponDisplayable(coupon: Coupon): boolean {
+  canShowCoupon(coupon: Coupon): boolean {
     if (!coupon.active) return false;
     if (!coupon.expiryDate) return true;
-    return new Date(coupon.expiryDate).getTime() >= new Date().setHours(0, 0, 0, 0);
+
+    const todayStart = new Date().setHours(0, 0, 0, 0);
+    return new Date(coupon.expiryDate).getTime() >= todayStart;
   }
 
-  getCouponRankScore(coupon: Coupon): number {
-    if (coupon.discountType === 'FREE_DELIVERY') return 60;
-    if (coupon.discountType === 'FLAT') return Number(coupon.discountValue) || 0;
+  getCouponPriorityValue(coupon: Coupon): number {
+    if (coupon.discountType === 'FREE_DELIVERY') {
+      return 60;
+    }
+
+    if (coupon.discountType === 'FLAT') {
+      return Number(coupon.discountValue) || 0;
+    }
 
     const percentageValue = Number(coupon.discountValue) || 0;
-    const maxCap = Number(coupon.maxDiscountAmount || 0);
-    return maxCap > 0 ? maxCap + percentageValue : percentageValue;
+    const maxDiscount = Number(coupon.maxDiscountAmount || 0);
+
+    return maxDiscount > 0 ? maxDiscount + percentageValue : percentageValue;
   }
 
-  startCouponAutoSlide(): void {
-    this.stopCouponAutoSlide();
+  getDisplayEtaText(): string {
+    const currentRestaurant = this.restaurant();
 
-    if (this.isCouponPaused || this.coupons().length <= 1) {
+    if (!currentRestaurant) {
+      return '20-25';
+    }
+
+    return currentRestaurant.estimatedMinutes != null
+      ? String(currentRestaurant.estimatedMinutes)
+      : '20-25';
+  }
+
+  getDisplayDistanceText(): string {
+    const currentRestaurant = this.restaurant();
+
+    if (!currentRestaurant || currentRestaurant.distanceKm == null) {
+      return '';
+    }
+
+    return `${currentRestaurant.distanceKm} km`;
+  }
+
+  startCouponSlider(): void {
+    this.stopCouponSlider();
+
+    if (this.isCouponSliderPaused || this.coupons().length <= 1) {
       return;
     }
 
-    this.couponInterval = setInterval(() => {
-      this.nextCoupon();
+    this.couponSliderInterval = setInterval(() => {
+      this.showNextCoupon();
     }, 2200);
   }
 
-  stopCouponAutoSlide(): void {
-    if (this.couponInterval) {
-      clearInterval(this.couponInterval);
-      this.couponInterval = null;
+  stopCouponSlider(): void {
+    if (this.couponSliderInterval) {
+      clearInterval(this.couponSliderInterval);
+      this.couponSliderInterval = null;
     }
   }
 
-  pauseCouponAutoSlide(): void {
-    this.isCouponPaused = true;
-    this.stopCouponAutoSlide();
+  pauseCouponSlider(): void {
+    this.isCouponSliderPaused = true;
+    this.stopCouponSlider();
   }
 
-  resumeCouponAutoSlide(): void {
-    this.isCouponPaused = false;
-    this.startCouponAutoSlide();
+  resumeCouponSlider(): void {
+    this.isCouponSliderPaused = false;
+    this.startCouponSlider();
   }
 
-  nextCoupon(): void {
-    const list = this.coupons();
-    if (!list.length) return;
-    this.currentCouponIndex.set((this.currentCouponIndex() + 1) % list.length);
+  showNextCoupon(): void {
+    const couponList = this.coupons();
+    if (!couponList.length) return;
+
+    this.currentCouponIndex.set((this.currentCouponIndex() + 1) % couponList.length);
   }
 
-  prevCoupon(): void {
-    const list = this.coupons();
-    if (!list.length) return;
-    this.currentCouponIndex.set((this.currentCouponIndex() - 1 + list.length) % list.length);
+  showPreviousCoupon(): void {
+    const couponList = this.coupons();
+    if (!couponList.length) return;
+
+    this.currentCouponIndex.set(
+      (this.currentCouponIndex() - 1 + couponList.length) % couponList.length
+    );
   }
 
-  openCouponModal(coupon: Coupon): void {
+  openCouponDetails(coupon: Coupon): void {
     this.selectedCoupon.set(coupon);
-    this.pauseCouponAutoSlide();
-    this.blurActiveElement();
+    this.pauseCouponSlider();
+    this.removeFocusFromActiveElement();
 
     setTimeout(() => {
       this.couponDetailsModal?.show();
     }, 0);
   }
 
-  async copyCouponCode(code: string, couponId: number, event?: Event): Promise<void> {
+  async copyCouponText(code: string, couponId: number, event?: Event): Promise<void> {
     event?.stopPropagation();
 
     try {
       await navigator.clipboard.writeText(code);
       this.copiedCouponId.set(couponId);
 
-      if (this.copyResetTimeout) {
-        clearTimeout(this.copyResetTimeout);
+      if (this.copySuccessTimeout) {
+        clearTimeout(this.copySuccessTimeout);
       }
 
-      this.copyResetTimeout = setTimeout(() => {
+      this.copySuccessTimeout = setTimeout(() => {
         this.copiedCouponId.set(null);
       }, 1500);
     } catch (error) {
-      console.error('Copy failed', error);
+      console.error('Failed to copy coupon code', error);
     }
   }
 
-  onSearch(value: string) {
+  updateSearchText(value: string): void {
     this.searchText.set(value);
   }
 
-  setFilter(filter: FilterType) {
+  changeFilter(filter: FilterType): void {
     this.selectedFilter.set(filter);
   }
 
-  openImagePreview(image: string | null | undefined, title: string) {
+  openDishImagePreview(image: string | null | undefined, title: string): void {
     if (!image) return;
+
     this.previewImage.set(image);
     this.previewTitle.set(title);
-    this.blurActiveElement();
-    this.previewModal?.show();
+    this.removeFocusFromActiveElement();
+    this.imagePreviewModal?.show();
   }
 
-  scrollToTop() {
+  scrollPageToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  addToCart(item: MenuItem) {
+  isMenuItemUnavailable(item: MenuItem): boolean {
+    return item.isAvailable === false;
+  }
+
+  isAddDisabled(item: MenuItem): boolean {
+    return this.isMenuItemUnavailable(item) || this.restaurant()?.isActive === false;
+  }
+
+  getAddButtonText(item: MenuItem): string {
+    return this.isMenuItemUnavailable(item) ? 'UNAVAILABLE' : 'ADD';
+  }
+
+  getAddButtonTitle(item: MenuItem): string {
+    if (this.isMenuItemUnavailable(item)) {
+      return 'This item is currently unavailable';
+    }
+
+    if (this.restaurant()?.isActive === false) {
+      return 'This restaurant is currently unavailable';
+    }
+
+    return 'Add to cart';
+  }
+
+  addItemToCart(item: MenuItem): void {
+    if (this.isAddDisabled(item)) return;
+
+    console.log('[DETAIL] addItemToCart =>', {
+      item,
+      restaurant: this.restaurant()
+    });
+
     this.cartService.addToCart(item, this.restaurant());
   }
 
-  removeFromCart(itemId: number) {
-    this.cartService.removeFromCart(itemId);
-  }
+  increaseItemQuantity(itemId: number): void {
+    const item = this.menuItems().find(menuItem => menuItem.id === itemId);
+    if (!item || this.isAddDisabled(item)) return;
 
-  increaseQty(itemId: number) {
     this.cartService.increaseQty(itemId);
   }
 
-  decreaseQty(itemId: number) {
+  decreaseItemQuantity(itemId: number): void {
     this.cartService.decreaseQty(itemId);
   }
 
-  getItemQty(itemId: number): number {
-    const found = this.cartService.cart().find(c => c.item.id === itemId);
-    return found ? found.qty : 0;
+  getQuantityInCart(itemId: number): number {
+    const itemInCart = this.cartService.cart().find(cartItem => cartItem.item.id === itemId);
+    return itemInCart ? itemInCart.qty : 0;
   }
 
-  goToCheckout() {
+  goToCheckoutPage(): void {
     if (this.cartService.cart().length === 0) return;
     this.router.navigate(['/home/checkout']);
   }
 
-  getCouponTypeLabel(coupon: Coupon): string {
+  getCouponOfferTitle(coupon: Coupon): string {
     switch (coupon.discountType) {
       case 'FLAT':
         return `Flat ₹${coupon.discountValue} Off`;
@@ -358,28 +539,33 @@ export class RestaurantDetail implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  getCouponMinOrderText(coupon: Coupon): string {
+  getCouponMinimumOrderText(coupon: Coupon): string {
     return `Minimum order amount ₹${coupon.minOrderAmount}`;
   }
 
-  getCouponMaxDiscountText(coupon: Coupon): string {
+  getCouponMaximumDiscountText(coupon: Coupon): string {
     if (coupon.discountType !== 'PERCENTAGE' || !coupon.maxDiscountAmount) {
       return '';
     }
+
     return `Maximum discount ₹${coupon.maxDiscountAmount}`;
   }
 
-  getCouponExpiryText(coupon: Coupon): string {
-    if (!coupon.expiryDate) return 'Limited period offer';
-    const date = new Date(coupon.expiryDate);
-    return `Offer valid till ${date.toLocaleDateString('en-GB', {
+  getCouponExpiryDisplayText(coupon: Coupon): string {
+    if (!coupon.expiryDate) {
+      return 'Limited period offer';
+    }
+
+    const expiryDate = new Date(coupon.expiryDate);
+
+    return `Offer valid till ${expiryDate.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     })}`;
   }
 
-  blurActiveElement(): void {
+  removeFocusFromActiveElement(): void {
     const activeElement = document.activeElement as HTMLElement | null;
     activeElement?.blur();
   }

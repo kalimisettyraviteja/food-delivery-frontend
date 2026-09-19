@@ -1,0 +1,289 @@
+/* =================================================
+   Cravyo shared design tokens
+   ================================================= */
+
+:root {
+  --cravyo-orange: #e85d04;
+  --cravyo-orange-dark: #cf5200;
+  --cravyo-orange-light: #ff8a3d;
+  --cravyo-orange-soft: #fff2e9;
+
+  --cravyo-green: #16a34a;
+  --cravyo-green-soft: #ecfdf3;
+
+  --cravyo-red: #dc2626;
+  --cravyo-red-soft: #fff1f2;
+
+  --cravyo-blue: #2f78dd;
+  --cravyo-blue-soft: #edf4ff;
+
+  --cravyo-text: #1f2937;
+  --cravyo-text-muted: #6b7280;
+  --cravyo-border: #e5e7eb;
+  --cravyo-page-bg: #f8fafc;
+
+  --cravyo-radius-sm: 10px;
+  --cravyo-radius-md: 14px;
+  --cravyo-radius-lg: 18px;
+  --cravyo-radius-xl: 24px;
+
+  --cravyo-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --cravyo-shadow-md: 0 10px 24px rgba(15, 23, 42, 0.1);
+  --cravyo-shadow-orange: 0 12px 26px rgba(232, 93, 4, 0.2);
+}
+
+/* =================================================
+   Global base styles
+   ================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--cravyo-text);
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(232, 93, 4, 0.35);
+  outline-offset: 2px;
+}
+
+/* =================================================
+   Shared page wrapper
+   ================================================= */
+
+.app-page-wrap {
+  margin: 0 auto;
+  max-width: 1380px;
+  width: min(1380px, calc(100% - 56px));
+}
+
+@media (max-width: 991.98px) {
+  .app-page-wrap {
+    width: min(100%, calc(100% - 36px));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .app-page-wrap {
+    width: calc(100% - 24px);
+  }
+}
+
+/* =================================================
+   Shared Back to Top button
+   ================================================= */
+
+.app-back-to-top {
+  align-items: center;
+  background: #111827;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 750;
+  gap: 0.42rem;
+  justify-content: center;
+  left: 50%;
+  min-height: 31px;
+  opacity: 0;
+  padding: 0.42rem 0.7rem;
+  pointer-events: none;
+  position: fixed;
+  top: 1.25rem;
+  transform: translate(-50%, -12px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: 1060;
+}
+
+.app-back-to-top.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+.app-back-to-top:hover {
+  background: #000;
+  transform: translate(-50%, 0);
+}
+
+.app-back-to-top i {
+  font-size: 0.68rem;
+}
+
+@media (max-width: 767.98px) {
+  .app-back-to-top {
+    font-size: 0.72rem;
+    min-height: 28px;
+    padding: 0.36rem 0.58rem;
+    top: 0.72rem;
+  }
+}
+
+/* =================================================
+   Shared food-type indicator
+   ================================================= */
+
+.food-indicator {
+  align-items: center;
+  border: 1px solid currentColor;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 14px;
+  justify-content: center;
+  width: 14px;
+}
+
+.food-indicator::after {
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  width: 6px;
+}
+
+.food-indicator--veg {
+  color: var(--cravyo-green);
+}
+
+.food-indicator--veg::after {
+  background: var(--cravyo-green);
+}
+
+.food-indicator--nonveg {
+  color: var(--cravyo-red);
+}
+
+.food-indicator--nonveg::after {
+  background: var(--cravyo-red);
+}
+
+/* =================================================
+   Shared loading shimmer
+   ================================================= */
+
+.app-skeleton {
+  animation: app-shimmer 1.35s linear infinite;
+  background: linear-gradient(
+    90deg,
+    #edf0f4 25%,
+    #f8fafc 50%,
+    #edf0f4 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 10px;
+}
+
+@keyframes app-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* =================================================
+   Shared coupon copy button
+   ================================================= */
+
+.app-copy-button {
+  align-items: center;
+  background: #fff7f1;
+  border: 1px solid #f4e4d6;
+  border-radius: 10px;
+  color: #a8551e;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  justify-content: center;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  width: 34px;
+}
+
+.app-copy-button:hover {
+  background: #ffecdf;
+  border-color: #f7bc91;
+  transform: translateY(-1px);
+}
+
+.app-copy-button i {
+  pointer-events: none;
+}
+
+/* =================================================
+   Shared screen-reader-only utility
+   ================================================= */
+
+.app-sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* =================================================
+   Shared disabled state
+   ================================================= */
+
+.app-disabled,
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* =================================================
+   Reduced-motion support
+   ================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

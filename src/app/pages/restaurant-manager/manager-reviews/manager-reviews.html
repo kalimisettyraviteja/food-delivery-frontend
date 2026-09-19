@@ -1,0 +1,251 @@
+<section class="manager-reviews-page">
+
+  <div class="review-page-card">
+
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">RESTAURANT MANAGEMENT</p>
+
+        <h1>Reviews &amp; ratings</h1>
+
+        <p class="page-subtitle">
+          View customer feedback and rating performance for this restaurant.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="icon-button"
+          (click)="refresh()"
+          [disabled]="loading"
+          aria-label="Refresh reviews"
+        >
+          ↻
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="goBackToRestaurants()"
+        >
+          ← Back to restaurants
+        </button>
+      </div>
+    </header>
+
+    <div class="loading-state" *ngIf="loading">
+      <div class="loading-row" *ngFor="let item of [1, 2, 3, 4]"></div>
+    </div>
+
+    <div class="error-alert" *ngIf="!loading && errorMessage">
+      {{ errorMessage }}
+
+      <button
+        type="button"
+        class="secondary-button retry-button"
+        (click)="refresh()"
+        *ngIf="restaurantId"
+      >
+        Try again
+      </button>
+    </div>
+
+    <ng-container *ngIf="!loading && !errorMessage && restaurant">
+
+      <section class="restaurant-info-card">
+        <div class="restaurant-info-main">
+          <div class="restaurant-avatar">
+            <img
+              *ngIf="restaurant.image"
+              [src]="restaurant.image"
+              [alt]="restaurant.name"
+            />
+
+            <span *ngIf="!restaurant.image">🍽</span>
+          </div>
+
+          <div class="restaurant-info-text">
+            <h2>{{ restaurant.name }}</h2>
+
+            <p>
+              {{ restaurant.location || 'Location unavailable' }}
+
+              <span *ngIf="restaurant.cuisine">
+                · {{ restaurant.cuisine }}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <span
+          class="status-badge"
+          [class.active]="isActive()"
+        >
+          <span class="status-dot"></span>
+          {{ isActive() ? 'Active' : 'Inactive' }}
+        </span>
+      </section>
+
+      <section class="rating-grid">
+
+        <article class="overall-rating-card">
+          <span class="section-label">OVERALL RATING</span>
+
+          <strong class="average-rating">
+            {{ formatRating(summary?.averageRating) }}
+          </strong>
+
+          <div class="large-stars">
+            <span
+              *ngFor="let star of ratingArray(5)"
+              class="filled-star"
+            >
+              ★
+            </span>
+          </div>
+
+          <p>
+            Based on {{ summary?.ratingCount ?? 0 }}
+            review{{ (summary?.ratingCount ?? 0) === 1 ? '' : 's' }}
+          </p>
+        </article>
+
+        <article class="rating-breakdown-card">
+          <h3>Rating breakdown</h3>
+
+          <div
+            *ngFor="let rating of [5, 4, 3, 2, 1]"
+            class="rating-row"
+          >
+            <span class="rating-label">
+              {{ rating }} ★
+            </span>
+
+            <div class="rating-progress">
+              <span
+                class="rating-progress-fill"
+                [style.width.%]="getRatingPercentage(rating)"
+              ></span>
+            </div>
+
+            <strong class="rating-count">
+              {{ getRatingCount(rating) }}
+            </strong>
+          </div>
+        </article>
+
+      </section>
+
+      <section class="reviews-section">
+
+        <div class="reviews-header">
+          <div>
+            <h2>Customer reviews</h2>
+
+            <p>
+              Showing {{ filteredReviews.length }} of {{ reviews.length }} reviews
+            </p>
+          </div>
+
+          <select
+            class="rating-filter"
+            [(ngModel)]="ratingFilter"
+            aria-label="Filter reviews by rating"
+          >
+            <option [ngValue]="'ALL'">All ratings</option>
+            <option [ngValue]="5">5 stars</option>
+            <option [ngValue]="4">4 stars</option>
+            <option [ngValue]="3">3 stars</option>
+            <option [ngValue]="2">2 stars</option>
+            <option [ngValue]="1">1 star</option>
+          </select>
+        </div>
+
+        <div class="empty-state" *ngIf="reviews.length === 0">
+          <div class="empty-icon">★</div>
+
+          <h2>No reviews yet</h2>
+
+          <p>
+            Customer reviews for this restaurant will appear here.
+          </p>
+        </div>
+
+        <div
+          class="empty-state"
+          *ngIf="reviews.length > 0 && filteredReviews.length === 0"
+        >
+          <div class="empty-icon">⌕</div>
+
+          <h2>No matching reviews</h2>
+
+          <p>
+            Try choosing a different rating filter.
+          </p>
+        </div>
+
+        <div
+          class="review-list"
+          *ngIf="filteredReviews.length > 0"
+        >
+          <article
+            class="review-card"
+            *ngFor="
+              let review of filteredReviews;
+              trackBy: trackByReviewId
+            "
+          >
+            <div class="review-top">
+              <div>
+                <h3>{{ maskEmail(review.userEmail) }}</h3>
+
+                <p class="review-meta">
+                  Order #{{ review.orderId }}
+                  <span>•</span>
+                  {{ formatDateTime(review.createdAt) }}
+                </p>
+              </div>
+
+              <div class="review-rating">
+                <span
+                  *ngFor="let star of ratingArray(review.rating)"
+                  class="filled-star"
+                >
+                  ★
+                </span>
+
+                <span
+                  *ngFor="let star of emptyStarArray(review.rating)"
+                  class="empty-star"
+                >
+                  ★
+                </span>
+
+                <strong>{{ review.rating }}.0</strong>
+              </div>
+            </div>
+
+            <p
+              *ngIf="review.reviewText"
+              class="review-text"
+            >
+              {{ review.reviewText }}
+            </p>
+
+            <p
+              *ngIf="!review.reviewText"
+              class="review-text no-comment"
+            >
+              Customer did not leave a written comment.
+            </p>
+          </article>
+        </div>
+
+      </section>
+
+    </ng-container>
+
+  </div>
+
+</section>

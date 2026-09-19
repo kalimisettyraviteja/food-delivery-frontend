@@ -1,0 +1,270 @@
+<section class="restaurant-form-page">
+  <div class="form-shell">
+    <header class="form-header">
+      <div>
+        <h1 class="restaurant-form-title">
+          {{ isEditMode ? 'Edit restaurant' : 'New restaurant' }}
+        </h1>
+
+        <p class="subtitle">
+          {{
+          isEditMode
+          ? 'Update restaurant details, location, availability and image.'
+          : 'Add a new branch. It will be assigned automatically to your manager account.'
+          }}
+        </p>
+      </div>
+
+      <div class="header-icon">
+        <i class="bi bi-shop"></i>
+      </div>
+    </header>
+
+    <div class="form-loading" *ngIf="loading">
+      <div class="loading-line title-line"></div>
+
+      <div class="loading-grid">
+        <div class="loading-field"></div>
+        <div class="loading-field"></div>
+        <div class="loading-field"></div>
+        <div class="loading-field"></div>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="saveRestaurant()" *ngIf="!loading">
+      <div class="form-card">
+        <div class="section-heading">
+          <div class="section-title">
+            <span class="section-icon">
+              <i class="bi bi-card-text"></i>
+            </span>
+
+            <div>
+              <h2>Restaurant details</h2>
+              <p>Enter the core details customers will see.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field field-full">
+            <span class="field-label">
+              <i class="bi bi-shop"></i>
+              Restaurant name
+              <span class="required">*</span>
+            </span>
+
+            <input type="text" formControlName="name" placeholder="Example: Spice Garden" maxlength="120" />
+
+            <small class="field-error" *ngIf="controlInvalid('name')">
+              Restaurant name is required.
+            </small>
+          </label>
+
+          <label class="field">
+            <span class="field-label">
+              <i class="bi bi-egg-fried"></i>
+              Cuisine
+              <span class="required">*</span>
+            </span>
+
+            <input type="text" formControlName="cuisine" placeholder="Example: Indian, Chinese" maxlength="100" />
+
+            <small class="field-error" *ngIf="controlInvalid('cuisine')">
+              Cuisine is required.
+            </small>
+          </label>
+
+          <label class="field">
+            <span class="field-label">
+              <i class="bi bi-flower1"></i>
+              Food type
+            </span>
+
+            <span class="select-like">
+              <input type="checkbox" formControlName="isPureVeg" />
+              <span>Pure vegetarian restaurant</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-heading">
+          <div class="section-title">
+            <span class="section-icon">
+              <i class="bi bi-geo-alt"></i>
+            </span>
+
+            <div>
+              <h2>Restaurant location</h2>
+              <p>Search an area or drag the map until the pin is on the restaurant.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="restaurant-map-search-row">
+          <div class="restaurant-map-search-box">
+            <i class="bi bi-search"></i>
+
+            <input type="text" [(ngModel)]="searchQuery" [ngModelOptions]="{ standalone: true }"
+              (input)="onSearchInput()" placeholder="Search area, street or locality..." autocomplete="off" />
+          </div>
+
+          <ul class="restaurant-search-results" *ngIf="searchResults.length > 0">
+            <li *ngFor="let result of searchResults" (click)="selectSearchResult(result)">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span>{{ result.display_name }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="restaurant-map-wrap">
+          <div id="restaurantMapPicker" class="restaurant-location-map"></div>
+
+          <div class="center-pin-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+          </div>
+
+          <button type="button" class="current-location-button" (click)="useCurrentLocation()"
+            aria-label="Use current location" title="Use current location">
+            <i class="bi bi-crosshair"></i>
+          </button>
+
+          <div class="map-pin-hint">
+            <i class="bi bi-arrows-move"></i>
+            <span>Drag map to place the pin</span>
+          </div>
+        </div>
+
+        <div class="map-loading-text" *ngIf="mapLoading">
+          <i class="bi bi-arrow-repeat"></i>
+          Fetching location details...
+        </div>
+
+        <div class="picked-location-field">
+          <span class="field-label">
+            <i class="bi bi-pin-map"></i>
+            Location / address
+            <span class="required">*</span>
+          </span>
+
+          <div class="picked-location-box" [class.empty]="!form.controls.location.value">
+            <i class="bi bi-geo-alt-fill"></i>
+
+            <span>
+              {{
+              form.controls.location.value ||
+              'Choose a location by searching or moving the map.'
+              }}
+            </span>
+          </div>
+
+          <small class="field-error" *ngIf="controlInvalid('location')">
+            Please select a location from the map.
+          </small>
+        </div>
+      </div>
+
+      <!-- Desktop side-by-side, mobile stacked -->
+      <div class="image-status-grid">
+        <!-- Restaurant image -->
+        <div class="form-card compact-card">
+          <div class="section-heading">
+            <div class="section-title">
+              <span class="section-icon">
+                <i class="bi bi-image"></i>
+              </span>
+
+              <div>
+                <h2>Restaurant image</h2>
+                <p>Upload one clear image for your restaurant.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="image-upload-layout">
+            <div class="image-preview">
+              <img *ngIf="imagePreview || existingImage" [src]="imagePreview || existingImage"
+                alt="Restaurant preview" />
+
+              <i *ngIf="!imagePreview && !existingImage" class="bi bi-image"></i>
+            </div>
+
+            <div class="image-upload-content">
+              <label class="upload-button">
+                <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+
+                <i class="bi bi-cloud-arrow-up"></i>
+                <span>Upload image</span>
+              </label>
+
+              <button type="button" class="remove-image-button" *ngIf="imagePreview" (click)="removeSelectedImage()">
+                <i class="bi bi-trash3"></i>
+                Remove selected image
+              </button>
+
+              <p>PNG, JPG or WEBP. Maximum file size: 5 MB.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Restaurant status -->
+        <div class="form-card compact-card">
+          <div class="status-setting">
+            <div class="section-title">
+              <span class="section-icon">
+                <i class="bi bi-toggle-on"></i>
+              </span>
+
+              <div>
+                <h2>Restaurant status</h2>
+                <p>Active restaurants can appear to customers.</p>
+              </div>
+            </div>
+
+            <label class="switch-row">
+              <input type="checkbox" formControlName="isActive" />
+              <span class="switch"></span>
+
+              <span class="switch-text">
+                {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <footer class="form-actions">
+        <button type="button" class="cancel-button" (click)="cancel()" [disabled]="saving">
+          <i class="bi bi-x-lg"></i>
+          Cancel
+        </button>
+
+        <button type="submit" class="save-button" [disabled]="saving">
+          <i class="bi" [ngClass]="saving ? 'bi-arrow-repeat' : 'bi-check2-circle'"></i>
+
+          <span>{{ saveLabel }}</span>
+        </button>
+      </footer>
+    </form>
+  </div>
+
+  <!-- Bottom-right toast -->
+  <div class="app-toast" *ngIf="toastMessage" [class.success]="toastType === 'success'"
+    [class.error]="toastType === 'error'">
+    <span class="toast-icon">
+      <i class="bi" [ngClass]="
+          toastType === 'success'
+            ? 'bi-check-lg'
+            : 'bi-exclamation-lg'
+        "></i>
+    </span>
+
+    <span>{{ toastMessage }}</span>
+
+    <button type="button" class="toast-close" (click)="toastMessage = ''" aria-label="Close message">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+</section>

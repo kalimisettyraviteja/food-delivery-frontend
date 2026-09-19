@@ -39,6 +39,7 @@ export class AdminOrders implements OnInit {
     'PLACED',
     'CONFIRMED',
     'PREPARING',
+    'PICKED_UP',
     'OUT_FOR_DELIVERY',
     'DELIVERED',
     'CANCELLED'
@@ -185,22 +186,43 @@ export class AdminOrders implements OnInit {
     return method.replace(/_/g, ' ');
   }
 
+  // getStatusClass(status: OrderStatus): string {
+  //   switch (status) {
+  //     case 'PLACED':
+  //       return 'status-badge placed';
+  //     case 'CONFIRMED':
+  //       return 'status-badge confirmed';
+  //     case 'PREPARING':
+  //       return 'status-badge preparing';
+  //     case 'OUT_FOR_DELIVERY':
+  //       return 'status-badge out-for-delivery';
+  //     case 'DELIVERED':
+  //       return 'status-badge delivered';
+  //     case 'CANCELLED':
+  //       return 'status-badge cancelled';
+  //     default:
+  //       return 'status-badge';
+  //   }
+  // }
+
   getStatusClass(status: OrderStatus): string {
-    switch (status) {
-      case 'PLACED':
-        return 'status-badge placed';
-      case 'CONFIRMED':
-        return 'status-badge confirmed';
-      case 'PREPARING':
-        return 'status-badge preparing';
-      case 'OUT_FOR_DELIVERY':
-        return 'status-badge out-for-delivery';
-      case 'DELIVERED':
-        return 'status-badge delivered';
-      case 'CANCELLED':
-        return 'status-badge cancelled';
-      default:
-        return 'status-badge';
-    }
+  switch (status) {
+    case 'PLACED':
+      return 'status-badge placed';
+    case 'CONFIRMED':
+      return 'status-badge confirmed';
+    case 'PREPARING':
+      return 'status-badge preparing';
+    case 'PICKED_UP':
+      return 'status-badge picked-up';
+    case 'OUT_FOR_DELIVERY':
+      return 'status-badge out-for-delivery';
+    case 'DELIVERED':
+      return 'status-badge delivered';
+    case 'CANCELLED':
+      return 'status-badge cancelled';
+    default:
+      return 'status-badge';
   }
+}
 }

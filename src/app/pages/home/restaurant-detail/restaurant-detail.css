@@ -507,24 +507,6 @@
   min-width: 0;
 }
 
-.veg-indicator {
-  width: 11px;
-  height: 11px;
-  flex: 0 0 11px;
-  margin-top: 5px;
-  border-radius: 3px;
-}
-
-.veg-indicator.veg {
-  border: 2px solid #16a34a;
-  background: #16a34a;
-}
-
-.veg-indicator.non {
-  border: 2px solid #dc2626;
-  background: #dc2626;
-}
-
 .menu-info {
   min-width: 0;
 }
@@ -807,49 +789,11 @@
   line-height: 1.6;
 }
 
-.scroll-top-btn {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  z-index: 1060;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 35px;
-  height: 35px;
-  border: none;
-  border-radius: 999px;
-  font-size: 18px;
-  color: #fff;
-  background: linear-gradient(135deg, #e85d04, #ff8a3d);
-  box-shadow: 0 14px 30px rgba(232, 93, 4, 0.28);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(16px);
-  transition: opacity 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
-}
-
-.scroll-top-btn.show {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
-}
-
-.scroll-top-btn:hover {
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 18px 34px rgba(232, 93, 4, 0.34);
-}
-
-.scroll-top-btn:active {
-  transform: translateX(-50%) translateY(0);
-}
 
 .floating-checkout {
   position: fixed;
   right: 18px;
-  bottom: 18px;
+  bottom: 8px;
   z-index: 1050;
 }
 
@@ -1646,20 +1590,11 @@
     font-size: 0.96rem;
   }
 
-  .scroll-top-btn {
-    right: auto;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
 
-  .scroll-top-btn:hover {
-    transform: translateX(-50%) translateY(-2px);
-  }
 
   .floating-checkout {
     right: 14px;
-    bottom: 68px;
+    bottom: 10px;
     left: 14px;
   }
 
@@ -1692,8 +1627,28 @@
   }
 
   .coupon-strip-inline,
-  .coupon-nav-btn,
-  .scroll-top-btn {
+  .coupon-nav-btn{
     transition: none;
   }
 }
+
+
+
+
+.add-btn-wrap.blocked-wrap {
+  cursor: not-allowed;
+}
+
+.add-btn-wrap.blocked-wrap .inline-add-btn[disabled] {
+  pointer-events: none;
+}
+
+.inline-add-btn.unavailable-btn {
+  opacity: 0.75;
+}
+
+.inline-add-btn.disabled-add-btn {
+  opacity: 0.6;
+}
+
+

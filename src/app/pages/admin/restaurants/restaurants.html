@@ -1,7 +1,7 @@
 <div class="page-header mb-4">
   <div>
     <h3 class="page-title">Restaurants</h3>
-    <p class="page-subtitle">Search, edit, and manage restaurant listings</p>
+    <p class="page-subtitle">Search, edit, assign managers, and manage restaurant listings</p>
   </div>
 
   <div class="header-actions">
@@ -10,10 +10,10 @@
       <input
         type="text"
         class="search-input"
-        [(ngModel)]="searchText"
+        [ngModel]="searchText()"
         name="searchText"
-        placeholder="Search by name, location, cuisine..."
-        (input)="onSearchChange()"
+        placeholder="Search by name, location, cuisine, manager..."
+        (ngModelChange)="onSearchChange($event)"
       />
     </div>
 
@@ -38,6 +38,9 @@
       <span class="status-badge" [class.active]="r.isActive" [class.inactive]="!r.isActive">
         {{ r.isActive ? 'Active' : 'Inactive' }}
       </span>
+      <span [class]="getVegBadgeClass(r.isPureVeg)" class="veg-badge-pos">
+        {{ getVegLabel(r.isPureVeg) }}
+      </span>
     </div>
 
     <ng-template #noImg>
@@ -46,25 +49,35 @@
         <span class="status-badge" [class.active]="r.isActive" [class.inactive]="!r.isActive">
           {{ r.isActive ? 'Active' : 'Inactive' }}
         </span>
+        <span [class]="getVegBadgeClass(r.isPureVeg)" class="veg-badge-pos">
+          {{ getVegLabel(r.isPureVeg) }}
+        </span>
       </div>
     </ng-template>
 
     <div class="rest-card-body">
-      <div class="cuisine-chip">{{ r.cuisine }}</div>
+      <div class="card-top-line">
+        <div class="cuisine-chip">{{ r.cuisine }}</div>
+        <div class="manager-chip" [class.unassigned]="!r.managerId">
+          {{ getManagerName(r.managerId) }}
+        </div>
+      </div>
+
       <h6 class="rest-name">{{ r.name }}</h6>
       <p class="rest-location">📍 {{ r.location }}</p>
 
       <div class="rest-meta">
         <span class="meta-pill">
           <ng-container *ngIf="(r.ratingCount ?? 0) > 0; else newBadge">
-            ⭐ {{ r.rating ?? 0 }}
+            ⭐ {{ r.rating ?? 0 }} ({{ r.ratingCount }})
           </ng-container>
           <ng-template #newBadge>
             <span class="new-badge">NEW</span>
           </ng-template>
         </span>
 
-        <span class="meta-pill">🕐 {{ r.deliveryTime ?? 0 }} min</span>
+        <span class="meta-pill" *ngIf="r.estimatedMinutes">🕐 {{ r.estimatedMinutes }} min</span>
+        <span class="meta-pill" *ngIf="r.distanceKm">📏 {{ r.distanceKm }} km</span>
       </div>
     </div>
 
@@ -89,7 +102,7 @@
         <span class="modal-icon">🏪</span>
         <div>
           <h4 class="modal-title">Add Restaurant</h4>
-          <p class="modal-subtitle">Fill in restaurant details</p>
+          <p class="modal-subtitle">Pick location on map and fill restaurant details</p>
         </div>
       </div>
       <button class="modal-close" (click)="closeAddModal()">✕</button>
@@ -98,40 +111,134 @@
     <div *ngIf="addErrorMsg" class="inline-msg error">⚠️ {{ addErrorMsg }}</div>
     <div *ngIf="addSuccessMsg" class="inline-msg success">✅ {{ addSuccessMsg }}</div>
 
-    <div class="form-panel single-panel">
-      <div class="form-section">
-        <p class="panel-label">Basic Details</p>
+    <div class="modal-body-grid">
+      <!-- MAP PANEL -->
+      <div class="image-panel map-side-panel">
+        <p class="panel-label">Pick Location</p>
 
-        <div class="field-group">
-          <label class="field-label">Restaurant Name <span class="req">*</span></label>
-          <input class="field-input" type="text" [(ngModel)]="form.name" name="add_name" placeholder="e.g. Spice Garden" />
+        <div class="map-search-row mb-2">
+          <div class="map-search-box">
+            <i class="bi bi-search"></i>
+            <input
+              type="text"
+              placeholder="Search area, street, locality..."
+              [(ngModel)]="mapSearchQuery"
+              name="add_mapSearch"
+              (input)="onMapSearchInput()"
+              autocomplete="off"
+            />
+          </div>
+
+          <ul class="search-results-list" *ngIf="mapSearchResults.length > 0">
+            <li *ngFor="let result of mapSearchResults" (click)="selectMapSearchResult(result)">
+              <i class="bi bi-geo-alt me-2"></i>
+              <span>{{ result.display_name }}</span>
+            </li>
+          </ul>
         </div>
 
-        <div class="field-row">
+        <div class="map-wrap">
+          <div id="restMapPicker" class="map-picker"></div>
+
+          <div class="center-pin-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+          </div>
+
+          <button type="button" class="current-location-btn" (click)="useCurrentLocation()">
+            <i class="bi bi-crosshair"></i>
+          </button>
+
+          <div class="map-pin-hint">
+            <i class="bi bi-geo-alt-fill"></i> Drag map to adjust pin
+          </div>
+        </div>
+
+        <div class="picked-address-box mt-2" *ngIf="mapPickedText">
+          <i class="bi bi-geo-alt me-2"></i>
+          <span>{{ mapPickedText }}</span>
+        </div>
+
+        <div *ngIf="mapLoading" class="map-loading-text mt-1">
+          Fetching location details...
+        </div>
+
+        <div class="coords-row" *ngIf="form.latitude && form.longitude">
+          <span>Lat: {{ form.latitude }}</span>
+          <span>Lng: {{ form.longitude }}</span>
+        </div>
+      </div>
+
+      <!-- FORM PANEL -->
+      <div class="form-panel">
+        <div class="form-section">
+          <p class="panel-label">Basic Details</p>
+
           <div class="field-group">
-            <label class="field-label">Location <span class="req">*</span></label>
-            <input class="field-input" type="text" [(ngModel)]="form.location" name="add_location" placeholder="Chennai" />
+            <label class="field-label">Restaurant Name <span class="req">*</span></label>
+            <input class="field-input" type="text" [(ngModel)]="form.name" name="add_name" placeholder="e.g. Spice Garden" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Location Address <span class="req">*</span></label>
+            <input class="field-input" type="text" [(ngModel)]="form.location" name="add_location" placeholder="Auto-filled from map, editable" />
           </div>
 
           <div class="field-group">
             <label class="field-label">Cuisine <span class="req">*</span></label>
-            <input class="field-input" type="text" [(ngModel)]="form.cuisine" name="add_cuisine" placeholder="South Indian" />
+            <input class="field-input" type="text" [(ngModel)]="form.cuisine" name="add_cuisine" placeholder="South Indian, Pizza" />
           </div>
         </div>
-      </div>
 
-      <div class="form-section">
-        <p class="panel-label">Additional Info</p>
+        <div class="form-section">
+          <p class="panel-label">Manager Assignment</p>
 
-        <div class="field-row three-col compact-row">
           <div class="field-group">
-            <label class="field-label">Delivery Time (min)</label>
-            <input class="field-input" type="number" [(ngModel)]="form.deliveryTime" name="add_deliveryTime" />
+            <label class="field-label">Assigned Manager</label>
+            <select class="field-input" [(ngModel)]="form.managerId" name="add_managerId">
+              <option [ngValue]="null">No manager assigned</option>
+              <option *ngFor="let manager of managers()" [ngValue]="manager.id">
+                {{ manager.name }} - {{ manager.email }}
+              </option>
+            </select>
+            <small class="field-hint" *ngIf="managersLoading()">Loading approved managers...</small>
+            <small class="field-hint" *ngIf="!managersLoading() && managers().length === 0">
+              No approved managers available yet.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="panel-label">Rating & Status</p>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Rating (0-5)</label>
+              <input class="field-input" type="number" step="0.1" min="0" max="5" [(ngModel)]="form.rating" name="add_rating" />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Rating Count</label>
+              <input class="field-input" type="number" min="0" [(ngModel)]="form.ratingCount" name="add_ratingCount" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Food Type <span class="req">*</span></label>
+            <div class="toggle-row">
+              <label class="toggle-option veg-toggle" [class.selected]="form.isPureVeg === true">
+                <input type="radio" name="add_isPureVeg" [checked]="form.isPureVeg === true" (change)="form.isPureVeg = true" />
+                🟢 Pure Veg
+              </label>
+              <label class="toggle-option nonveg-toggle" [class.selected]="form.isPureVeg === false">
+                <input type="radio" name="add_isPureVeg" [checked]="form.isPureVeg === false" (change)="form.isPureVeg = false" />
+                🔴 Non-Veg
+              </label>
+            </div>
           </div>
 
           <div class="field-group">
             <label class="field-label">Active Status</label>
-            <div class="toggle-row compact-toggle">
+            <div class="toggle-row">
               <label class="toggle-option" [class.selected]="form.isActive === true">
                 <input type="radio" name="add_isActive" [checked]="form.isActive === true" (change)="form.isActive = true" />
                 Active
@@ -143,11 +250,11 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer-actions">
-        <button class="btn btn-ghost" (click)="closeAddModal()">Cancel</button>
-        <button class="btn btn-primary-orange" (click)="saveRestaurantDetails()">🏪 Save Restaurant</button>
+        <div class="modal-footer-actions">
+          <button class="btn btn-ghost" (click)="closeAddModal()">Cancel</button>
+          <button class="btn btn-primary-orange" (click)="saveRestaurantDetails()">🏪 Save Restaurant</button>
+        </div>
       </div>
     </div>
   </div>
@@ -161,7 +268,7 @@
         <span class="modal-icon">✏️</span>
         <div>
           <h4 class="modal-title">Edit Restaurant</h4>
-          <p class="modal-subtitle">Update details and manage image</p>
+          <p class="modal-subtitle">Update details, image, location, and assigned manager</p>
         </div>
       </div>
       <button class="modal-close" (click)="closeEditModal()">✕</button>
@@ -170,7 +277,7 @@
     <div *ngIf="editErrorMsg" class="inline-msg error">⚠️ {{ editErrorMsg }}</div>
     <div *ngIf="editSuccessMsg" class="inline-msg success">✅ {{ editSuccessMsg }}</div>
 
-    <div class="modal-body-grid">
+    <div class="modal-body-grid three-col-edit">
       <div class="image-panel">
         <p class="panel-label">Restaurant Image</p>
 
@@ -201,13 +308,68 @@
             <span class="stat-val">{{ form.ratingCount || 0 }}</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Delivery</span>
-            <span class="stat-val">{{ form.deliveryTime || 0 }}m</span>
+            <span class="stat-label">Rating</span>
+            <span class="stat-val">{{ form.rating || 0 }}</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Status</span>
-            <span class="stat-val">{{ form.isActive ? 'Active' : 'Inactive' }}</span>
+            <span class="stat-label">Manager</span>
+            <span class="stat-val manager-stat">{{ getManagerName(form.managerId) }}</span>
           </div>
+        </div>
+      </div>
+
+      <div class="image-panel map-side-panel">
+        <p class="panel-label">Location</p>
+
+        <div class="map-search-row mb-2">
+          <div class="map-search-box">
+            <i class="bi bi-search"></i>
+            <input
+              type="text"
+              placeholder="Search area, street, locality..."
+              [(ngModel)]="mapSearchQuery"
+              name="edit_mapSearch"
+              (input)="onMapSearchInput()"
+              autocomplete="off"
+            />
+          </div>
+
+          <ul class="search-results-list" *ngIf="mapSearchResults.length > 0">
+            <li *ngFor="let result of mapSearchResults" (click)="selectMapSearchResult(result)">
+              <i class="bi bi-geo-alt me-2"></i>
+              <span>{{ result.display_name }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="map-wrap">
+          <div id="restMapPicker" class="map-picker"></div>
+
+          <div class="center-pin-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+          </div>
+
+          <button type="button" class="current-location-btn" (click)="useCurrentLocation()">
+            <i class="bi bi-crosshair"></i>
+          </button>
+
+          <div class="map-pin-hint">
+            <i class="bi bi-geo-alt-fill"></i> Drag map to adjust pin
+          </div>
+        </div>
+
+        <div class="picked-address-box mt-2" *ngIf="mapPickedText">
+          <i class="bi bi-geo-alt me-2"></i>
+          <span>{{ mapPickedText }}</span>
+        </div>
+
+        <div *ngIf="mapLoading" class="map-loading-text mt-1">
+          Fetching location details...
+        </div>
+
+        <div class="coords-row" *ngIf="form.latitude && form.longitude">
+          <span>Lat: {{ form.latitude }}</span>
+          <span>Lng: {{ form.longitude }}</span>
         </div>
       </div>
 
@@ -220,25 +382,62 @@
             <input class="field-input" type="text" [(ngModel)]="form.name" name="edit_name" placeholder="e.g. Spice Garden" />
           </div>
 
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label">Location <span class="req">*</span></label>
-              <input class="field-input" type="text" [(ngModel)]="form.location" name="edit_location" placeholder="Chennai" />
-            </div>
+          <div class="field-group">
+            <label class="field-label">Location Address <span class="req">*</span></label>
+            <input class="field-input" type="text" [(ngModel)]="form.location" name="edit_location" placeholder="Auto-filled from map, editable" />
+          </div>
 
-            <div class="field-group">
-              <label class="field-label">Cuisine <span class="req">*</span></label>
-              <input class="field-input" type="text" [(ngModel)]="form.cuisine" name="edit_cuisine" placeholder="South Indian" />
-            </div>
+          <div class="field-group">
+            <label class="field-label">Cuisine <span class="req">*</span></label>
+            <input class="field-input" type="text" [(ngModel)]="form.cuisine" name="edit_cuisine" placeholder="South Indian, Pizza" />
           </div>
         </div>
 
         <div class="form-section">
-          <p class="panel-label">Additional Info</p>
+          <p class="panel-label">Manager Assignment</p>
 
           <div class="field-group">
-            <label class="field-label">Delivery Time (min)</label>
-            <input class="field-input" type="number" [(ngModel)]="form.deliveryTime" name="edit_deliveryTime" />
+            <label class="field-label">Assigned Manager</label>
+            <select class="field-input" [(ngModel)]="form.managerId" name="edit_managerId">
+              <option [ngValue]="null">No manager assigned</option>
+              <option *ngFor="let manager of managers()" [ngValue]="manager.id">
+                {{ manager.name }} - {{ manager.email }}
+              </option>
+            </select>
+            <small class="field-hint" *ngIf="managersLoading()">Loading approved managers...</small>
+            <small class="field-hint" *ngIf="!managersLoading() && managers().length === 0">
+              No approved managers available yet.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="panel-label">Rating & Status</p>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Rating (0-5)</label>
+              <input class="field-input" type="number" step="0.1" min="0" max="5" [(ngModel)]="form.rating" name="edit_rating" />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Rating Count</label>
+              <input class="field-input" type="number" min="0" [(ngModel)]="form.ratingCount" name="edit_ratingCount" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Food Type <span class="req">*</span></label>
+            <div class="toggle-row">
+              <label class="toggle-option veg-toggle" [class.selected]="form.isPureVeg === true">
+                <input type="radio" name="edit_isPureVeg" [checked]="form.isPureVeg === true" (change)="form.isPureVeg = true" />
+                🟢 Pure Veg
+              </label>
+              <label class="toggle-option nonveg-toggle" [class.selected]="form.isPureVeg === false">
+                <input type="radio" name="edit_isPureVeg" [checked]="form.isPureVeg === false" (change)="form.isPureVeg = false" />
+                🔴 Non-Veg
+              </label>
+            </div>
           </div>
 
           <div class="field-group">

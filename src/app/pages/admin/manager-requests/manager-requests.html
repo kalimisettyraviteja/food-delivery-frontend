@@ -1,0 +1,138 @@
+<div class="manager-requests-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manager Requests</h1>
+      <p class="page-subtitle">Review, approve, or reject restaurant manager registration requests.</p>
+    </div>
+
+    <div class="header-actions">
+      <select
+        class="status-filter"
+        [(ngModel)]="selectedStatus"
+        (change)="onStatusChange()"
+      >
+        <option value="ALL">All Requests</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+
+      <button type="button" class="refresh-btn" (click)="loadRequests()" [disabled]="loading">
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="state-card" *ngIf="loading">
+    Loading manager requests...
+  </div>
+
+  <div class="state-card" *ngIf="!loading && requests.length === 0">
+    No manager requests found for the selected filter.
+  </div>
+
+  <div class="requests-grid" *ngIf="!loading && requests.length > 0">
+    <div class="request-card" *ngFor="let request of requests; trackBy: trackByRequestId">
+      <div class="request-card-top">
+        <div>
+          <h3 class="request-name">{{ request.name }}</h3>
+          <p class="request-role">{{ request.requestedRole || 'RESTAURANT_MANAGER' }}</p>
+        </div>
+        <span [class]="getStatusClass(request.status)">
+          {{ request.status }}
+        </span>
+      </div>
+
+      <div class="request-details">
+        <div class="detail-row">
+          <span class="detail-label">Request ID</span>
+          <span class="detail-value">#{{ request.id }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{ request.email }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Phone</span>
+          <span class="detail-value">{{ request.phone }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Created At</span>
+          <span class="detail-value">{{ request.createdAt | date:'medium' }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.reviewedAt">
+          <span class="detail-label">Reviewed At</span>
+          <span class="detail-value">{{ request.reviewedAt | date:'medium' }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.rejectionReason">
+          <span class="detail-label">Rejection Reason</span>
+          <span class="detail-value rejection-text">{{ request.rejectionReason }}</span>
+        </div>
+      </div>
+
+      <div class="request-actions" *ngIf="request.status === 'PENDING'">
+        <button
+          type="button"
+          class="approve-btn"
+          (click)="approve(request)"
+          [disabled]="actionLoadingId === request.id"
+        >
+          {{ actionLoadingId === request.id ? 'Processing...' : 'Approve' }}
+        </button>
+
+        <button
+          type="button"
+          class="reject-btn"
+          (click)="openRejectModal(request)"
+          [disabled]="actionLoadingId === request.id"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="selectedRequest" (click)="closeRejectModal()"></div>
+
+  <div class="reject-modal" *ngIf="selectedRequest">
+    <div class="reject-modal-card" (click)="$event.stopPropagation()">
+      <div class="reject-modal-header">
+        <h3>Reject Manager Request</h3>
+        <button type="button" class="modal-close-btn" (click)="closeRejectModal()">✕</button>
+      </div>
+
+      <p class="reject-modal-text">
+        Reject request for <strong>{{ selectedRequest.name }}</strong>?
+      </p>
+
+      <label for="rejectReason" class="reject-label">Reason (optional)</label>
+      <textarea
+        id="rejectReason"
+        [(ngModel)]="rejectReason"
+        rows="4"
+        class="reject-textarea"
+        placeholder="Enter rejection reason"
+      ></textarea>
+
+      <div class="reject-modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeRejectModal()">Cancel</button>
+        <button
+          type="button"
+          class="danger-btn"
+          (click)="rejectSelected()"
+          [disabled]="actionLoadingId === selectedRequest.id"
+        >
+          {{ actionLoadingId === selectedRequest.id ? 'Rejecting...' : 'Confirm Reject' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
