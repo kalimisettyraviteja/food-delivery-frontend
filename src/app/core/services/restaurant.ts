@@ -43,9 +43,14 @@ export interface MenuItem {
 export class RestaurantService {
   private http = inject(HttpClient);
 
-  private pub = 'http://localhost:8080/api/restaurants';
-  private admin = 'http://localhost:8080/api/admin/restaurants';
-  private manager = 'http://localhost:8080/api/manager';
+  private localPub = 'http://localhost:8080/api/restaurants';
+  private localAdmin = 'http://localhost:8080/api/admin/restaurants';
+  private localManager = 'http://localhost:8080/api/manager';
+
+
+  private pub = 'https://api-gateway-ftbf.onrender.com/api/restaurants';
+  private admin = 'https://api-gateway-ftbf.onrender.com/api/admin/restaurants';
+  private manager = 'https://api-gateway-ftbf.onrender.com/api/manager';
 
   // ══════════════════════════════════════════════════════════
   // USER / PUBLIC APIs — RestaurantController (/api/restaurants)
@@ -138,7 +143,7 @@ export class RestaurantService {
     return this.http.delete<void>(`${this.admin}/menu-items/${itemId}/image`);
   }
 
-    // ══════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════
   // MANAGER APIs — ManagerRestaurantController (/api/manager)
   // Requires RESTAURANT_MANAGER role, managerId auto-bound from JWT
   // Used on manager dashboard pages (own restaurants only)

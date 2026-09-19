@@ -61,16 +61,23 @@ export class CouponService {
   private readonly http = inject(HttpClient);
 
   // Customer coupon APIs
-  private readonly userApiUrl =
-    'http://localhost:8080/api/coupons';
+  private readonly localUserApiUrl = 'http://localhost:8080/api/coupons';
 
   // Admin coupon APIs
-  private readonly adminApiUrl =
-    'http://localhost:8080/api/admin/coupons';
+  private readonly localAdminApiUrl = 'http://localhost:8080/api/admin/coupons';
 
   // Restaurant manager coupon APIs
-  private readonly managerApiUrl =
-    'http://localhost:8080/api/manager/coupons';
+  private readonly localManagerApiUrl = 'http://localhost:8080/api/manager/coupons';
+
+
+   // Customer coupon APIs
+  private readonly userApiUrl = 'https://api-gateway-ftbf.onrender.com/api/coupons';
+
+  // Admin coupon APIs
+  private readonly adminApiUrl = 'https://api-gateway-ftbf.onrender.com/api/admin/coupons';
+
+  // Restaurant manager coupon APIs
+  private readonly managerApiUrl = 'https://api-gateway-ftbf.onrender.com/api/manager/coupons';
 
   // ─────────────────────────────────────────────
   // Customer/User APIs

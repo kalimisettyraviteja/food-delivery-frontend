@@ -190,9 +190,13 @@ export interface UpdateOrderInstructionsRequest {
 export class OrderService {
   private readonly http = inject(HttpClient);
 
-  private readonly userApiUrl = 'http://localhost:8080/api/orders';
-  private readonly adminApiUrl = 'http://localhost:8080/api/admin/orders';
-  private readonly managerApiUrl = 'http://localhost:8080/api/manager/orders';
+  private readonly localUserApiUrl = 'http://localhost:8080/api/orders';
+  private readonly localAdminApiUrl = 'http://localhost:8080/api/admin/orders';
+  private readonly localManagerApiUrl = 'http://localhost:8080/api/manager/orders';
+
+   private readonly userApiUrl = 'https://api-gateway-ftbf.onrender.com/api/orders';
+  private readonly adminApiUrl = 'https://api-gateway-ftbf.onrender.com/api/admin/orders';
+  private readonly managerApiUrl = 'https://api-gateway-ftbf.onrender.com/api/manager/orders';
 
   // -------------------------------------------------
   // Customer order APIs
