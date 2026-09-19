@@ -1,0 +1,142 @@
+:host {
+  display: block;
+  background: #f7f8fc;
+  min-height: 100%;
+}
+
+.manager-order-detail {
+  max-width: 1500px;
+}
+
+.eyebrow {
+  color: #6c63ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: #20212a;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  color: #7c8191;
+  font-size: 0.9rem;
+}
+
+.detail-card,
+.state-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.detail-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f1f5;
+  padding: 1rem 1.25rem;
+}
+
+.detail-card .card-header h5 {
+  color: #303342;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.item-row {
+  border-bottom: 1px solid #f0f1f5;
+  padding: 1rem 1.25rem;
+}
+
+.item-row:last-child {
+  border-bottom: 0;
+}
+
+.item-name {
+  color: #303342;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.item-total {
+  color: #252735;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.address-block {
+  color: #565b6c;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.address-block strong {
+  color: #303342;
+}
+
+.summary-line {
+  align-items: flex-start;
+  color: #525768;
+  display: flex;
+  font-size: 0.87rem;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.summary-label {
+  color: #858999;
+}
+
+.summary-value {
+  color: #343746;
+}
+
+.total-line {
+  color: #252735;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.payment-info {
+  background: #f8f9fc;
+  border-radius: 10px;
+  color: #656a7a;
+  padding: 0.75rem;
+}
+
+.restaurant-name {
+  color: #303342;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.45rem 0.65rem;
+}
+
+@media (max-width: 767.98px) {
+  .manager-order-detail {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .page-header {
+    align-items: flex-start !important;
+  }
+
+  .item-row {
+    padding: 0.9rem 1rem;
+  }
+
+  .summary-line {
+    font-size: 0.83rem;
+  }
+}

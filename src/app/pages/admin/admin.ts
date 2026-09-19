@@ -1,6 +1,7 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { UserService } from '../../core/services/user';
 
 @Component({
   selector: 'app-admin',
@@ -11,6 +12,7 @@ import { CommonModule } from '@angular/common';
 })
 export class Admin {
   private router = inject(Router);
+  private userService = inject(UserService);
 
   userName = localStorage.getItem('userName') || 'Admin';
   isSidebarOpen = false;
@@ -37,7 +39,7 @@ export class Admin {
   }
 
   logout(): void {
-    localStorage.clear();
-    this.router.navigate(['/login']);
+    this.userService.logout();
+    this.router.navigate(['/home/main']);
   }
 }

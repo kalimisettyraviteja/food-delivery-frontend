@@ -1,10 +1,20 @@
 <div class="profile-shell">
+
   <div class="profile-page" *ngIf="!loading; else loadingBlock">
+
+    <!-- Profile hero -->
     <section class="profile-hero-card">
+
       <div class="hero-left">
+
         <div class="profile-photo-wrap">
+
           <ng-container *ngIf="displayPhoto; else initialsAvatar">
-            <img [src]="displayPhoto" alt="Profile photo" class="profile-photo" />
+            <img
+              [src]="displayPhoto"
+              alt="Profile photo"
+              class="profile-photo"
+            />
           </ng-container>
 
           <ng-template #initialsAvatar>
@@ -19,8 +29,17 @@
             title="Change profile photo"
             (click)="openFilePicker()"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="edit-icon">
-              <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              class="edit-icon"
+            >
+              <path
+                d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"
+              />
             </svg>
           </button>
 
@@ -31,41 +50,80 @@
             accept=".jpg,.jpeg,.png,.webp"
             (change)="onFileSelected($event)"
           />
+
         </div>
 
         <div class="hero-copy">
+
           <div class="hero-copy-top">
             <span class="mini-label">My profile</span>
-            <span class="role-badge">{{ profile?.role }}</span>
+
+            <span class="role-badge">
+              {{ profile?.role }}
+            </span>
+
+            <span
+              class="status-badge"
+              [ngClass]="accountStatusClass"
+            >
+              {{ profile?.accountStatus || 'ACTIVE' }}
+            </span>
           </div>
 
           <h1>{{ profile?.name }}</h1>
           <p>{{ profile?.email }}</p>
 
           <div class="hero-meta">
-            
 
             <div class="meta-chip" *ngIf="selectedFile">
               <span class="meta-label">Selected file</span>
-              <span class="meta-value text-truncate">{{ selectedFile.name }}</span>
+              <span class="meta-value text-truncate">
+                {{ selectedFile.name }}
+              </span>
             </div>
+
+            <div class="meta-chip" *ngIf="profile?.phone">
+              <span class="meta-label">Phone</span>
+              <span class="meta-value text-truncate">
+                {{ profile?.phone }}
+              </span>
+            </div>
+
           </div>
+
         </div>
+
       </div>
 
       <div class="hero-actions">
-        <button class="btn btn-gradient" type="button" (click)="uploadPhoto()" [disabled]="uploading || !selectedFile">
+
+        <button
+          class="btn btn-gradient"
+          type="button"
+          (click)="uploadPhoto()"
+          [disabled]="uploading || !selectedFile"
+        >
           {{ uploading ? 'Uploading...' : 'Upload photo' }}
         </button>
 
-        <button class="btn btn-soft-danger" type="button" (click)="removePhoto()" [disabled]="removing || !hasSavedPhoto">
+        <button
+          class="btn btn-soft-danger"
+          type="button"
+          (click)="removePhoto()"
+          [disabled]="removing || !hasSavedPhoto"
+        >
           {{ removing ? 'Removing...' : 'Remove photo' }}
         </button>
+
       </div>
+
     </section>
 
     <div class="profile-content-grid">
+
+      <!-- Personal details -->
       <section class="content-card details-card">
+
         <div class="card-head">
           <span class="section-kicker">Account</span>
           <h3>Personal details</h3>
@@ -73,47 +131,90 @@
         </div>
 
         <div class="form-grid">
+
           <div class="form-group">
-            <label>Name</label>
-            <input type="text" [(ngModel)]="form.name" />
+            <label for="profileName">Name</label>
+
+            <input
+              id="profileName"
+              type="text"
+              [(ngModel)]="form.name"
+            />
           </div>
 
           <div class="form-group">
-            <label>Phone</label>
-            <input type="text" [(ngModel)]="form.phone" />
+            <label for="profilePhone">Phone</label>
+
+            <input
+              id="profilePhone"
+              type="text"
+              [(ngModel)]="form.phone"
+            />
           </div>
 
           <div class="form-group form-group-full">
-            <label>Email</label>
-            <input type="email" [value]="profile?.email || ''" disabled />
+            <label for="profileEmail">Email</label>
+
+            <input
+              id="profileEmail"
+              type="email"
+              [value]="profile?.email || ''"
+              disabled
+            />
           </div>
+
         </div>
 
         <div class="card-actions">
-          <button class="btn btn-gradient" type="button" (click)="saveProfile()" [disabled]="saving">
+          <button
+            class="btn btn-gradient"
+            type="button"
+            (click)="saveProfile()"
+            [disabled]="saving"
+          >
             {{ saving ? 'Saving...' : 'Save changes' }}
           </button>
         </div>
+
       </section>
 
+      <!-- Password settings -->
       <section class="content-card security-card">
+
         <div class="security-top">
+
           <div class="security-icon-wrap">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0c-.69 0-1.386.17-2 .5A5.5 5.5 0 0 0 3 5.5V7H2.5A1.5 1.5 0 0 0 1 8.5v5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 13.5 7H13V5.5A5.5 5.5 0 0 0 10 .5 4.48 4.48 0 0 0 8 0zm4 7H4V5.5a4 4 0 1 1 8 0V7z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M8 0c-.69 0-1.386.17-2 .5A5.5 5.5 0 0 0 3 5.5V7H2.5A1.5 1.5 0 0 0 1 8.5v5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 13.5 7H13V5.5A5.5 5.5 0 0 0 10 .5 4.48 4.48 0 0 0 8 0zm4 7H4V5.5a4 4 0 1 1 8 0V7z"
+              />
             </svg>
           </div>
 
           <div class="security-copy">
             <span class="section-kicker">Security</span>
             <h3>Password settings</h3>
-            <p>Change your password only when needed. Keep it strong and unique for better account security.</p>
+            <p>
+              Change your password only when needed. Keep it strong and unique
+              for better account security.
+            </p>
           </div>
+
         </div>
 
         <div class="security-note" *ngIf="!showChangePassword">
           <div class="security-note-dot"></div>
-          <span>Your password is hidden for safety. Open the form only when you want to update it.</span>
+
+          <span>
+            Your password is hidden for safety. Open the form only when you
+            want to update it.
+          </span>
         </div>
 
         <div class="security-action-bar">
@@ -126,39 +227,128 @@
           </button>
         </div>
 
-        <div class="password-panel" *ngIf="showChangePassword">
+        <div
+          class="password-panel"
+          *ngIf="showChangePassword"
+        >
+
           <div class="password-panel-header">
             <h4>Update password</h4>
             <p>Enter your current password, then choose a new one.</p>
           </div>
 
           <div class="form-group">
-            <label>Current password</label>
-            <input type="password" [(ngModel)]="passwordForm.currentPassword" />
+            <label for="currentPassword">Current password</label>
+
+            <input
+              id="currentPassword"
+              type="password"
+              [(ngModel)]="passwordForm.currentPassword"
+              autocomplete="current-password"
+            />
           </div>
 
           <div class="form-group">
-            <label>New password</label>
-            <input type="password" [(ngModel)]="passwordForm.newPassword" />
+            <label for="newPassword">New password</label>
+
+            <input
+              id="newPassword"
+              type="password"
+              [(ngModel)]="passwordForm.newPassword"
+              autocomplete="new-password"
+            />
           </div>
 
           <div class="form-group">
-            <label>Confirm new password</label>
-            <input type="password" [(ngModel)]="passwordForm.confirmPassword" />
+            <label for="confirmNewPassword">
+              Confirm new password
+            </label>
+
+            <input
+              id="confirmNewPassword"
+              type="password"
+              [(ngModel)]="passwordForm.confirmPassword"
+              autocomplete="new-password"
+            />
           </div>
 
           <div class="password-tip">
-            Use a password that is hard to guess and different from your old one.
+            Use a password that is hard to guess and different from your old
+            one.
           </div>
 
           <div class="card-actions">
-            <button class="btn btn-gradient" type="button" (click)="changePassword()" [disabled]="changingPassword">
-              {{ changingPassword ? 'Changing...' : 'Update password' }}
+            <button
+              class="btn btn-gradient"
+              type="button"
+              (click)="changePassword()"
+              [disabled]="changingPassword"
+            >
+              {{
+                changingPassword
+                  ? 'Changing...'
+                  : 'Update password'
+              }}
             </button>
           </div>
+
         </div>
+
       </section>
+
     </div>
+
+    <!-- Deactivate account -->
+    <section class="content-card deactivate-card">
+
+      <div class="security-top">
+
+        <div class="security-icon-wrap danger-icon-wrap">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 1.278a.5.5 0 0 1 .447.276l6.518 12.676A.5.5 0 0 1 14.518 15H1.482a.5.5 0 0 1-.447-.77L7.553 1.554A.5.5 0 0 1 8 1.278zm0 2.536L2.07 14h11.86L8 3.814zm-.5 4.222a.5.5 0 0 1 1 0v3.25a.5.5 0 0 1-1 0v-3.25zm0 4.75a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0z"
+            />
+          </svg>
+        </div>
+
+        <div class="security-copy">
+          <span class="section-kicker danger-kicker">Danger zone</span>
+
+          <h3>Deactivate account</h3>
+
+          <p>
+            This will mark your account as deactivated. You can reactivate
+            later through OTP from the login page.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="danger-note">
+        Deactivation is protected with OTP confirmation. A verification code
+        will be sent to your registered email before your account status
+        changes.
+      </div>
+
+      <div class="card-actions danger-actions">
+        <button
+          class="btn btn-danger-outline"
+          type="button"
+          (click)="openDeactivateFlow()"
+          [disabled]="deactivating || !canDeactivate"
+        >
+          {{ deactivating ? 'Sending OTP...' : 'Deactivate account' }}
+        </button>
+      </div>
+
+    </section>
+
   </div>
 
   <ng-template #loadingBlock>
@@ -168,13 +358,145 @@
       </div>
     </div>
   </ng-template>
+
 </div>
 
+<!-- =================================================
+     Deactivate OTP modal
+     ================================================= -->
+
+<div
+  class="modal fade"
+  id="deactivateModal"
+  tabindex="-1"
+  aria-labelledby="deactivateModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content otp-modal-content">
+
+      <div class="modal-header">
+        <h5
+          class="modal-title"
+          id="deactivateModalLabel"
+        >
+          Confirm deactivation
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          [disabled]="confirmingDeactivate"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+
+        <p class="modal-desc">
+          We sent a six-digit verification code to your registered email.
+          Enter it below to deactivate your account.
+        </p>
+
+        <div
+          class="otp-countdown"
+          [class.otp-expired]="deactivationOtpCountdown === 0"
+        >
+          <span class="otp-countdown-icon">⏱</span>
+
+          <span *ngIf="deactivationOtpCountdown > 0">
+            OTP expires in {{ deactivationOtpDisplayTime }}
+          </span>
+
+          <span *ngIf="deactivationOtpCountdown === 0">
+            OTP expired. Request a new code to continue.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="deactivateOtp">
+            Verification code
+          </label>
+
+          <input
+            id="deactivateOtp"
+            type="text"
+            maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            [(ngModel)]="deactivateOtp"
+            placeholder="Enter 6-digit OTP"
+            [disabled]="confirmingDeactivate"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="btn resend-link"
+          (click)="resendDeactivateOtp()"
+          [disabled]="
+            resendingDeactivateOtp ||
+            confirmingDeactivate ||
+            !canResendDeactivateOtp
+          "
+        >
+          {{
+            resendingDeactivateOtp
+              ? 'Sending OTP...'
+              : canResendDeactivateOtp
+                ? 'Resend OTP'
+                : 'Resend OTP in ' + deactivationOtpDisplayTime
+          }}
+        </button>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button
+          type="button"
+          class="btn btn-light"
+          data-bs-dismiss="modal"
+          [disabled]="confirmingDeactivate"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmDeactivate()"
+          [disabled]="
+            confirmingDeactivate ||
+            deactivateOtp.trim().length !== 6 ||
+            deactivationOtpCountdown === 0
+          "
+        >
+          {{
+            confirmingDeactivate
+              ? 'Confirming...'
+              : 'Confirm deactivation'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
+
   <div
     #statusToast
     class="toast align-items-center border-0"
-    [ngClass]="toastType === 'success' ? 'text-bg-success' : 'text-bg-danger'"
+    [ngClass]="
+      toastType === 'success'
+        ? 'text-bg-success'
+        : 'text-bg-danger'
+    "
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
@@ -183,6 +505,7 @@
       <div class="toast-body">
         {{ toastMessage }}
       </div>
+
       <button
         type="button"
         class="btn-close btn-close-white me-2 m-auto"
@@ -191,4 +514,5 @@
       ></button>
     </div>
   </div>
+
 </div>

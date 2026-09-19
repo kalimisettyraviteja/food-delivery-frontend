@@ -4,8 +4,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = localStorage.getItem('token');
 
   const publicUrls = [
+    'http://localhost:8080/api/users/auth/email-status',
+    'http://localhost:8080/api/users/register',
+    'http://localhost:8080/api/users/verify-email',
+    'http://localhost:8080/api/users/resend-verification',
     'http://localhost:8080/api/users/login',
-    'http://localhost:8080/api/users/register'
+    'http://localhost:8080/api/users/forgot-password',
+    'http://localhost:8080/api/users/verify-reset-otp',
+    'http://localhost:8080/api/users/reset-password'
   ];
 
   const isPublicRequest = publicUrls.some(url => req.url.includes(url));
@@ -18,7 +24,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
     return next(authReq);
   }
-  
 
   return next(req);
 };

@@ -67,7 +67,7 @@ export class Coupons implements OnInit {
   }
 
   loadRestaurants(): void {
-    this.restaurantService.getAll().subscribe({
+    this.restaurantService.getAllAdmin().subscribe({
       next: (data: any[]) => {
         this.restaurants = data;
       },

@@ -1,0 +1,329 @@
+<section class="manager-dashboard-page">
+
+  <!-- Loading skeleton -->
+  <ng-container *ngIf="loading">
+
+    <section class="dashboard-top-grid">
+
+      <div class="overview-skeleton dashboard-skeleton-card">
+        <span class="skeleton-line skeleton-title"></span>
+        <span class="skeleton-line skeleton-subtitle"></span>
+
+        <div class="skeleton-chart">
+          <span class="skeleton-chart-segment"></span>
+          <span class="skeleton-chart-segment"></span>
+          <span class="skeleton-chart-segment"></span>
+        </div>
+      </div>
+
+      <div class="actions-skeleton dashboard-skeleton-card">
+        <span class="skeleton-action"></span>
+        <span class="skeleton-action"></span>
+      </div>
+
+    </section>
+
+    <section class="manager-content-skeleton dashboard-skeleton-card">
+      <span class="skeleton-line skeleton-title"></span>
+      <span class="skeleton-line skeleton-content-line"></span>
+      <span class="skeleton-line skeleton-content-line short"></span>
+      <span class="skeleton-line skeleton-content-line"></span>
+    </section>
+
+  </ng-container>
+
+  <!-- Error state -->
+  <section
+    *ngIf="!loading && errorMessage"
+    class="dashboard-error"
+    role="alert"
+  >
+    <div>
+      <strong>Unable to load dashboard</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="retry-button"
+      (click)="loadSummary()"
+    >
+      Try again
+    </button>
+  </section>
+
+  <!-- Dashboard content -->
+  <ng-container *ngIf="!loading && !errorMessage">
+
+    <section class="dashboard-top-grid">
+
+      <!-- Restaurant overview -->
+      <article class="overview-card">
+
+        <div class="overview-header">
+
+          <div>
+            <h1>Overview of restaurants</h1>
+
+            <p class="overview-description">
+              Track your restaurant branches and availability at a glance.
+              <span class="overview-instruction">
+                Click Total, Active, or Inactive to open the filtered restaurant list.
+              </span>
+            </p>
+          </div>
+
+          <span
+            class="overview-icon"
+            aria-hidden="true"
+          >
+            <span class="overview-building"></span>
+          </span>
+
+        </div>
+
+        <!-- Interactive horizontal bar chart -->
+        <div
+          class="restaurant-bar-chart"
+          aria-label="Restaurant overview chart"
+        >
+
+          <!-- Total restaurants -->
+          <button
+            type="button"
+            class="bar-chart-row total-bar-row"
+            (click)="openRestaurants()"
+            [attr.aria-label]="'View all ' + totalCount + ' restaurants'"
+          >
+            <span class="bar-label">
+              <span class="bar-dot total-dot"></span>
+              <span>Total</span>
+            </span>
+
+            <span class="bar-track">
+              <span
+                class="bar-fill total-bar-fill"
+                [style.width.%]="totalCount > 0 ? 100 : 0"
+              ></span>
+            </span>
+
+            <strong class="bar-value">
+              {{ totalCount }}
+            </strong>
+          </button>
+
+          <!-- Active restaurants -->
+          <button
+            type="button"
+            class="bar-chart-row active-bar-row"
+            (click)="openRestaurants('ACTIVE')"
+            [attr.aria-label]="'View ' + activeCount + ' active restaurants'"
+          >
+            <span class="bar-label">
+              <span class="bar-dot active-dot"></span>
+              <span>Active</span>
+            </span>
+
+            <span class="bar-track">
+              <span
+                class="bar-fill active-bar-fill"
+                [style.width.%]="totalCount > 0 ? (activeCount / totalCount) * 100 : 0"
+              ></span>
+            </span>
+
+            <strong class="bar-value">
+              {{ activeCount }}
+            </strong>
+          </button>
+
+          <!-- Inactive restaurants -->
+          <button
+            type="button"
+            class="bar-chart-row inactive-bar-row"
+            (click)="openRestaurants('INACTIVE')"
+            [attr.aria-label]="'View ' + inactiveCount + ' inactive restaurants'"
+          >
+            <span class="bar-label">
+              <span class="bar-dot inactive-dot"></span>
+              <span>Inactive</span>
+            </span>
+
+            <span class="bar-track">
+              <span
+                class="bar-fill inactive-bar-fill"
+                [style.width.%]="totalCount > 0 ? (inactiveCount / totalCount) * 100 : 0"
+              ></span>
+            </span>
+
+            <strong class="bar-value">
+              {{ inactiveCount }}
+            </strong>
+          </button>
+
+        </div>
+
+      </article>
+
+      <!-- Actions -->
+      <article class="actions-card">
+
+        <h2>Actions</h2>
+
+        <button
+          type="button"
+          class="action-button create-action"
+          (click)="openCreateRestaurant()"
+        >
+          <span
+            class="action-icon plus-icon"
+            aria-hidden="true"
+          >
+            +
+          </span>
+
+          <span class="action-content">
+            <strong>Create restaurant</strong>
+            <small>Add a new branch</small>
+          </span>
+
+          <span
+            class="action-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="action-button orders-action"
+          (click)="openOrders()"
+        >
+          <span
+            class="action-icon orders-icon"
+            aria-hidden="true"
+          >
+            <span class="mini-receipt"></span>
+          </span>
+
+          <span class="action-content">
+            <strong>Manage orders</strong>
+            <small>Review incoming orders</small>
+          </span>
+
+          <span
+            class="action-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </button>
+
+        
+
+      </article>
+
+    </section>
+
+    <!-- Manager portal information -->
+    <section class="manager-info-card">
+
+      <div class="manager-info-header">
+
+        <span
+          class="info-icon"
+          aria-hidden="true"
+        >
+          i
+        </span>
+
+        <div>
+          <p class="section-eyebrow">
+            MANAGER PORTAL
+          </p>
+
+          <h2>
+            Manage your restaurant operations
+          </h2>
+        </div>
+
+      </div>
+
+      <p class="manager-info-description">
+        Use the manager portal to keep your branches updated, maintain menus,
+        process customer orders, and monitor restaurant performance.
+      </p>
+
+      <div class="capability-grid">
+
+        <div class="capability-item">
+          <span
+            class="capability-icon restaurant-capability-icon"
+            aria-hidden="true"
+          >
+            <span class="small-building"></span>
+          </span>
+
+          <div>
+            <h3>Restaurant management</h3>
+            <p>
+              Create, edit, activate or deactivate your restaurant branches.
+            </p>
+          </div>
+        </div>
+
+        <div class="capability-item">
+          <span
+            class="capability-icon menu-capability-icon"
+            aria-hidden="true"
+          >
+            <span class="small-menu-lines"></span>
+          </span>
+
+          <div>
+            <h3>Menu management</h3>
+            <p>
+              Add menu items, update pricing and control availability.
+            </p>
+          </div>
+        </div>
+
+        <div class="capability-item">
+          <span
+            class="capability-icon order-capability-icon"
+            aria-hidden="true"
+          >
+            <span class="small-order-icon"></span>
+          </span>
+
+          <div>
+            <h3>Order management</h3>
+            <p>
+              Confirm orders and update preparation and delivery status.
+            </p>
+          </div>
+        </div>
+
+        <div class="capability-item">
+          <span
+            class="capability-icon review-capability-icon"
+            aria-hidden="true"
+          >
+            <span class="small-star-icon">★</span>
+          </span>
+
+          <div>
+            <h3>Customer feedback</h3>
+            <p>
+              View customer ratings and reviews from the restaurant actions.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </ng-container>
+
+</section>

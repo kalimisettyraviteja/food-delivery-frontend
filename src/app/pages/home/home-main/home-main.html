@@ -1,38 +1,299 @@
-<!-- Hero -->
+<!-- =================================================
+     Hero
+     ================================================= -->
+
 <section class="hero-section">
-  <div class="home-wrap text-center">
-    <h1 class="hero-title">Hungry? We've got you.</h1>
-    <p class="hero-sub">Discover restaurants near you and order your favourite food</p>
+  <div class="home-wrap">
 
-    <div class="search-bar mx-auto">
-      <input
-        type="text"
-        class="form-control form-control-lg"
-        placeholder="🔍 Search by restaurants, cuisine or location..."
-        [(ngModel)]="searchText"
-        (ngModelChange)="onSearch()"
-      />
+    <div class="hero-copy text-center">
+      <span class="hero-eyebrow">
+        <i class="bi bi-lightning-charge-fill"></i>
+        Fast delivery. Great food.
+      </span>
+
+      <h1 class="hero-title">
+        Hungry? We've got you.
+      </h1>
+
+      <p class="hero-sub">
+        Discover restaurants near you and order your favourite food.
+      </p>
     </div>
-  </div>
-</section>
 
-<!-- Restaurants Grid -->
-<section class="restaurant-section">
-  <div class="home-wrap my-4">
+    <div class="search-address-row mx-auto">
+      <div class="search-address-combined" [class.logged-out]="!isLoggedIn">
+        <div class="search-address-shell">
 
-    <div *ngIf="loading()" class="row g-4">
-      <div class="col-6 col-md-4 col-lg-3" *ngFor="let i of [1,2,3,4,5,6,7,8]">
-        <div class="restaurant-card skeleton-shell">
-          <div class="skeleton-media"></div>
-          <div class="skeleton-line skeleton-line-lg"></div>
-          <div class="skeleton-line skeleton-line-md"></div>
-          <div class="skeleton-line skeleton-line-sm"></div>
+          <!-- Delivery address selector: visible only after login -->
+          <button *ngIf="isLoggedIn" type="button" class="btn address-trigger" data-bs-toggle="offcanvas"
+            data-bs-target="#addressOffcanvas" aria-controls="addressOffcanvas">
+            <span class="address-icon-wrap">
+              <i class="bi bi-geo-alt-fill"></i>
+            </span>
+
+            <span class="address-content" *ngIf="selectedAddress() as address; else noSelectedAddress">
+              <span class="address-label">
+                {{
+                address.label === 'OTHER'
+                ? address.customLabel
+                : address.label
+                }}
+              </span>
+
+              <span class="address-text">
+                {{ address.addressLine1 }}, {{ address.city }}
+              </span>
+            </span>
+
+            <ng-template #noSelectedAddress>
+              <span class="address-content">
+                <span class="address-label">
+                  Delivery address
+                </span>
+
+                <span class="address-text">
+                  Select address
+                </span>
+              </span>
+            </ng-template>
+
+            <span class="address-action">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </button>
+
+          <!-- Restaurant search -->
+          <div class="search-bar">
+            <span class="search-bar-icon-wrap">
+              <i class="bi bi-search"></i>
+            </span>
+
+            <input type="text" class="form-control form-control-lg"
+              placeholder="Search restaurants, cuisine or location..." [(ngModel)]="searchText"
+              (ngModelChange)="onSearch()" autocomplete="off" />
+
+            <button *ngIf="searchText" type="button" class="clear-search-btn" (click)="clearSearch()"
+              aria-label="Clear restaurant search" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
 
+    <div *ngIf="isLoggedIn && selectedAddress()" class="hero-location-note">
+      <i class="bi bi-geo-alt-fill"></i>
+      Restaurant results are tailored to your selected delivery address.
+    </div>
+
+  </div>
+</section>
+
+<!-- =================================================
+     Right-side delivery address offcanvas
+     ================================================= -->
+
+<div class="offcanvas offcanvas-end address-offcanvas" tabindex="-1" id="addressOffcanvas"
+  aria-labelledby="addressOffcanvasLabel">
+  <div class="offcanvas-header address-offcanvas-header">
+
+    <div class="address-offcanvas-heading">
+      <span class="address-sheet-kicker">
+        <i class="bi bi-geo-alt-fill"></i>
+        Delivery location
+      </span>
+
+      <h5 class="offcanvas-title" id="addressOffcanvasLabel">
+        Where should we deliver?
+      </h5>
+
+      <p class="offcanvas-subtitle mb-0">
+        Choose an address to see restaurants and delivery details nearby.
+      </p>
+    </div>
+
+    <button type="button" class="btn-close address-offcanvas-close" data-bs-dismiss="offcanvas"
+      aria-label="Close"></button>
+
+  </div>
+
+  <div class="offcanvas-body address-offcanvas-body">
+
+    <div class="address-list" *ngIf="addresses().length > 0; else noSavedAddressBlock">
+
+      <button type="button" class="address-card" *ngFor="let address of addresses()"
+        [class.active]="selectedAddress()?.id === address.id" (click)="onAddressChange(address)"
+        data-bs-dismiss="offcanvas">
+        <span class="address-card-icon">
+          <i class="bi" [ngClass]="
+              selectedAddress()?.id === address.id
+                ? 'bi-check2-circle'
+                : getAddressLabelIcon(address)
+            "></i>
+        </span>
+
+        <span class="address-card-body">
+
+          <span class="address-card-top">
+            <span class="address-card-label">
+              {{
+              address.label === 'OTHER'
+              ? address.customLabel
+              : address.label
+              }}
+            </span>
+
+            <span *ngIf="address.isDefault" class="address-default-badge">
+              Default
+            </span>
+
+            <span *ngIf="selectedAddress()?.id === address.id" class="selected-address-badge">
+              Selected
+            </span>
+          </span>
+
+          <span class="address-card-line">
+            {{ address.addressLine2 }}
+            <span *ngIf="address.addressLine2">, </span>
+            {{ address.addressLine1 }},
+            {{ address.city }},
+            {{ address.postalCode }}
+          </span>
+
+        </span>
+
+        <span class="address-card-check">
+          <i class="bi" [ngClass]="
+              selectedAddress()?.id === address.id
+                ? 'bi-check-circle-fill'
+                : 'bi-chevron-right'
+            "></i>
+        </span>
+      </button>
+
+      <button type="button" class="manage-address-btn" (click)="goToSavedAddresses()" data-bs-dismiss="offcanvas">
+        <span class="manage-address-icon">
+          <i class="bi bi-pencil-square"></i>
+        </span>
+
+        <span class="manage-address-copy">
+          <strong>Manage saved addresses</strong>
+
+          <small>
+            Add, edit, or choose another delivery address.
+          </small>
+        </span>
+
+        <i class="bi bi-chevron-right manage-address-arrow" aria-hidden="true"></i>
+      </button>
+
+    </div>
+
+    <ng-template #noSavedAddressBlock>
+      <div class="address-empty-state">
+
+        <div class="address-empty-icon">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+
+        <h6>No saved addresses yet</h6>
+
+        <p>
+          Add your delivery address to discover restaurants near you.
+        </p>
+
+        <button type="button" class="add-address-sheet-btn" (click)="goToSavedAddresses()" data-bs-dismiss="offcanvas">
+          <i class="bi bi-plus-lg"></i>
+          Add a delivery address
+        </button>
+
+      </div>
+    </ng-template>
+
+  </div>
+</div>
+
+<!-- =================================================
+     Restaurant section
+     ================================================= -->
+
+<section class="restaurant-section">
+  <div class="home-wrap restaurant-wrap">
+
+    <div class="restaurant-section-head">
+
+      <div>
+        <span class="section-kicker">
+          <i class="bi bi-compass-fill"></i>
+          Discover nearby food
+        </span>
+
+        <h2>
+          {{
+          searchText
+          ? 'Search results'
+          : vegOnly
+          ? 'Pure veg restaurants'
+          : 'Restaurants for you'
+          }}
+        </h2>
+
+        <p>
+          {{
+          searchText
+          ? 'Restaurants matching your search.'
+          : vegOnly
+          ? 'Explore restaurants serving vegetarian food only.'
+          : 'Explore restaurants, cuisines, and your next favourite meal.'
+          }}
+        </p>
+      </div>
+
+      <div class="restaurant-header-actions">
+
+        <!-- Veg-only option is available only after login -->
+        <label *ngIf="isLoggedIn" class="veg-only-filter" [class.active]="vegOnly"
+          title="Show only pure vegetarian restaurants">
+          <input type="checkbox" [(ngModel)]="vegOnly" (ngModelChange)="onVegOnlyChange()"
+            aria-label="Show only pure vegetarian restaurants" />
+
+          <span class="veg-filter-indicator">
+            <span class="veg-filter-dot"></span>
+          </span>
+
+          <span class="veg-filter-label">
+            Veg only
+          </span>
+
+          <span class="veg-filter-switch"></span>
+        </label>
+
+        <div *ngIf="!loading() && !hasLoadError" class="restaurant-count">
+          <strong>{{ filtered().length }}</strong>
+          restaurant{{ filtered().length === 1 ? '' : 's' }}
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Restaurant loading skeletons -->
+    <div *ngIf="loading()" class="restaurant-grid" aria-label="Loading restaurants">
+      <article class="restaurant-card skeleton-shell" *ngFor="let item of skeletonItems">
+        <div class="skeleton-media app-skeleton"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line skeleton-line-lg"></div>
+          <div class="skeleton-line skeleton-line-md"></div>
+          <div class="skeleton-line skeleton-line-sm"></div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Restaurant loading error -->
     <div *ngIf="!loading() && hasLoadError" class="empty-state-wrap">
       <div class="empty-state-card empty-state-card-error">
+
         <div class="empty-state-visual">
           <div class="empty-bowl">🍽️</div>
           <div class="empty-float empty-float-1">⚠️</div>
@@ -40,11 +301,13 @@
           <div class="empty-float empty-float-3">😕</div>
         </div>
 
-        <h3 class="empty-state-title">Restaurants are taking a little longer</h3>
+        <h3 class="empty-state-title">
+          Restaurants are taking a little longer
+        </h3>
 
         <p class="empty-state-text">
-          We couldn’t load restaurants right now. This may be a temporary server or network issue.
-          Please try again in a moment.
+          We couldn’t load restaurants right now. This may be a temporary
+          server or network issue. Please try again in a moment.
         </p>
 
         <div class="empty-state-actions">
@@ -52,156 +315,311 @@
             Try again
           </button>
         </div>
+
       </div>
     </div>
 
-    <div class="row g-4" *ngIf="!loading() && !hasLoadError">
-      <div class="col-6 col-md-4 col-lg-3" *ngFor="let r of filtered()">
-        <article
-          class="restaurant-card"
-          [class.inactive-card]="isLoggedIn && r.isActive === false"
-          [class.disabled-card]="isLoggedIn && r.isActive === false"
-          (click)="openRestaurant(r)"
-        >
-          <div class="restaurant-media-wrap">
-            <div class="restaurant-media">
-              <div class="restaurant-image-layer">
-                <ng-container *ngIf="hasRestaurantImage(r); else defaultImageBlock">
-                  <img
-                    class="restaurant-img"
-                    [src]="getRestaurantImage(r)"
-                    [alt]="r.name"
-                    (error)="onImageError($event)"
-                  />
-                  <div class="media-overlay"></div>
-                </ng-container>
+    <!-- Restaurant cards -->
+    <div *ngIf="!loading() && !hasLoadError && filtered().length > 0" class="restaurant-grid">
+      <article class="restaurant-card" *ngFor="
+          let restaurant of filtered();
+          trackBy: trackByRestaurantId
+        " [class.inactive-card]="
+          isLoggedIn &&
+          restaurant.isActive === false
+        " (click)="openRestaurant(restaurant)">
 
-                <ng-template #defaultImageBlock>
-                  <div class="restaurant-fallback">
-                    <div class="fallback-pattern"></div>
-                    <div class="fallback-content">
-                      <div class="fallback-icon">🍽️</div>
-                    </div>
-                    <div class="media-overlay fallback-overlay"></div>
-                  </div>
-                </ng-template>
+        <div class="restaurant-media">
+
+          <ng-container *ngIf="
+              hasRestaurantImage(restaurant);
+              else defaultImageBlock
+            ">
+            <img class="restaurant-img" [src]="getRestaurantImage(restaurant)" [alt]="restaurant.name" loading="lazy"
+              (error)="onImageError($event)" />
+
+            <div class="media-overlay"></div>
+          </ng-container>
+
+          <ng-template #defaultImageBlock>
+            <div class="restaurant-fallback">
+              <div class="fallback-pattern"></div>
+
+              <div class="fallback-content">
+                <span class="fallback-icon">🍽️</span>
+                <span>Fresh food, nearby</span>
               </div>
 
-              <span class="cuisine-badge">{{ r.cuisine }}</span>
-
-              <span *ngIf="isLoggedIn && r.isActive === false" class="status-badge">
-                Currently Unavailable
-              </span>
-
-              <div class="offer-strip">
-                {{ getOfferText(r) }}
-              </div>
+              <div class="media-overlay fallback-overlay"></div>
             </div>
+          </ng-template>
+
+          <div class="restaurant-image-top">
+
+            <span *ngIf="restaurant.isPureVeg" class="veg-badge">
+              <span class="veg-symbol"></span>
+              Pure veg
+            </span>
+
+            <span *ngIf="
+                isLoggedIn &&
+                restaurant.isActive === false
+              " class="unavailable-badge">
+              Currently unavailable
+            </span>
+
           </div>
 
-          <div class="restaurant-content">
-            <h3 class="restaurant-name" [title]="r.name">{{ r.name }}</h3>
-
-            <div class="restaurant-meta-row">
-              <ng-container *ngIf="(r.ratingCount ?? 0) > 0; else newBadge">
-                <span class="rating-star">★</span>
-                {{ r.rating ?? 0 }}
-              </ng-container>
-              <ng-template #newBadge>
-                <span class="new-badge">NEW</span>
-              </ng-template>
-
-              <span *ngIf="r.deliveryTime" class="meta-separator">•</span>
-              <span *ngIf="r.deliveryTime" class="delivery-time">{{ r.deliveryTime }} mins</span>
-            </div>
-
-            <p class="restaurant-cuisine" [title]="r.cuisine">
-              {{ r.cuisine }}
-            </p>
-
-            <p class="restaurant-location" [title]="r.location">
-              {{ r.location }}
-            </p>
-          </div>
-        </article>
-      </div>
-
-      <div *ngIf="filtered().length === 0" class="empty-state-wrap">
-        <div class="empty-state-card">
-          <div class="empty-state-visual">
-            <div class="empty-bowl">🍜</div>
-            <div class="empty-float empty-float-1">🍕</div>
-            <div class="empty-float empty-float-2">🍔</div>
-            <div class="empty-float empty-float-3">🌮</div>
+          <!-- Shows only after login and only for valid coupons -->
+          <div *ngIf="
+              isLoggedIn &&
+              getRestaurantCoupon(restaurant) as coupon
+            " class="coupon-banner">
+            <i class="bi bi-patch-check-fill"></i>
+            <span>{{ getCouponLabel(coupon) }}</span>
           </div>
 
-          <h3 class="empty-state-title">Oops! We couldn’t find that craving</h3>
+        </div>
 
-          <p class="empty-state-text">
-            No restaurants matched <span>"{{ searchText }}"</span>.
-            Try searching for a cuisine, restaurant name, or location.
+        <div class="restaurant-content">
+
+          <div class="restaurant-name-row">
+
+            <h3 class="restaurant-name" [title]="restaurant.name">
+              {{ restaurant.name }}
+            </h3>
+
+            <span *ngIf="(restaurant.ratingCount ?? 0) > 0" class="rating-badge">
+              {{ restaurant.rating ?? 0 }}
+              <i class="bi bi-star-fill"></i>
+            </span>
+
+            <span *ngIf="(restaurant.ratingCount ?? 0) === 0" class="new-badge">
+              New
+            </span>
+
+          </div>
+
+          <p class="restaurant-cuisine" [title]="restaurant.cuisine">
+            {{ restaurant.cuisine || 'Multiple cuisines' }}
           </p>
 
-          <div class="empty-state-actions">
-            <button type="button" class="empty-state-btn" (click)="searchText=''; onSearch()">
-              Show all restaurants
-            </button>
+          <p class="restaurant-location" [title]="restaurant.location">
+            <i class="bi bi-geo-alt"></i>
+            {{ restaurant.location || 'Location unavailable' }}
+          </p>
+
+          <div class="restaurant-bottom-row">
+
+            <span class="restaurant-delivery">
+              <i class="bi bi-clock"></i>
+
+              {{
+              restaurant.estimatedMinutes
+              ? restaurant.estimatedMinutes + ' min'
+              : 'Delivery time unavailable'
+              }}
+            </span>
+
+            <span *ngIf="
+                restaurant.distanceKm !== null &&
+                restaurant.distanceKm !== undefined
+              " class="restaurant-distance">
+              {{ restaurant.distanceKm | number:'1.0-1' }} km
+            </span>
+
+          </div>
+
+        </div>
+
+      </article>
+    </div>
+
+    <!-- Empty restaurant/filter state -->
+    <div *ngIf="
+        !loading() &&
+        !hasLoadError &&
+        filtered().length === 0
+      " class="empty-state-wrap">
+      <div class="empty-state-card">
+
+        <div class="empty-state-visual">
+          <div class="empty-bowl">
+            {{ vegOnly ? '🥗' : '🍜' }}
+          </div>
+
+          <div class="empty-float empty-float-1">
+            {{ vegOnly ? '🥦' : '🍕' }}
+          </div>
+
+          <div class="empty-float empty-float-2">
+            {{ vegOnly ? '🥕' : '🍔' }}
+          </div>
+
+          <div class="empty-float empty-float-3">
+            {{ vegOnly ? '🌽' : '🌮' }}
           </div>
         </div>
+
+        <h3 class="empty-state-title">
+          {{
+          vegOnly
+          ? 'No pure veg restaurants found'
+          : 'We couldn’t find that craving'
+          }}
+        </h3>
+
+        <p class="empty-state-text">
+
+          <ng-container *ngIf="vegOnly; else noSearchMatch">
+            No pure vegetarian restaurants match the current search and location.
+          </ng-container>
+
+          <ng-template #noSearchMatch>
+            No restaurants matched
+            <span>"{{ searchText }}"</span>.
+            Try a restaurant name, cuisine, or location.
+          </ng-template>
+
+        </p>
+
+        <div class="empty-state-actions">
+
+          <button *ngIf="vegOnly" type="button" class="empty-state-btn" (click)="clearVegOnlyFilter()">
+            Show all restaurants
+          </button>
+
+          <button *ngIf="!vegOnly" type="button" class="empty-state-btn" (click)="clearSearch()">
+            Show all restaurants
+          </button>
+
+        </div>
+
       </div>
     </div>
+
   </div>
 </section>
 
-<!-- Scroll To Top -->
-<button
-  type="button"
-  class="scroll-top-btn"
-  [class.show]="showScrollTop"
-  (click)="scrollToTop()"
-  aria-label="Scroll to top"
->
-  <i class="fa-solid fa-arrow-up"></i>
+<!-- =================================================
+     Sticky active order
+     Hidden while any offcanvas is open.
+     ================================================= -->
+
+<section *ngIf="
+    isLoggedIn &&
+    !isAnyOffcanvasOpen &&
+    activeOrders().length > 0
+  " class="sticky-order-layer" aria-label="Active order status">
+  <div class="sticky-orders-shell">
+
+    <div *ngIf="activeOrders().length > 1" class="sticky-orders-nav">
+      <button type="button" class="sticky-order-nav-btn" (click)="scrollOrdersLeft()"
+        aria-label="Previous active order">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+
+      <button type="button" class="sticky-order-nav-btn" (click)="scrollOrdersRight()" aria-label="Next active order">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+
+    <div #ordersScroller class="sticky-orders-scroller" (scroll)="onOrdersScroll()">
+
+      <article *ngFor="
+          let order of activeOrders();
+          trackBy: trackByOrderId
+        " class="sticky-order-slide">
+        <button type="button" class="sticky-order-card" (click)="openOrderTracking(order.id)">
+
+          <span class="sticky-order-icon">
+            <i class="bi" [ngClass]="getStickyOrderIcon(order.status)"></i>
+          </span>
+
+          <span class="sticky-order-content">
+
+            <span class="sticky-order-topline">
+
+              <span class="sticky-order-status" [ngClass]="getActiveOrderStatusClass(order.status)">
+                {{ formatOrderStatus(order.status) }}
+              </span>
+
+              <span class="sticky-order-eta">
+                {{ getEtaText(order) }}
+              </span>
+
+            </span>
+
+            <strong>{{ order.restaurantName }}</strong>
+
+            <small>
+              Order #{{ order.id }} ·
+              {{ getActiveOrderStatusLabel(order.status) }}
+            </small>
+
+          </span>
+
+          <span class="sticky-order-arrow">
+            <i class="bi bi-arrow-right"></i>
+          </span>
+
+        </button>
+      </article>
+
+    </div>
+
+    <div *ngIf="activeOrders().length > 1" class="sticky-order-dots">
+      <button type="button" class="sticky-order-dot" *ngFor="let index of getVisibleDotIndexes()"
+        [class.active]="currentOrderIndex() === index" (click)="goToOrderSlide(index)"
+        [attr.aria-label]="'View active order ' + (index + 1)"></button>
+    </div>
+
+  </div>
+</section>
+
+<!-- =================================================
+     Back to top
+     ================================================= -->
+
+<button type="button" class="app-back-to-top" [class.show]="showScrollTop" (click)="scrollToTop()"
+  aria-label="Back to top">
+  <i class="bi bi-arrow-up"></i>
+  <span>Back to top</span>
 </button>
 
-<!-- Bootstrap Toast -->
+<!-- =================================================
+     Sign-in toast
+     ================================================= -->
+
 <div class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap">
-  <div
-    #signInToast
-    id="signInToast"
-    class="toast custom-toast align-items-center border-0"
-    role="alert"
-    aria-live="assertive"
-    aria-atomic="true"
-    data-bs-delay="2500"
-  >
+  <div #signInToast id="signInToast" class="toast custom-toast align-items-center border-0" role="alert"
+    aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
     <div class="d-flex">
+
       <div class="toast-body">
-        🔒 Please sign in to view this feature
+        <i class="bi bi-lock-fill"></i>
+        Please sign in to view restaurant details.
       </div>
-      <button
-        type="button"
-        class="btn-close btn-close-white me-2 m-auto"
-        data-bs-dismiss="toast"
-        aria-label="Close"
-      ></button>
+
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+        aria-label="Close"></button>
+
     </div>
   </div>
 </div>
 
-<!-- Footer -->
+<!-- =================================================
+     Footer
+     ================================================= -->
+
 <footer class="footer">
   <div class="home-wrap">
     <p class="mb-0 text-muted small">
       © 2026 FoodDelivery · Built with ❤️ in Chennai ·
       Contact:
-      <a
-        href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-mail"
-      >
-        [cravyosupport@gmail.com]
+      <a href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com" target="_blank"
+        rel="noopener noreferrer" class="footer-mail">
+        cravyosupport@gmail.com
       </a>
     </p>
   </div>

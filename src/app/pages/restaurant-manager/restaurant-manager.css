@@ -1,0 +1,447 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.manager-shell {
+  background: #fff8f3;
+  min-height: 100vh;
+}
+
+.manager-content {
+  margin: 0 auto;
+  max-width: 1600px;
+  min-height: 100vh;
+  padding: 22px;
+}
+
+.manager-topbar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #f1dfd2;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(151, 83, 38, 0.06);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 12px 18px;
+}
+
+/* =================================================
+   Brand: logo + Cravyo + role
+   ================================================= */
+
+.manager-brand {
+  align-items: center;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  flex: 0 1 auto;
+  gap: 10px;
+  min-width: 0;
+  padding: 4px;
+  text-decoration: none;
+}
+
+.manager-brand:focus-visible {
+  outline: 3px solid rgba(232, 93, 4, 0.28);
+  outline-offset: 3px;
+}
+
+/*
+  Shared header logo dimensions:
+  Desktop = 42px × 42px
+  Tablet  = 40px × 40px
+  Mobile  = 36px × 36px
+*/
+.app-role-logo {
+  display: block;
+  flex: 0 0 auto;
+  height: 42px;
+  object-fit: contain;
+  width: 42px;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.brand-name {
+  color: #09122b;
+  font-size: 1.35rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  transition: color 0.14s ease;
+}
+
+.manager-brand:hover .brand-name {
+  color: #e85d04;
+}
+
+.brand-role {
+  color: #e85d04;
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* =================================================
+   Header right side
+   ================================================= */
+
+.topbar-right {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+/* Profile has no hover highlighter/background. */
+.profile-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #2f2f2f;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 9px;
+  max-width: 280px;
+  min-width: 0;
+  padding: 6px 9px;
+  text-align: left;
+}
+
+.profile-button:focus-visible,
+.logout-btn:focus-visible {
+  outline: 3px solid rgba(232, 93, 4, 0.26);
+  outline-offset: 2px;
+}
+
+.topbar-avatar {
+  align-items: center;
+  background: linear-gradient(135deg, #f39a56, #e85d04);
+  border-radius: 50%;
+  color: #ffffff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.profile-name {
+  color: #2f2f2f;
+  font-size: 0.9rem;
+  font-weight: 800;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.14s ease;
+  white-space: nowrap;
+}
+
+/* Only the manager name changes orange on hover. */
+.profile-button:hover .profile-name {
+  color: #e85d04;
+}
+
+/* =================================================
+   User loading skeleton
+   ================================================= */
+
+.profile-skeleton {
+  align-items: center;
+  display: inline-flex;
+  gap: 9px;
+  padding: 6px 9px;
+}
+
+.avatar-skeleton,
+.name-skeleton {
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    #f0e7e1 25%,
+    #faf6f3 50%,
+    #f0e7e1 75%
+  );
+  background-size: 200% 100%;
+}
+
+.avatar-skeleton {
+  border-radius: 50%;
+  display: inline-block;
+  height: 40px;
+  width: 40px;
+}
+
+.name-skeleton {
+  border-radius: 7px;
+  display: inline-block;
+  height: 13px;
+  width: 105px;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* =================================================
+   Clean door + exit-arrow logout button
+   ================================================= */
+
+.logout-btn {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #f0c9b1;
+  border-radius: 10px;
+  color: #bd571e;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 750;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.48rem 0.72rem;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.logout-btn:hover {
+  background: #fff8f3;
+  border-color: #e99661;
+  box-shadow: 0 4px 12px rgba(216, 101, 29, 0.12);
+}
+
+.logout-btn:active {
+  box-shadow: none;
+}
+
+/*
+  The icon is a 24 x 24 pixel canvas:
+  - .logout-door draws a charcoal outlined door frame.
+  - .logout-arrow draws an orange arrow leaving to the right.
+*/
+.logout-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 24px;
+  position: relative;
+  width: 24px;
+}
+
+/* Door outline */
+.logout-door {
+  border: 2px solid #384152;
+  border-radius: 3px;
+  height: 16px;
+  left: 3px;
+  position: absolute;
+  top: 4px;
+  width: 11px;
+}
+
+/* Door opening at the arrow side */
+.logout-door::after {
+  background: #ffffff;
+  content: '';
+  height: 8px;
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  width: 4px;
+}
+
+/* Exit arrow shaft */
+.logout-arrow {
+  background: #e85d04;
+  border-radius: 99px;
+  height: 2px;
+  left: 9px;
+  position: absolute;
+  top: 11px;
+  transition: transform 0.18s ease;
+  width: 11px;
+}
+
+/* Exit arrow head */
+.logout-arrow::after {
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid #e85d04;
+  border-top: 4px solid transparent;
+  content: '';
+  height: 0;
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  width: 0;
+}
+
+/* A subtle, professional arrow motion only. */
+.logout-btn:hover .logout-arrow {
+  transform: translateX(2px);
+}
+
+.logout-text {
+  line-height: 1;
+}
+
+/* =================================================
+   Router outlet
+   ================================================= */
+
+.manager-page-body {
+  padding-top: 18px;
+}
+
+/* =================================================
+   Tablet
+   ================================================= */
+
+@media (max-width: 767.98px) {
+  .manager-content {
+    padding: 14px;
+  }
+
+  .manager-topbar {
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+
+  .app-role-logo {
+    height: 40px;
+    width: 40px;
+  }
+
+  .brand-name {
+    font-size: 1.22rem;
+  }
+
+  .profile-name {
+    max-width: 120px;
+  }
+}
+
+/* =================================================
+   Mobile
+   ================================================= */
+
+@media (max-width: 575.98px) {
+  .manager-content {
+    padding: 10px;
+  }
+
+  .manager-topbar {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .manager-brand {
+    gap: 7px;
+    padding: 2px;
+  }
+
+  .app-role-logo {
+    height: 36px;
+    width: 36px;
+  }
+
+  .brand-name {
+    font-size: 1.05rem;
+  }
+
+  .brand-role {
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  .topbar-right {
+    gap: 4px;
+  }
+
+  .profile-button {
+    gap: 0;
+    padding: 3px;
+  }
+
+  .profile-name {
+    display: none;
+  }
+
+  .topbar-avatar {
+    font-size: 0.82rem;
+    height: 36px;
+    width: 36px;
+  }
+
+  .profile-skeleton {
+    gap: 0;
+    padding: 3px;
+  }
+
+  .avatar-skeleton {
+    height: 36px;
+    width: 36px;
+  }
+
+  .name-skeleton {
+    display: none;
+  }
+
+  .logout-btn {
+    border-radius: 10px;
+    font-size: 0;
+    gap: 0;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    width: 36px;
+  }
+
+  .logout-icon {
+    height: 23px;
+    width: 23px;
+  }
+
+  .logout-text {
+    display: none;
+  }
+
+  .manager-page-body {
+    padding-top: 12px;
+  }
+}
+
+/* Disable transition/motion for users who request reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .brand-name,
+  .profile-name,
+  .logout-btn,
+  .logout-arrow,
+  .avatar-skeleton,
+  .name-skeleton {
+    animation: none !important;
+    transition: none !important;
+  }
+}

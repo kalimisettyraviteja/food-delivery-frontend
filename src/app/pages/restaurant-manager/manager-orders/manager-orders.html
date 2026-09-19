@@ -1,0 +1,695 @@
+<div class="manager-orders-page container-fluid py-3 py-md-4">
+
+  <!-- Page header -->
+  <div
+    class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+  >
+    <div>
+      <p class="eyebrow mb-1">Restaurant management</p>
+
+      <h2 class="page-title mb-1">Orders</h2>
+
+      <p class="page-subtitle mb-0">
+        View, track, and update orders from your restaurants.
+      </p>
+    </div>
+
+    <div class="header-actions d-flex flex-wrap gap-2">
+
+      <button
+        type="button"
+        class="btn btn-light border"
+        (click)="loadOrders()"
+        [disabled]="loading"
+      >
+        <i class="bi bi-arrow-clockwise me-1"></i>
+        Refresh
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-success"
+        (click)="exportCsv()"
+        [disabled]="loading || exporting || filteredOrders.length === 0"
+      >
+        <i class="bi bi-download me-1"></i>
+        {{ exporting ? 'Exporting...' : 'Export CSV' }}
+      </button>
+
+      <a
+        routerLink="/restaurant-manager/restaurants"
+        class="btn btn-primary"
+      >
+        <i class="bi bi-shop me-1"></i>
+        Restaurants
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div
+    *ngIf="!loading && !error"
+    class="row g-3 mb-4"
+  >
+
+    <div class="col-6 col-lg-3">
+      <div class="stat-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="stat-icon stat-icon-orders">
+            <i class="bi bi-receipt"></i>
+          </div>
+
+          <div>
+            <p class="stat-label mb-1">Total orders</p>
+            <h4 class="stat-value mb-0">{{ totalOrders }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="stat-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="stat-icon stat-icon-active">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+
+          <div>
+            <p class="stat-label mb-1">Active orders</p>
+            <h4 class="stat-value mb-0">{{ activeOrders }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="stat-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="stat-icon stat-icon-delivered">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+
+          <div>
+            <p class="stat-label mb-1">Delivered</p>
+            <h4 class="stat-value mb-0">{{ deliveredOrders }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="stat-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="stat-icon stat-icon-revenue">
+            <i class="bi bi-currency-rupee"></i>
+          </div>
+
+          <div>
+            <p class="stat-label mb-1">Revenue</p>
+            <h4 class="stat-value mb-0">
+              ₹{{ formatAmount(totalRevenue) }}
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Filters -->
+<div class="filter-card card border-0 shadow-sm mb-4">
+  <div class="card-body">
+
+    <div class="row g-3 align-items-end">
+
+      <!-- Search order ID - first -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <label
+          for="orderIdSearch"
+          class="form-label"
+        >
+          Search order ID
+        </label>
+
+        <div class="order-id-search">
+          <i
+            class="bi bi-search search-icon"
+            aria-hidden="true"
+          ></i>
+
+          <input
+            id="orderIdSearch"
+            type="text"
+            class="form-control"
+            placeholder="Example: 1024"
+            [(ngModel)]="orderIdSearch"
+            aria-label="Search orders by order ID"
+            autocomplete="off"
+            inputmode="numeric"
+          />
+
+          <button
+            *ngIf="orderIdSearch"
+            type="button"
+            class="clear-search-button"
+            aria-label="Clear order ID search"
+            title="Clear search"
+            (click)="clearOrderIdSearch()"
+          >
+            <i
+              class="bi bi-x-lg"
+              aria-hidden="true"
+            ></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Time period - second -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <label
+          for="dateFilter"
+          class="form-label"
+        >
+          Time period
+        </label>
+
+        <select
+          id="dateFilter"
+          class="form-select"
+          [(ngModel)]="dateFilter"
+        >
+          <option value="ALL">All time</option>
+          <option value="TODAY">Today</option>
+          <option value="LAST_7_DAYS">Last 7 days</option>
+        </select>
+      </div>
+
+      <!-- Order status - third -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <label
+          for="statusFilter"
+          class="form-label"
+        >
+          Order status
+        </label>
+
+        <select
+          id="statusFilter"
+          class="form-select"
+          [(ngModel)]="statusFilter"
+        >
+          <option value="ALL">All statuses</option>
+          <option value="PLACED">Placed</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="PREPARING">Preparing</option>
+          <option value="PICKED_UP">Picked up</option>
+          <option value="OUT_FOR_DELIVERY">
+            Out for delivery
+          </option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+
+      <!-- Clear and result count -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <div
+          class="filter-actions d-flex justify-content-lg-end gap-2"
+        >
+          <button
+            type="button"
+            class="btn btn-light border"
+            (click)="clearFilters()"
+            [disabled]="!hasActiveFilters"
+          >
+            <i
+              class="bi bi-x-circle me-1"
+              aria-hidden="true"
+            ></i>
+            Clear
+          </button>
+
+          <div class="order-count">
+            <strong>{{ filteredOrders.length }}</strong>
+            order{{ filteredOrders.length === 1 ? '' : 's' }}
+
+            <span class="d-none d-xl-inline">
+              · {{ filteredOrderLabel }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+  <!-- Loading -->
+  <div
+    *ngIf="loading"
+    class="state-card card border-0 shadow-sm text-center py-5"
+  >
+    <div class="spinner-border text-primary mb-3" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+
+    <p class="text-muted mb-0">
+      Loading your restaurant orders...
+    </p>
+  </div>
+
+  <!-- Error -->
+  <div
+    *ngIf="!loading && error"
+    class="alert alert-danger shadow-sm"
+    role="alert"
+  >
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ error }}
+
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger ms-2"
+      (click)="loadOrders()"
+    >
+      Try again
+    </button>
+  </div>
+
+  <!-- Empty: no orders -->
+  <div
+    *ngIf="!loading && !error && orders.length === 0"
+    class="state-card card border-0 shadow-sm text-center py-5"
+  >
+    <div class="empty-icon">
+      <i class="bi bi-receipt"></i>
+    </div>
+
+    <h5 class="mt-3">No orders yet</h5>
+
+    <p class="text-muted mb-0">
+      Orders from your restaurants will appear here.
+    </p>
+  </div>
+
+  <!-- Empty: filters/search return no results -->
+  <div
+    *ngIf="!loading && !error && orders.length > 0 && filteredOrders.length === 0"
+    class="state-card card border-0 shadow-sm text-center py-5"
+  >
+    <div class="empty-icon">
+      <i class="bi bi-search"></i>
+    </div>
+
+    <h5 class="mt-3">No matching orders</h5>
+
+    <p class="text-muted mb-3">
+      No orders match your Order ID search or selected filters.
+    </p>
+
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      (click)="clearFilters()"
+    >
+      <i class="bi bi-x-circle me-1"></i>
+      Clear filters
+    </button>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && filteredOrders.length > 0">
+
+    <!-- Desktop/tablet table -->
+    <div class="desktop-orders card border-0 shadow-sm">
+      <div class="table-responsive">
+
+        <table class="table align-middle mb-0">
+
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Restaurant</th>
+              <th>Placed</th>
+              <th>ETA</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Update</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              *ngFor="let order of filteredOrders; trackBy: trackByOrderId"
+            >
+              <td>
+                <div class="order-number">#{{ order.id }}</div>
+
+                <div class="small text-muted">
+                  {{ order.userEmail }}
+                </div>
+              </td>
+
+              <td>
+                <div class="restaurant-name">
+                  {{ order.restaurantName }}
+                </div>
+
+                <div class="small text-muted">
+                  {{ order.restaurantLocation || 'Location unavailable' }}
+                </div>
+              </td>
+
+              <td>
+                <span class="small">
+                  {{ formatDateTime(order.createdAt) }}
+                </span>
+              </td>
+
+              <td>
+                <div class="small">
+                  {{
+                    order.finalEstimatedDeliveryMinutes
+                      ? order.finalEstimatedDeliveryMinutes + ' min'
+                      : '-'
+                  }}
+                </div>
+
+                <div
+                  *ngIf="order.estimatedDeliveryAt"
+                  class="small text-muted"
+                >
+                  By {{ formatTime(order.estimatedDeliveryAt) }}
+                </div>
+              </td>
+
+              <td>
+                <div class="amount">
+                  ₹{{ formatAmount(order.totalAmount) }}
+                </div>
+
+                <div
+                  *ngIf="order.couponCode"
+                  class="small text-success"
+                >
+                  {{ order.couponCode }}
+                </div>
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="statusBadgeClass(order.status)"
+                >
+                  {{ formatStatus(order.status) }}
+                </span>
+              </td>
+
+              <td>
+                <select
+                  class="form-select form-select-sm status-select"
+                  [ngModel]="order.status"
+                  (ngModelChange)="onStatusSelection(order, $event)"
+                  [disabled]="
+                    isTerminalStatus(order.status) ||
+                    updatingOrderId === order.id
+                  "
+                >
+                  <option
+                    *ngFor="let status of statuses"
+                    [value]="status"
+                  >
+                    {{ formatStatus(status) }}
+                  </option>
+                </select>
+
+                <small
+                  *ngIf="updatingOrderId === order.id"
+                  class="text-muted d-block mt-1"
+                >
+                  Updating...
+                </small>
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="viewOrder(order.id)"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-orders">
+
+      <article
+        *ngFor="let order of filteredOrders; trackBy: trackByOrderId"
+        class="order-card card border-0 shadow-sm mb-3"
+      >
+        <div class="card-body">
+
+          <div
+            class="d-flex justify-content-between align-items-start gap-3 mb-3"
+          >
+            <div class="min-width-0">
+              <div class="order-number">
+                Order #{{ order.id }}
+              </div>
+
+              <div class="small text-muted text-break">
+                {{ order.userEmail }}
+              </div>
+            </div>
+
+            <span
+              class="status-badge flex-shrink-0"
+              [ngClass]="statusBadgeClass(order.status)"
+            >
+              {{ formatStatus(order.status) }}
+            </span>
+          </div>
+
+          <div class="restaurant-block mb-3">
+            <div class="restaurant-name">
+              {{ order.restaurantName }}
+            </div>
+
+            <div class="small text-muted">
+              {{ order.restaurantLocation || 'Location unavailable' }}
+            </div>
+          </div>
+
+          <div class="order-meta-grid mb-3">
+
+            <div>
+              <div class="meta-label">Placed</div>
+
+              <div class="meta-value">
+                {{ formatDateTime(order.createdAt) }}
+              </div>
+            </div>
+
+            <div>
+              <div class="meta-label">Estimated delivery</div>
+
+              <div class="meta-value">
+                {{
+                  order.finalEstimatedDeliveryMinutes
+                    ? order.finalEstimatedDeliveryMinutes + ' min'
+                    : '-'
+                }}
+              </div>
+
+              <div
+                *ngIf="order.estimatedDeliveryAt"
+                class="small text-muted"
+              >
+                By {{ formatTime(order.estimatedDeliveryAt) }}
+              </div>
+            </div>
+
+          </div>
+
+          <div class="order-total-row mb-3">
+            <div>
+              <div class="meta-label">Order total</div>
+
+              <div
+                *ngIf="order.couponCode"
+                class="small text-success"
+              >
+                Coupon: {{ order.couponCode }}
+              </div>
+            </div>
+
+            <div class="amount">
+              ₹{{ formatAmount(order.totalAmount) }}
+            </div>
+          </div>
+
+          <div class="status-update-box">
+
+            <label class="form-label small fw-semibold">
+              Update order status
+            </label>
+
+            <select
+              class="form-select"
+              [ngModel]="order.status"
+              (ngModelChange)="onStatusSelection(order, $event)"
+              [disabled]="
+                isTerminalStatus(order.status) ||
+                updatingOrderId === order.id
+              "
+            >
+              <option
+                *ngFor="let status of statuses"
+                [value]="status"
+              >
+                {{ formatStatus(status) }}
+              </option>
+            </select>
+
+            <div
+              *ngIf="isTerminalStatus(order.status)"
+              class="small text-muted mt-2"
+            >
+              This order has reached a final status.
+            </div>
+
+            <div
+              *ngIf="updatingOrderId === order.id"
+              class="small text-primary mt-2"
+            >
+              Updating order status...
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary w-100 mt-3"
+            (click)="viewOrder(order.id)"
+          >
+            <i class="bi bi-eye me-1"></i>
+            View full order details
+          </button>
+
+        </div>
+      </article>
+
+    </div>
+
+  </ng-container>
+
+</div>
+
+<!-- Status confirmation modal -->
+<div
+  *ngIf="showStatusConfirmModal"
+  class="modal-backdrop-custom"
+  (click)="closeStatusConfirmModal()"
+>
+  <div
+    class="status-confirm-modal card border-0 shadow-lg"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="statusConfirmTitle"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="card-body p-4">
+
+      <div class="modal-icon">
+        <i class="bi bi-arrow-repeat"></i>
+      </div>
+
+      <h5
+        id="statusConfirmTitle"
+        class="modal-title mt-3 mb-2"
+      >
+        Confirm status update
+      </h5>
+
+      <p class="text-muted mb-3">
+        You are changing order
+        <strong *ngIf="selectedOrder">
+          #{{ selectedOrder.id }}
+        </strong>
+        from
+        <strong *ngIf="selectedOrder">
+          {{ formatStatus(selectedOrder.status) }}
+        </strong>
+        to
+        <strong *ngIf="selectedNewStatus">
+          {{ formatStatus(selectedNewStatus) }}
+        </strong>.
+      </p>
+
+      <div class="status-change-preview mb-4">
+
+        <span
+          *ngIf="selectedOrder"
+          class="status-badge"
+          [ngClass]="statusBadgeClass(selectedOrder.status)"
+        >
+          {{ formatStatus(selectedOrder.status) }}
+        </span>
+
+        <i class="bi bi-arrow-right mx-2 text-muted"></i>
+
+        <span
+          *ngIf="selectedNewStatus"
+          class="status-badge"
+          [ngClass]="statusBadgeClass(selectedNewStatus)"
+        >
+          {{ formatStatus(selectedNewStatus) }}
+        </span>
+
+      </div>
+
+      <div
+        class="d-flex flex-column flex-sm-row justify-content-end gap-2"
+      >
+        <button
+          type="button"
+          class="btn btn-light border order-sm-1"
+          (click)="closeStatusConfirmModal()"
+          [disabled]="updatingOrderId !== null"
+        >
+          Keep current status
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary order-sm-2"
+          (click)="confirmStatusUpdate()"
+          [disabled]="updatingOrderId !== null"
+        >
+          <span
+            *ngIf="updatingOrderId !== null"
+            class="spinner-border spinner-border-sm me-2"
+            aria-hidden="true"
+          ></span>
+
+          {{
+            updatingOrderId !== null
+              ? 'Updating...'
+              : 'Yes, update status'
+          }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

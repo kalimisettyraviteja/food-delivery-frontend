@@ -1,22 +1,47 @@
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { RestaurantService, Restaurant } from '../../../core/services/restaurant';
-import { UserService } from '../../../core/services/user';
 import {
-  Component,
-  OnInit,
-  OnDestroy,
   AfterViewInit,
-  ViewChild,
+  Component,
   ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
   inject,
-  signal,
-  HostListener
+  signal
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import {
+  Observable,
+  Subscription,
+  forkJoin,
+  of
+} from 'rxjs';
+import {
+  catchError,
+  map
+} from 'rxjs/operators';
+import {
+  Coupon,
+  CouponService
+} from '../../../core/services/coupon';
+import {
+  Restaurant,
+  RestaurantSearchRequest,
+  RestaurantService
+} from '../../../core/services/restaurant';
+import {
+  AddressResponse,
+  UserService
+} from '../../../core/services/user';
+import {
+  OrderService,
+  OrderStatus,
+  OrderSummaryResponse
+} from '../../../core/services/order';
 
-declare var bootstrap: any;
+declare const bootstrap: any;
 
 @Component({
   selector: 'app-home-main',
@@ -25,210 +50,1111 @@ declare var bootstrap: any;
   templateUrl: './home-main.html',
   styleUrl: './home-main.css'
 })
-export class HomeMain implements OnInit, AfterViewInit, OnDestroy {
-  private svc = inject(RestaurantService);
-  private router = inject(Router);
-  private userService = inject(UserService);
+export class HomeMain
+  implements OnInit, OnDestroy, AfterViewInit {
+  private readonly restaurantService = inject(RestaurantService);
+  private readonly couponService = inject(CouponService);
+  private readonly router = inject(Router);
+  private readonly userService = inject(UserService);
+  private readonly orderService = inject(OrderService);
 
-  @ViewChild('signInToast') signInToastRef!: ElementRef;
+  @ViewChild('signInToast')
+  signInToastRef!: ElementRef<HTMLElement>;
+
+  @ViewChild('ordersScroller')
+  ordersScrollerRef?: ElementRef<HTMLDivElement>;
 
   restaurants = signal<Restaurant[]>([]);
   filtered = signal<Restaurant[]>([]);
   loading = signal(true);
 
+  addresses = signal<AddressResponse[]>([]);
+  selectedAddress = signal<AddressResponse | null>(null);
+
+  activeOrders = signal<OrderSummaryResponse[]>([]);
+  loadingActiveOrders = signal(false);
+  currentOrderIndex = signal(0);
+
+  restaurantCouponById = signal<Record<number, Coupon | null>>({});
+
   searchText = '';
+  vegOnly = false;
+
   isLoggedIn = false;
   showScrollTop = false;
   hasLoadError = false;
+  isAnyOffcanvasOpen = false;
+
+  readonly skeletonItems = Array.from({ length: 8 });
 
   private toastInstance: any;
-  private authSub!: Subscription;
+  private authSub?: Subscription;
 
-  ngOnInit() {
-    this.syncLoginState();
+  private autoScrollTimer:
+    | ReturnType<typeof setInterval>
+    | null = null;
 
-    this.authSub = this.userService.isLoggedIn$.subscribe(state => {
-      this.isLoggedIn = state;
-      this.applyRestaurantView();
-    });
+  private refreshOrdersTimer:
+    | ReturnType<typeof setInterval>
+    | null = null;
+
+  private offcanvasShownHandler?: EventListener;
+  private offcanvasHiddenHandler?: EventListener;
+
+  ngOnInit(): void {
+    this.isLoggedIn = this.userService.isLoggedIn();
 
     this.loadRestaurants();
+    this.loadActiveOrders(false);
+    this.startOrdersAutoRefresh();
     this.updateScrollButton();
+
+    this.authSub = this.userService.isLoggedIn$.subscribe(
+      loggedIn => {
+        /*
+         * Use the BehaviorSubject state directly.
+         * This avoids relying on an old local value
+         * immediately after login or logout.
+         */
+        this.isLoggedIn = loggedIn;
+
+        if (!loggedIn) {
+          this.vegOnly = false;
+
+          localStorage.removeItem('selectedRestaurant');
+          localStorage.removeItem('selectedAddress');
+          localStorage.removeItem('selectedAddressId');
+
+          this.addresses.set([]);
+          this.selectedAddress.set(null);
+          this.activeOrders.set([]);
+          this.currentOrderIndex.set(0);
+          this.restaurantCouponById.set({});
+
+          this.stopAutoScroll();
+          this.stopOrdersAutoRefresh();
+        } else {
+          this.startOrdersAutoRefresh();
+        }
+
+        this.loadRestaurants();
+        this.loadActiveOrders(false);
+      }
+    );
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     if (this.signInToastRef?.nativeElement) {
-      this.toastInstance = new bootstrap.Toast(this.signInToastRef.nativeElement, {
-        autohide: true,
-        delay: 2500
-      });
+      this.toastInstance = new bootstrap.Toast(
+        this.signInToastRef.nativeElement,
+        {
+          autohide: true,
+          delay: 2500
+        }
+      );
     }
+
+    this.registerOffcanvasListeners();
   }
 
-  ngOnDestroy() {
-    if (this.authSub) {
-      this.authSub.unsubscribe();
-    }
+  ngOnDestroy(): void {
+    this.authSub?.unsubscribe();
+
+    this.stopAutoScroll();
+    this.stopOrdersAutoRefresh();
+    this.unregisterOffcanvasListeners();
   }
 
   @HostListener('window:scroll')
-  onWindowScroll() {
+  onWindowScroll(): void {
     this.updateScrollButton();
   }
 
-  @HostListener('window:storage')
-  onStorageChange() {
-    this.syncLoginState();
-  }
-
-  @HostListener('window:focus')
-  onWindowFocus() {
-    this.syncLoginState();
-  }
-
-  private syncLoginState() {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    this.isLoggedIn = !!token && !!role;
-    this.applyRestaurantView();
-  }
-
-  updateScrollButton() {
+  updateScrollButton(): void {
     this.showScrollTop = window.scrollY > 260;
   }
 
-  scrollToTop() {
+  scrollToTop(): void {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   }
 
-  loadRestaurants() {
-    this.loading.set(true);
-    this.hasLoadError = false;
+  /* =================================================
+     Offcanvas visibility
+     ================================================= */
 
-    this.svc.getAll().subscribe({
-      next: (data) => {
-        this.restaurants.set(data);
-        this.applyRestaurantView();
-        this.loading.set(false);
-      },
-      error: () => {
-        this.restaurants.set([]);
-        this.filtered.set([]);
-        this.hasLoadError = true;
-        this.loading.set(false);
-      }
+  private registerOffcanvasListeners(): void {
+    const offcanvasElements = Array.from(
+      document.querySelectorAll<HTMLElement>('.offcanvas')
+    );
+
+    this.offcanvasShownHandler = () => {
+      this.isAnyOffcanvasOpen = true;
+    };
+
+    this.offcanvasHiddenHandler = () => {
+      window.setTimeout(() => {
+        this.isAnyOffcanvasOpen =
+          document.querySelector('.offcanvas.show') !== null;
+      }, 0);
+    };
+
+    offcanvasElements.forEach(element => {
+      element.addEventListener(
+        'shown.bs.offcanvas',
+        this.offcanvasShownHandler as EventListener
+      );
+
+      element.addEventListener(
+        'hidden.bs.offcanvas',
+        this.offcanvasHiddenHandler as EventListener
+      );
     });
   }
 
-  reloadRestaurants() {
-    this.loadRestaurants();
+  private unregisterOffcanvasListeners(): void {
+    const offcanvasElements = Array.from(
+      document.querySelectorAll<HTMLElement>('.offcanvas')
+    );
+
+    offcanvasElements.forEach(element => {
+      if (this.offcanvasShownHandler) {
+        element.removeEventListener(
+          'shown.bs.offcanvas',
+          this.offcanvasShownHandler
+        );
+      }
+
+      if (this.offcanvasHiddenHandler) {
+        element.removeEventListener(
+          'hidden.bs.offcanvas',
+          this.offcanvasHiddenHandler
+        );
+      }
+    });
+
+    this.offcanvasShownHandler = undefined;
+    this.offcanvasHiddenHandler = undefined;
   }
 
-  onSearch() {
-    this.applyRestaurantView();
-  }
+  /* =================================================
+     Restaurant and address loading
+     ================================================= */
 
-  applyRestaurantView() {
-    const q = this.searchText.trim().toLowerCase();
-    const data = this.restaurants();
+  loadRestaurants(): void {
+    this.loading.set(true);
+    this.hasLoadError = false;
 
-    if (!this.isLoggedIn) {
-      this.filtered.set(
-        !q
-          ? data
-          : data.filter(r =>
-              r.name.toLowerCase().includes(q) ||
-              r.cuisine.toLowerCase().includes(q) ||
-              r.location.toLowerCase().includes(q)
-            )
-      );
+    const loggedIn = this.userService.isLoggedIn();
+    this.isLoggedIn = loggedIn;
+
+    if (!loggedIn) {
+      this.vegOnly = false;
+
+      this.addresses.set([]);
+      this.selectedAddress.set(null);
+      this.restaurantCouponById.set({});
+
+      localStorage.removeItem('selectedAddress');
+      localStorage.removeItem('selectedAddressId');
+      localStorage.removeItem('selectedRestaurant');
+
+      this.fetchRestaurants({});
       return;
     }
 
-    this.filtered.set(
-      !q
-        ? data.filter(r => r.isActive)
-        : data.filter(r =>
-            r.name.toLowerCase().includes(q) ||
-            r.cuisine.toLowerCase().includes(q) ||
-            r.location.toLowerCase().includes(q)
-          )
+    this.userService
+      .getSavedAddresses()
+      .pipe(
+        catchError(() => of([] as AddressResponse[]))
+      )
+      .subscribe(addresses => {
+        this.addresses.set(addresses);
+
+        if (addresses.length === 0) {
+          this.selectedAddress.set(null);
+          this.restaurantCouponById.set({});
+
+          localStorage.removeItem('selectedAddress');
+          localStorage.removeItem('selectedAddressId');
+          localStorage.removeItem('selectedRestaurant');
+
+          this.fetchRestaurants({});
+          return;
+        }
+
+        const savedAddressId =
+          this.userService.getSelectedAddressId();
+
+        const savedAddress = savedAddressId
+          ? addresses.find(
+              address => address.id === savedAddressId
+            )
+          : null;
+
+        const activeAddress =
+          savedAddress ||
+          addresses.find(address => address.isDefault) ||
+          addresses[0];
+
+        if (!activeAddress?.id) {
+          this.selectedAddress.set(null);
+          this.restaurantCouponById.set({});
+
+          localStorage.removeItem('selectedAddress');
+          localStorage.removeItem('selectedAddressId');
+
+          this.fetchRestaurants({});
+          return;
+        }
+
+        this.userService.setSelectedAddressId(
+          activeAddress.id
+        );
+
+        localStorage.setItem(
+          'selectedAddressId',
+          String(activeAddress.id)
+        );
+
+        localStorage.setItem(
+          'selectedAddress',
+          JSON.stringify(activeAddress)
+        );
+
+        this.selectedAddress.set(activeAddress);
+
+        this.fetchRestaurants(
+          this.buildSearchPayload(activeAddress)
+        );
+      });
+  }
+
+  onAddressChange(address: AddressResponse): void {
+    if (!address?.id) {
+      return;
+    }
+
+    this.userService.setSelectedAddressId(address.id);
+
+    localStorage.setItem(
+      'selectedAddressId',
+      String(address.id)
+    );
+
+    localStorage.setItem(
+      'selectedAddress',
+      JSON.stringify(address)
+    );
+
+    this.selectedAddress.set(address);
+
+    this.loading.set(true);
+    this.hasLoadError = false;
+
+    this.fetchRestaurants(
+      this.buildSearchPayload(address)
     );
   }
 
-  showSignInToast() {
-    if (this.toastInstance) {
-      this.toastInstance.show();
+  private buildSearchPayload(
+    address: AddressResponse | null
+  ): RestaurantSearchRequest {
+    if (
+      address?.latitude !== null &&
+      address?.latitude !== undefined &&
+      address?.longitude !== null &&
+      address?.longitude !== undefined
+    ) {
+      return {
+        lat: address.latitude,
+        lng: address.longitude
+      };
     }
+
+    return {};
   }
 
-  getOfferText(r: Restaurant): string {
-    const rating = Number(r.rating);
-    const deliveryTime = Number(r.deliveryTime);
+  private fetchRestaurants(
+    payload: RestaurantSearchRequest
+  ): void {
+    this.restaurantService
+      .searchRestaurants(payload)
+      .subscribe({
+        next: restaurants => {
+          const list = restaurants ?? [];
 
-    if (!isNaN(rating) && rating >= 4.7 && !isNaN(deliveryTime) && deliveryTime <= 25) {
-      return 'Top rated • Fast delivery';
-    }
+          this.restaurants.set(list);
+          this.applyRestaurantView();
+          this.loading.set(false);
 
-    if (!isNaN(rating) && rating >= 4.5) {
-      return 'Customer favourite';
-    }
+          /*
+           * Coupon API calls happen only after login.
+           */
+          if (this.userService.isLoggedIn()) {
+            this.loadRestaurantCoupons(list);
+          } else {
+            this.restaurantCouponById.set({});
+          }
+        },
 
-    if (!isNaN(deliveryTime) && deliveryTime <= 20) {
-      return 'Delivers in 20 mins';
-    }
-
-    if (!isNaN(deliveryTime) && deliveryTime <= 30) {
-      return 'Quick bites delivered fast';
-    }
-
-    if (r.cuisine?.trim()) {
-      return `${r.cuisine} special`;
-    }
-
-    return 'Fresh food near you';
+        error: () => {
+          this.restaurants.set([]);
+          this.filtered.set([]);
+          this.restaurantCouponById.set({});
+          this.hasLoadError = true;
+          this.loading.set(false);
+        }
+      });
   }
 
-  getRestaurantImage(r: any): string {
-    return r.imageUrl || r.image || r.photo || r.bannerImage || r.coverImage || '';
+  reloadRestaurants(): void {
+    this.loadRestaurants();
+    this.loadActiveOrders(false);
   }
 
-  hasRestaurantImage(r: any): boolean {
-    return !!this.getRestaurantImage(r).trim();
+  /* =================================================
+     Veg-only filter
+     ================================================= */
+
+  onVegOnlyChange(): void {
+    /*
+     * Safety guard: a logged-out user should never have
+     * this filter active even if the value changes manually.
+     */
+    if (!this.userService.isLoggedIn()) {
+      this.vegOnly = false;
+    }
+
+    this.applyRestaurantView();
   }
 
-  onImageError(event: Event) {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    const parent = img.parentElement;
-    if (parent) parent.classList.add('image-failed');
+  clearVegOnlyFilter(): void {
+    this.vegOnly = false;
+    this.applyRestaurantView();
   }
 
-  private releaseActiveCard(): void {
+  /* =================================================
+     Coupon loading
+     ================================================= */
+
+  private loadRestaurantCoupons(
+    restaurants: Restaurant[]
+  ): void {
+    if (!this.userService.isLoggedIn()) {
+      this.restaurantCouponById.set({});
+      return;
+    }
+
+    const couponRequests: Observable<{
+      restaurantId: number;
+      coupon: Coupon | null;
+    }>[] = restaurants
+      .filter(
+        restaurant =>
+          restaurant.id !== null &&
+          restaurant.id !== undefined
+      )
+      .map(restaurant =>
+        this.couponService
+          .getRestaurantCoupons(restaurant.id as number)
+          .pipe(
+            map(coupons => ({
+              restaurantId: restaurant.id as number,
+              coupon: this.pickBestValidCoupon(coupons ?? [])
+            })),
+            catchError(() =>
+              of({
+                restaurantId: restaurant.id as number,
+                coupon: null
+              })
+            )
+          )
+      );
+
+    if (couponRequests.length === 0) {
+      this.restaurantCouponById.set({});
+      return;
+    }
+
+    forkJoin(couponRequests).subscribe(results => {
+      if (!this.userService.isLoggedIn()) {
+        this.restaurantCouponById.set({});
+        return;
+      }
+
+      const couponMap: Record<number, Coupon | null> = {};
+
+      results.forEach(result => {
+        couponMap[result.restaurantId] = result.coupon;
+      });
+
+      this.restaurantCouponById.set(couponMap);
+    });
+  }
+
+  private pickBestValidCoupon(
+    coupons: Coupon[]
+  ): Coupon | null {
+    const validCoupons = coupons.filter(coupon =>
+      this.isCouponValid(coupon)
+    );
+
+    if (validCoupons.length === 0) {
+      return null;
+    }
+
+    return [...validCoupons].sort(
+      (first, second) =>
+        this.getCouponPriority(second) -
+        this.getCouponPriority(first)
+    )[0];
+  }
+
+  private isCouponValid(coupon: Coupon): boolean {
+    if (!coupon?.active) {
+      return false;
+    }
+
+    if (!coupon.expiryDate) {
+      return true;
+    }
+
+    const expiryDate = new Date(coupon.expiryDate);
+
+    if (Number.isNaN(expiryDate.getTime())) {
+      return false;
+    }
+
+    return expiryDate.getTime() > Date.now();
+  }
+
+  private getCouponPriority(coupon: Coupon): number {
+    if (coupon.discountType === 'FREE_DELIVERY') {
+      return 100000;
+    }
+
+    if (coupon.discountType === 'FLAT') {
+      return Number(coupon.discountValue) || 0;
+    }
+
+    if (coupon.discountType === 'PERCENTAGE') {
+      return (
+        Number(coupon.maxDiscountAmount) ||
+        Number(coupon.discountValue) ||
+        0
+      );
+    }
+
+    return 0;
+  }
+
+  getRestaurantCoupon(
+    restaurant: Restaurant
+  ): Coupon | null {
+    if (
+      !this.userService.isLoggedIn() ||
+      restaurant.id === null ||
+      restaurant.id === undefined
+    ) {
+      return null;
+    }
+
+    return this.restaurantCouponById()[restaurant.id] ?? null;
+  }
+
+  getCouponLabel(coupon: Coupon): string {
+    if (coupon.discountType === 'FLAT') {
+      return `Flat ₹${this.formatCouponNumber(
+        coupon.discountValue
+      )} OFF`;
+    }
+
+    if (coupon.discountType === 'PERCENTAGE') {
+      return `Flat ${this.formatCouponNumber(
+        coupon.discountValue
+      )}% OFF`;
+    }
+
+    if (coupon.discountType === 'FREE_DELIVERY') {
+      return 'Free delivery';
+    }
+
+    return coupon.description || 'Special offer';
+  }
+
+  private formatCouponNumber(value: number): string {
+    return (Number(value) || 0).toLocaleString(
+      'en-IN',
+      {
+        maximumFractionDigits: 0
+      }
+    );
+  }
+
+  /* =================================================
+     Search and display filters
+     ================================================= */
+
+  onSearch(): void {
+    this.applyRestaurantView();
+  }
+
+  clearSearch(): void {
+    this.searchText = '';
+    this.applyRestaurantView();
+  }
+
+  private applyRestaurantView(): void {
+    const query = this.searchText.trim().toLowerCase();
+    const restaurantList = this.restaurants();
+
+    const vegFilterEnabled =
+      this.userService.isLoggedIn() &&
+      this.vegOnly;
+
+    this.filtered.set(
+      restaurantList.filter(restaurant => {
+        const matchesSearch =
+          !query ||
+          (restaurant.name || '').toLowerCase().includes(query) ||
+          (restaurant.cuisine || '').toLowerCase().includes(query) ||
+          (restaurant.location || '').toLowerCase().includes(query);
+
+        const matchesVegOnly =
+          !vegFilterEnabled ||
+          restaurant.isPureVeg === true;
+
+        return matchesSearch && matchesVegOnly;
+      })
+    );
+  }
+
+  getRestaurantImage(restaurant: Restaurant): string {
+    const imageSource = restaurant as Restaurant & {
+      photo?: string | null;
+      bannerImage?: string | null;
+      coverImage?: string | null;
+    };
+
+    return (
+      imageSource.imageUrl ||
+      imageSource.image ||
+      imageSource.photo ||
+      imageSource.bannerImage ||
+      imageSource.coverImage ||
+      ''
+    );
+  }
+
+  hasRestaurantImage(restaurant: Restaurant): boolean {
+    return Boolean(
+      this.getRestaurantImage(restaurant).trim()
+    );
+  }
+
+  onImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+
+    image.style.display = 'none';
+
+    image.parentElement?.classList.add('image-failed');
+  }
+
+  private removeFocusFromActiveElement(): void {
     const activeElement = document.activeElement as HTMLElement | null;
     activeElement?.blur();
   }
 
-  openRestaurant(r: Restaurant, event?: MouseEvent) {
-    if (!this.isLoggedIn) {
-      event?.preventDefault();
-      event?.stopPropagation();
-      this.releaseActiveCard();
+  private storeSelectedRestaurant(
+    restaurant: Restaurant
+  ): void {
+    if (!this.userService.isLoggedIn()) {
+      localStorage.removeItem('selectedRestaurant');
+      return;
+    }
+
+    localStorage.setItem(
+      'selectedRestaurant',
+      JSON.stringify(restaurant)
+    );
+  }
+
+  openRestaurant(restaurant: Restaurant): void {
+    /*
+     * Always query UserService here rather than relying
+     * only on this.isLoggedIn. This immediately handles
+     * clicks after logout without requiring page refresh.
+     */
+    const loggedInNow = this.userService.isLoggedIn();
+
+    if (!loggedInNow) {
+      this.isLoggedIn = false;
+      this.vegOnly = false;
+
+      this.removeFocusFromActiveElement();
       this.showSignInToast();
+
       return;
     }
 
-    if (!r.isActive) {
-      event?.preventDefault();
-      event?.stopPropagation();
-      this.releaseActiveCard();
+    this.isLoggedIn = true;
+
+    if (restaurant.isActive === false) {
       return;
     }
 
-    this.releaseActiveCard();
-    this.router.navigate(['/home/restaurant', r.id]);
+    this.storeSelectedRestaurant(restaurant);
+
+    this.removeFocusFromActiveElement();
+
+    this.router.navigate([
+      '/home/restaurant',
+      restaurant.id
+    ]);
+  }
+
+  showSignInToast(): void {
+    if (!this.toastInstance && this.signInToastRef?.nativeElement) {
+      this.toastInstance = new bootstrap.Toast(
+        this.signInToastRef.nativeElement,
+        {
+          autohide: true,
+          delay: 2500
+        }
+      );
+    }
+
+    this.toastInstance?.show();
+  }
+
+  getAddressLabelIcon(address: AddressResponse): string {
+    if (address.label === 'HOME') {
+      return 'bi-house-door-fill';
+    }
+
+    if (address.label === 'WORK') {
+      return 'bi-briefcase-fill';
+    }
+
+    return 'bi-bookmark-fill';
+  }
+
+  goToSavedAddresses(): void {
+    this.router.navigate(['home/addresses']);
+  }
+
+  trackByRestaurantId(
+    _index: number,
+    restaurant: Restaurant
+  ): number | string {
+    return restaurant.id ?? restaurant.name;
+  }
+
+  /* =================================================
+     Active orders
+     ================================================= */
+
+  loadActiveOrders(preservePosition = true): void {
+    if (!this.userService.isLoggedIn()) {
+      this.activeOrders.set([]);
+      this.loadingActiveOrders.set(false);
+      this.currentOrderIndex.set(0);
+      this.stopAutoScroll();
+      return;
+    }
+
+    this.loadingActiveOrders.set(
+      this.activeOrders().length === 0
+    );
+
+    const previousOrders = this.activeOrders();
+
+    const previousCurrentOrderId =
+      previousOrders[this.currentOrderIndex()]?.id ?? null;
+
+    this.orderService
+      .getMyOrders()
+      .pipe(
+        catchError(() => of([] as OrderSummaryResponse[]))
+      )
+      .subscribe(orders => {
+        const latestActiveOrders = [...orders]
+          .filter(order =>
+            this.isActiveOrderStatus(order.status)
+          )
+          .sort(
+            (first, second) =>
+              new Date(second.createdAt).getTime() -
+              new Date(first.createdAt).getTime()
+          );
+
+        this.activeOrders.set(latestActiveOrders);
+        this.loadingActiveOrders.set(false);
+
+        if (latestActiveOrders.length === 0) {
+          this.currentOrderIndex.set(0);
+          this.stopAutoScroll();
+          return;
+        }
+
+        if (preservePosition && previousCurrentOrderId) {
+          const matchingIndex = latestActiveOrders.findIndex(
+            order => order.id === previousCurrentOrderId
+          );
+
+          if (matchingIndex >= 0) {
+            this.currentOrderIndex.set(matchingIndex);
+          } else {
+            this.currentOrderIndex.set(
+              Math.min(
+                this.currentOrderIndex(),
+                latestActiveOrders.length - 1
+              )
+            );
+          }
+        } else {
+          this.currentOrderIndex.set(0);
+        }
+
+        setTimeout(() => {
+          this.scrollToOrder(
+            this.currentOrderIndex(),
+            false
+          );
+
+          this.startAutoScroll();
+        }, 120);
+      });
+  }
+
+  private startOrdersAutoRefresh(): void {
+    this.stopOrdersAutoRefresh();
+
+    if (!this.userService.isLoggedIn()) {
+      return;
+    }
+
+    this.refreshOrdersTimer = setInterval(() => {
+      this.loadActiveOrders(true);
+    }, 25000);
+  }
+
+  private stopOrdersAutoRefresh(): void {
+    if (!this.refreshOrdersTimer) {
+      return;
+    }
+
+    clearInterval(this.refreshOrdersTimer);
+    this.refreshOrdersTimer = null;
+  }
+
+  private isActiveOrderStatus(
+    status: OrderStatus
+  ): boolean {
+    return [
+      'PLACED',
+      'CONFIRMED',
+      'PREPARING',
+      'PICKED_UP',
+      'OUT_FOR_DELIVERY'
+    ].includes(status);
+  }
+
+  openOrderTracking(orderId: number): void {
+    this.router.navigate([
+      '/home/order-tracking',
+      orderId
+    ]);
+  }
+
+  scrollOrdersLeft(): void {
+    const totalOrders = this.activeOrders().length;
+
+    if (totalOrders <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      this.currentOrderIndex() === 0
+        ? totalOrders - 1
+        : this.currentOrderIndex() - 1;
+
+    this.scrollToOrder(nextIndex);
+    this.restartAutoScroll();
+  }
+
+  scrollOrdersRight(): void {
+    const totalOrders = this.activeOrders().length;
+
+    if (totalOrders <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      this.currentOrderIndex() === totalOrders - 1
+        ? 0
+        : this.currentOrderIndex() + 1;
+
+    this.scrollToOrder(nextIndex);
+    this.restartAutoScroll();
+  }
+
+  goToOrderSlide(index: number): void {
+    this.scrollToOrder(index);
+    this.restartAutoScroll();
+  }
+
+  getVisibleDotIndexes(): number[] {
+    const totalOrders = this.activeOrders().length;
+
+    if (totalOrders <= 3) {
+      return Array.from(
+        { length: totalOrders },
+        (_item, index) => index
+      );
+    }
+
+    const currentIndex = this.currentOrderIndex();
+
+    if (currentIndex <= 1) {
+      return [0, 1, 2];
+    }
+
+    if (currentIndex >= totalOrders - 2) {
+      return [
+        totalOrders - 3,
+        totalOrders - 2,
+        totalOrders - 1
+      ];
+    }
+
+    return [
+      currentIndex - 1,
+      currentIndex,
+      currentIndex + 1
+    ];
+  }
+
+  private startAutoScroll(): void {
+    this.stopAutoScroll();
+
+    if (this.activeOrders().length <= 1) {
+      return;
+    }
+
+    this.autoScrollTimer = setInterval(() => {
+      const totalOrders = this.activeOrders().length;
+
+      const nextIndex =
+        this.currentOrderIndex() >= totalOrders - 1
+          ? 0
+          : this.currentOrderIndex() + 1;
+
+      this.scrollToOrder(nextIndex);
+    }, 4500);
+  }
+
+  private stopAutoScroll(): void {
+    if (!this.autoScrollTimer) {
+      return;
+    }
+
+    clearInterval(this.autoScrollTimer);
+    this.autoScrollTimer = null;
+  }
+
+  private restartAutoScroll(): void {
+    this.stopAutoScroll();
+    this.startAutoScroll();
+  }
+
+  private scrollToOrder(
+    index: number,
+    smooth = true
+  ): void {
+    this.currentOrderIndex.set(index);
+
+    const container =
+      this.ordersScrollerRef?.nativeElement;
+
+    if (!container) {
+      return;
+    }
+
+    const slides = container.querySelectorAll<HTMLElement>(
+      '.sticky-order-slide'
+    );
+
+    const targetSlide = slides[index];
+
+    if (!targetSlide) {
+      return;
+    }
+
+    targetSlide.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto',
+      block: 'nearest',
+      inline: 'start'
+    });
+  }
+
+  onOrdersScroll(): void {
+    const container =
+      this.ordersScrollerRef?.nativeElement;
+
+    if (!container) {
+      return;
+    }
+
+    const slides = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        '.sticky-order-slide'
+      )
+    );
+
+    if (slides.length === 0) {
+      return;
+    }
+
+    const scrollPosition = container.scrollLeft;
+
+    let closestIndex = 0;
+    let closestDistance = Number.MAX_VALUE;
+
+    slides.forEach((slide, index) => {
+      const distance = Math.abs(
+        slide.offsetLeft - scrollPosition
+      );
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    this.currentOrderIndex.set(closestIndex);
+  }
+
+  getEtaText(order: OrderSummaryResponse): string {
+    let arrivalTimeInMilliseconds: number | null = null;
+
+    if (order.estimatedDeliveryAt) {
+      arrivalTimeInMilliseconds = new Date(
+        order.estimatedDeliveryAt
+      ).getTime();
+    } else if (
+      order.finalEstimatedDeliveryMinutes !== null &&
+      order.finalEstimatedDeliveryMinutes !== undefined
+    ) {
+      arrivalTimeInMilliseconds =
+        new Date(order.createdAt).getTime() +
+        order.finalEstimatedDeliveryMinutes * 60000;
+    }
+
+    if (arrivalTimeInMilliseconds !== null) {
+      const remainingMinutes = Math.ceil(
+        (arrivalTimeInMilliseconds - Date.now()) / 60000
+      );
+
+      if (remainingMinutes <= 1) {
+        return 'Arriving shortly';
+      }
+
+      return `Arriving in ${remainingMinutes} min`;
+    }
+
+    return 'ETA updating';
+  }
+
+  getActiveOrderStatusLabel(status: OrderStatus): string {
+    switch (status) {
+      case 'PLACED':
+        return 'Order placed';
+
+      case 'CONFIRMED':
+        return 'Restaurant confirmed';
+
+      case 'PREPARING':
+        return 'Preparing your food';
+
+      case 'PICKED_UP':
+        return 'Picked up by delivery partner';
+
+      case 'OUT_FOR_DELIVERY':
+        return 'Out for delivery';
+
+      case 'DELIVERED':
+        return 'Delivered';
+
+      case 'CANCELLED':
+        return 'Cancelled';
+
+      default:
+        return 'Processing';
+    }
+  }
+
+  getActiveOrderStatusClass(status: OrderStatus): string {
+    switch (status) {
+      case 'OUT_FOR_DELIVERY':
+      case 'PICKED_UP':
+        return 'active-order-status-delivery';
+
+      case 'CONFIRMED':
+      case 'PREPARING':
+      case 'PLACED':
+        return 'active-order-status-progress';
+
+      case 'DELIVERED':
+        return 'active-order-status-success';
+
+      case 'CANCELLED':
+        return 'active-order-status-cancelled';
+
+      default:
+        return 'active-order-status-progress';
+    }
+  }
+
+  getStickyOrderIcon(status: OrderStatus): string {
+    switch (status) {
+      case 'OUT_FOR_DELIVERY':
+        return 'bi-bicycle';
+
+      case 'PICKED_UP':
+        return 'bi-bag-check-fill';
+
+      case 'PREPARING':
+        return 'bi-fire';
+
+      case 'CONFIRMED':
+        return 'bi-check2-circle';
+
+      case 'PLACED':
+      default:
+        return 'bi-receipt';
+    }
+  }
+
+  formatOrderStatus(status: OrderStatus): string {
+    return status
+      .toLowerCase()
+      .split('_')
+      .map(
+        word =>
+          word.charAt(0).toUpperCase() +
+          word.slice(1)
+      )
+      .join(' ');
+  }
+
+  trackByOrderId(
+    _index: number,
+    order: OrderSummaryResponse
+  ): number {
+    return order.id;
   }
 }

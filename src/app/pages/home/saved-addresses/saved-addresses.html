@@ -1,4 +1,906 @@
-<div class="home-wrap py-4">
-  <h3 class="fw-bold mb-2">Saved Addresses</h3>
-  <p class="text-muted mb-0">Saved addresses page coming next.</p>
+<div class="saved-addresses-page">
+
+  <div class="addresses-container">
+
+    <!-- Page header -->
+    <section class="addresses-header">
+
+      <div class="addresses-heading">
+        <span class="page-kicker">
+          <i class="bi bi-geo-alt-fill"></i>
+          Delivery settings
+        </span>
+
+        <h1>Saved addresses</h1>
+
+        <p>
+          Add, update, and choose the address you use for deliveries.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="btn add-btn"
+        (click)="openAddModal()"
+      >
+        <i class="bi bi-plus-lg"></i>
+        <span>Add address</span>
+      </button>
+
+    </section>
+
+    <!-- Success message -->
+    <div
+      *ngIf="successMessage"
+      class="page-alert page-alert-success"
+      role="status"
+    >
+      <i class="bi bi-check-circle-fill"></i>
+
+      <span>{{ successMessage }}</span>
+
+      <button
+        type="button"
+        class="page-alert-close"
+        aria-label="Close success message"
+        (click)="successMessage = ''"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Error message -->
+    <div
+      *ngIf="errorMessage"
+      class="page-alert page-alert-error"
+      role="alert"
+    >
+      <i class="bi bi-exclamation-triangle-fill"></i>
+
+      <span>{{ errorMessage }}</span>
+
+      <button
+        type="button"
+        class="page-alert-close"
+        aria-label="Close error message"
+        (click)="errorMessage = ''"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div
+      *ngIf="loading"
+      class="address-grid"
+      aria-label="Loading saved addresses"
+    >
+      <article
+        class="address-skeleton-card"
+        *ngFor="let item of skeletonItems"
+      >
+        <div class="skeleton skeleton-icon"></div>
+
+        <div class="skeleton-content">
+          <div class="skeleton skeleton-line skeleton-title"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line skeleton-short"></div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Empty state -->
+    <section
+      *ngIf="!loading && addresses.length === 0"
+      class="empty-state-card"
+    >
+      <div class="empty-icon">
+        <i class="bi bi-geo-alt"></i>
+      </div>
+
+      <span class="empty-kicker">
+        No addresses saved
+      </span>
+
+      <h2>Add your delivery address</h2>
+
+      <p>
+        Save an address now to make future checkout faster and more convenient.
+      </p>
+
+      <button
+        type="button"
+        class="btn add-btn"
+        (click)="openAddModal()"
+      >
+        <i class="bi bi-plus-lg"></i>
+        Add your first address
+      </button>
+    </section>
+
+    <!-- Address cards -->
+    <section
+      *ngIf="!loading && addresses.length > 0"
+      class="address-grid"
+    >
+      <article
+        class="address-card"
+        *ngFor="let address of addresses; trackBy: trackByAddressId"
+        [class.default-address-card]="address.isDefault"
+      >
+
+        <div class="address-card-accent"></div>
+
+        <div class="address-card-top">
+
+          <div
+            class="label-icon-wrap"
+            [ngClass]="{
+              'label-home': address.label === 'HOME',
+              'label-work': address.label === 'WORK',
+              'label-other': address.label === 'OTHER'
+            }"
+          >
+            <i
+              class="bi"
+              [ngClass]="getLabelIcon(address)"
+            ></i>
+          </div>
+
+          <div class="address-main">
+
+            <div class="address-title-row">
+
+              <div class="address-label-group">
+                <h2 class="address-label-title">
+                  {{ getDisplayLabel(address) }}
+                </h2>
+
+                <span
+                  *ngIf="address.isDefault"
+                  class="default-badge"
+                >
+                  <i class="bi bi-check2-circle"></i>
+                  Default
+                </span>
+              </div>
+
+              <!-- Delete only -->
+              <div class="address-card-menu">
+                <button
+                  type="button"
+                  class="address-icon-action address-icon-delete"
+                  aria-label="Delete address"
+                  title="Delete address"
+                  (click)="openDeleteModal(address)"
+                >
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <div class="address-recipient">
+              <i class="bi bi-person"></i>
+              <span>{{ address.receiverName }}</span>
+
+              <span class="recipient-separator"></span>
+
+              <i class="bi bi-telephone"></i>
+              <span>{{ address.phoneNumber }}</span>
+            </div>
+
+            <p class="address-text">
+              {{ address.addressLine2 }}
+            </p>
+
+            <p class="address-text address-location">
+              {{ address.addressLine1 }}
+            </p>
+
+            <p
+              *ngIf="address.landmark"
+              class="address-landmark"
+            >
+              <i class="bi bi-signpost-2"></i>
+              Near {{ address.landmark }}
+            </p>
+
+            <p class="address-city-row">
+              {{ address.city }}, {{ address.state }} –
+              {{ address.postalCode }}
+            </p>
+
+          </div>
+
+        </div>
+
+        <!-- Single edit option -->
+        <div class="address-card-footer">
+
+          <button
+            type="button"
+            class="address-footer-btn edit-footer-btn"
+            (click)="openEditModal(address)"
+          >
+            <i class="bi bi-pencil"></i>
+            Edit address
+          </button>
+
+          <button
+            *ngIf="!address.isDefault"
+            type="button"
+            class="address-footer-btn default-footer-btn"
+            (click)="makeDefault(address.id)"
+          >
+            <i class="bi bi-pin-map"></i>
+            Set as default
+          </button>
+
+          <span
+            *ngIf="address.isDefault"
+            class="default-address-note"
+          >
+            <i class="bi bi-house-check"></i>
+            Used for delivery by default
+          </span>
+
+        </div>
+
+      </article>
+    </section>
+
+  </div>
+</div>
+
+<!-- =================================================
+     Full-screen Add/Edit Address Modal
+     ================================================= -->
+
+<div
+  class="modal fade"
+  id="addressModal"
+  tabindex="-1"
+  aria-labelledby="addressModalLabel"
+  aria-hidden="true"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+>
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content address-modal-content">
+
+      <!-- Header without close button -->
+      <div class="modal-header address-modal-header">
+
+        <div class="address-modal-title-group">
+
+          <span class="modal-kicker">
+            <i
+              class="bi"
+              [ngClass]="
+                editMode
+                  ? 'bi-pencil-square'
+                  : 'bi-plus-circle-fill'
+              "
+            ></i>
+
+            {{
+              editMode
+                ? 'Update delivery address'
+                : 'New delivery address'
+            }}
+          </span>
+
+          <h1
+            class="modal-title"
+            id="addressModalLabel"
+          >
+            {{
+              editMode
+                ? 'Update delivery address'
+                : 'New delivery address'
+            }}
+          </h1>
+
+          <p class="modal-subtitle">
+            Select the location on the map and complete the required delivery details.
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body address-modal-body">
+
+        <div class="address-editor-container">
+
+          <div
+            *ngIf="modalMessage"
+            class="modal-inline-alert"
+            [ngClass]="modalMessageType"
+            role="alert"
+          >
+            <i
+              class="bi"
+              [ngClass]="{
+                'bi-check-circle-fill': modalMessageType === 'success',
+                'bi-exclamation-triangle-fill': modalMessageType === 'warning',
+                'bi-x-circle-fill': modalMessageType === 'error'
+              }"
+            ></i>
+
+            <span>{{ modalMessage }}</span>
+          </div>
+
+          <div class="address-editor-layout">
+
+            <!-- Location panel -->
+            <section class="address-location-panel">
+
+              <div class="editor-section-heading">
+
+                <div class="location-heading-copy">
+
+                  <div class="location-heading-line">
+                    <span class="panel-step">
+                      <span class="step-number">1</span>
+                      Location
+                    </span>
+
+                    <!-- Status beside heading -->
+                    <span
+                      class="location-ready-status"
+                      [class.location-ready]="hasSelectedLocation"
+                    >
+                      <i
+                        class="bi"
+                        [ngClass]="
+                          hasSelectedLocation
+                            ? 'bi-check-circle-fill'
+                            : 'bi-info-circle-fill'
+                        "
+                      ></i>
+
+                      {{
+                        hasSelectedLocation
+                          ? 'Location selected successfully.'
+                          : 'Location not selected'
+                      }}
+                    </span>
+                  </div>
+
+                  <h2>Pin your delivery location</h2>
+
+                  <p>
+                    Search for an area or drag the map to position the pin.
+                  </p>
+
+                </div>
+
+              </div>
+
+              <!-- Search -->
+              <div class="map-search-row">
+
+                <div class="map-search-box">
+                  <i class="bi bi-search"></i>
+
+                  <input
+                    type="text"
+                    placeholder="Search locality, street or city"
+                    [(ngModel)]="searchQuery"
+                    name="searchQuery"
+                    (input)="onSearchInput()"
+                    autocomplete="off"
+                  />
+
+                  <button
+                    *ngIf="searchQuery"
+                    type="button"
+                    class="map-search-clear"
+                    aria-label="Clear location search"
+                    title="Clear search"
+                    (click)="clearMapSearch()"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+
+                <ul
+                  *ngIf="searchResults.length > 0"
+                  class="search-results-list"
+                >
+                  <li
+                    *ngFor="let result of searchResults"
+                    (click)="selectSearchResult(result)"
+                  >
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span>{{ result.display_name }}</span>
+                  </li>
+                </ul>
+
+              </div>
+
+              <!-- Map -->
+              <div class="map-workspace">
+
+                <div class="map-wrap">
+
+                  <div
+                    id="mapPicker"
+                    class="map-picker"
+                  ></div>
+
+                  <div
+                    class="center-pin-icon"
+                    aria-hidden="true"
+                  >
+                    <i class="bi bi-geo-alt-fill"></i>
+                  </div>
+
+                  <!-- Existing map location control -->
+                  <button
+                    type="button"
+                    class="current-location-btn"
+                    aria-label="Use my current location"
+                    title="Use my current location"
+                    (click)="useCurrentLocation()"
+                    [disabled]="mapLoading"
+                  >
+                    <i class="bi bi-crosshair"></i>
+                  </button>
+
+                  <div class="map-pin-hint">
+                    <i class="bi bi-arrows-move"></i>
+                    Drag map to set location
+                  </div>
+
+                </div>
+
+                <div
+                  *ngIf="mapLoading"
+                  class="map-loading-row"
+                >
+                  <span class="map-loading-spinner"></span>
+                  Updating location details...
+                </div>
+
+                <!-- Location details only under the map -->
+                <div class="map-location-summary">
+
+                  <div class="map-location-summary-head">
+
+                    <span class="map-summary-icon">
+                      <i class="bi bi-map-fill"></i>
+                    </span>
+
+                    <div>
+                      <strong>Location details from map</strong>
+
+                      <small>
+                        These values update when the map location changes.
+                      </small>
+                    </div>
+
+                  </div>
+
+                  <div class="map-location-summary-grid">
+
+                    <div>
+                      <span>City</span>
+                      <strong>{{ form.city || 'Not selected' }}</strong>
+                    </div>
+
+                    <div>
+                      <span>State</span>
+                      <strong>{{ form.state || 'Not selected' }}</strong>
+                    </div>
+
+                    <div>
+                      <span>Pincode</span>
+                      <strong>{{ form.postalCode || 'Not selected' }}</strong>
+                    </div>
+
+                  </div>
+
+                  <div
+                    *ngIf="mapPickedText"
+                    class="picked-address-box"
+                  >
+                    <i class="bi bi-geo-alt-fill"></i>
+
+                    <div>
+                      <span class="picked-address-label">
+                        Selected location
+                      </span>
+
+                      <span class="picked-address-text">
+                        {{ mapPickedText }}
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </section>
+
+            <!-- Address details panel -->
+            <section class="address-details-panel">
+
+              <div class="editor-section-heading details-heading">
+
+                <div>
+                  <span class="panel-step">
+                    <span class="step-number">2</span>
+                    Delivery details
+                  </span>
+
+                  <h2>Complete the address</h2>
+
+                  <p>
+                    Add the receiver and house details required for delivery.
+                  </p>
+                </div>
+
+              </div>
+
+              <form
+                class="address-editor-form"
+                (submit)="$event.preventDefault()"
+              >
+
+                <!-- Address label -->
+                <div class="field-block">
+
+                  <label class="form-label field-label">
+                    Save address as
+                    <span class="required-mark">*</span>
+                  </label>
+
+                  <div class="label-radio-group">
+
+                    <label
+                      class="label-radio-card"
+                      [class.active]="selectedLabelOption === 'HOME'"
+                    >
+                      <input
+                        type="radio"
+                        name="addressLabel"
+                        [checked]="selectedLabelOption === 'HOME'"
+                        (change)="onLabelOptionChange('HOME')"
+                      />
+
+                      <span class="label-option-icon">
+                        <i class="bi bi-house-door-fill"></i>
+                      </span>
+
+                      <span>Home</span>
+                    </label>
+
+                    <label
+                      class="label-radio-card"
+                      [class.active]="selectedLabelOption === 'WORK'"
+                    >
+                      <input
+                        type="radio"
+                        name="addressLabel"
+                        [checked]="selectedLabelOption === 'WORK'"
+                        (change)="onLabelOptionChange('WORK')"
+                      />
+
+                      <span class="label-option-icon">
+                        <i class="bi bi-briefcase-fill"></i>
+                      </span>
+
+                      <span>Work</span>
+                    </label>
+
+                    <label
+                      class="label-radio-card"
+                      [class.active]="selectedLabelOption === 'OTHER'"
+                    >
+                      <input
+                        type="radio"
+                        name="addressLabel"
+                        [checked]="selectedLabelOption === 'OTHER'"
+                        (change)="onLabelOptionChange('OTHER')"
+                      />
+
+                      <span class="label-option-icon">
+                        <i class="bi bi-bookmark-fill"></i>
+                      </span>
+
+                      <span>Other</span>
+                    </label>
+
+                  </div>
+
+                </div>
+
+                <!-- Custom label -->
+                <div
+                  *ngIf="selectedLabelOption === 'OTHER'"
+                  class="field-block"
+                >
+                  <label
+                    for="customOtherLabel"
+                    class="form-label field-label"
+                  >
+                    Custom label
+                    <span class="required-mark">*</span>
+                  </label>
+
+                  <input
+                    id="customOtherLabel"
+                    name="customOtherLabel"
+                    type="text"
+                    class="form-control custom-input"
+                    placeholder="Example: PG, Hostel, Friend's home"
+                    [(ngModel)]="customOtherLabel"
+                    (ngModelChange)="onCustomLabelChange()"
+                  />
+                </div>
+
+                <!-- Receiver and phone -->
+                <div class="field-row">
+
+                  <div class="field-block">
+                    <label
+                      for="receiverName"
+                      class="form-label field-label"
+                    >
+                      Receiver name
+                      <span class="required-mark">*</span>
+                    </label>
+
+                    <input
+                      id="receiverName"
+                      name="receiverName"
+                      type="text"
+                      class="form-control custom-input"
+                      [(ngModel)]="form.receiverName"
+                      placeholder="Name receiving the order"
+                      autocomplete="name"
+                    />
+                  </div>
+
+                  <div class="field-block">
+                    <label
+                      for="phoneNumber"
+                      class="form-label field-label"
+                    >
+                      Phone number
+                      <span class="required-mark">*</span>
+                    </label>
+
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      inputmode="tel"
+                      class="form-control custom-input"
+                      [(ngModel)]="form.phoneNumber"
+                      placeholder="Delivery contact number"
+                      autocomplete="tel"
+                    />
+                  </div>
+
+                </div>
+
+                <!-- House/street -->
+                <div class="field-block">
+                  <label
+                    for="addressLine2"
+                    class="form-label field-label"
+                  >
+                    House / flat / street
+                    <span class="required-mark">*</span>
+                  </label>
+
+                  <input
+                    id="addressLine2"
+                    name="addressLine2"
+                    type="text"
+                    class="form-control custom-input"
+                    [(ngModel)]="form.addressLine2"
+                    placeholder="House no., building, floor, street"
+                  />
+                </div>
+
+                <!-- Landmark -->
+                <div class="field-block">
+                  <label
+                    for="landmark"
+                    class="form-label field-label"
+                  >
+                    Landmark
+                    <span class="field-optional">(Optional)</span>
+                  </label>
+
+                  <input
+                    id="landmark"
+                    name="landmark"
+                    type="text"
+                    class="form-control custom-input"
+                    [(ngModel)]="form.landmark"
+                    placeholder="Example: Near metro station"
+                  />
+                </div>
+
+                <!-- Default address under Landmark -->
+                <label class="default-check-wrap">
+
+                  <input
+                    id="isDefault"
+                    name="isDefault"
+                    type="checkbox"
+                    class="form-check-input"
+                    [(ngModel)]="form.isDefault"
+                  />
+
+                  <span class="default-check-icon">
+                    <i class="bi bi-pin-map-fill"></i>
+                  </span>
+
+                  <span class="default-check-copy">
+                    <strong>Make this my default address</strong>
+
+                    <small>
+                      Select this address automatically during checkout.
+                    </small>
+                  </span>
+
+                </label>
+
+              </form>
+
+            </section>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer address-modal-footer">
+
+        <button
+          type="button"
+          class="btn cancel-btn"
+          data-bs-dismiss="modal"
+          [disabled]="submitting"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="btn save-btn"
+          [disabled]="
+            submitting ||
+            !isFormValid() ||
+            (editMode && !hasAddressChanges)
+          "
+          (click)="saveAddress()"
+        >
+          <span
+            *ngIf="submitting"
+            class="btn-spinner"
+          ></span>
+
+          <i
+            *ngIf="!submitting"
+            class="bi"
+            [ngClass]="
+              editMode
+                ? 'bi-check2-circle'
+                : 'bi-plus-circle'
+            "
+          ></i>
+
+          {{
+            submitting
+              ? 'Saving...'
+              : editMode
+                ? 'Update address'
+                : 'Save address'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- =================================================
+     Delete confirmation modal
+     ================================================= -->
+
+<div
+  class="modal fade"
+  id="deleteAddressModal"
+  tabindex="-1"
+  aria-labelledby="deleteAddressModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered delete-modal-dialog">
+    <div class="modal-content delete-modal-content">
+
+      <div class="delete-modal-icon">
+        <i class="bi bi-trash3-fill"></i>
+      </div>
+
+      <div class="delete-modal-copy">
+
+        <h2 id="deleteAddressModalLabel">
+          Delete address?
+        </h2>
+
+        <p>
+          Are you sure you want to delete
+          <strong>
+            {{
+              addressToDelete
+                ? getDisplayLabel(addressToDelete)
+                : 'this address'
+            }}
+          </strong>?
+          This action cannot be undone.
+        </p>
+
+        <div
+          *ngIf="addressToDelete"
+          class="delete-address-preview"
+        >
+          <i
+            class="bi"
+            [ngClass]="getLabelIcon(addressToDelete)"
+          ></i>
+
+          <span>
+            {{ addressToDelete.addressLine2 }},
+            {{ addressToDelete.city }}
+          </span>
+        </div>
+
+      </div>
+
+      <div class="delete-modal-actions">
+
+        <button
+          type="button"
+          class="btn delete-cancel-btn"
+          data-bs-dismiss="modal"
+          [disabled]="deletingAddress"
+        >
+          Keep address
+        </button>
+
+        <button
+          type="button"
+          class="btn delete-confirm-btn"
+          (click)="confirmDeleteAddress()"
+          [disabled]="deletingAddress"
+        >
+          <span
+            *ngIf="deletingAddress"
+            class="btn-spinner"
+          ></span>
+
+          {{
+            deletingAddress
+              ? 'Deleting...'
+              : 'Yes, delete'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+  </div>
 </div>

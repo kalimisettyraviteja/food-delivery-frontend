@@ -2,8 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export type DiscountType = 'FLAT' | 'PERCENTAGE' | 'FREE_DELIVERY';
-export type CouponScope = 'GLOBAL' | 'RESTAURANT';
+export type DiscountType =
+  | 'FLAT'
+  | 'PERCENTAGE'
+  | 'FREE_DELIVERY';
+
+export type CouponScope =
+  | 'GLOBAL'
+  | 'RESTAURANT';
 
 export interface Coupon {
   id: number;
@@ -52,36 +58,123 @@ export interface ApplyCouponResponse {
   providedIn: 'root'
 })
 export class CouponService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private userApiUrl = 'https://api-gateway-ftbf.onrender.com/api/coupons';
-  private adminApiUrl = 'https://api-gateway-ftbf.onrender.com/api/admin/coupons';
+  // Customer coupon APIs
+  private readonly userApiUrl =
+    'http://localhost:8080/api/coupons';
+
+  // Admin coupon APIs
+  private readonly adminApiUrl =
+    'http://localhost:8080/api/admin/coupons';
+
+  // Restaurant manager coupon APIs
+  private readonly managerApiUrl =
+    'http://localhost:8080/api/manager/coupons';
+
+  // ─────────────────────────────────────────────
+  // Customer/User APIs
+  // ─────────────────────────────────────────────
 
   getGlobalCoupons(): Observable<Coupon[]> {
-    return this.http.get<Coupon[]>(`${this.userApiUrl}/global`);
+    return this.http.get<Coupon[]>(
+      `${this.userApiUrl}/global`
+    );
   }
 
-  getRestaurantCoupons(restaurantId: number): Observable<Coupon[]> {
-    return this.http.get<Coupon[]>(`${this.userApiUrl}/restaurant/${restaurantId}`);
+  getRestaurantCoupons(
+    restaurantId: number
+  ): Observable<Coupon[]> {
+    return this.http.get<Coupon[]>(
+      `${this.userApiUrl}/restaurant/${restaurantId}`
+    );
   }
 
-  applyCoupon(payload: ApplyCouponRequest): Observable<ApplyCouponResponse> {
-    return this.http.post<ApplyCouponResponse>(`${this.userApiUrl}/apply`, payload);
+  applyCoupon(
+    payload: ApplyCouponRequest
+  ): Observable<ApplyCouponResponse> {
+    return this.http.post<ApplyCouponResponse>(
+      `${this.userApiUrl}/apply`,
+      payload
+    );
   }
+
+  // ─────────────────────────────────────────────
+  // Admin APIs
+  // ─────────────────────────────────────────────
 
   getAllCoupons(): Observable<Coupon[]> {
-    return this.http.get<Coupon[]>(this.adminApiUrl);
+    return this.http.get<Coupon[]>(
+      this.adminApiUrl
+    );
   }
 
-  createCoupon(payload: CouponPayload): Observable<Coupon> {
-    return this.http.post<Coupon>(this.adminApiUrl, payload);
+  createCoupon(
+    payload: CouponPayload
+  ): Observable<Coupon> {
+    return this.http.post<Coupon>(
+      this.adminApiUrl,
+      payload
+    );
   }
 
-  updateCoupon(id: number, payload: CouponPayload): Observable<Coupon> {
-    return this.http.put<Coupon>(`${this.adminApiUrl}/${id}`, payload);
+  updateCoupon(
+    id: number,
+    payload: CouponPayload
+  ): Observable<Coupon> {
+    return this.http.put<Coupon>(
+      `${this.adminApiUrl}/${id}`,
+      payload
+    );
   }
 
   deleteCoupon(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.adminApiUrl}/${id}`);
+    return this.http.delete<void>(
+      `${this.adminApiUrl}/${id}`
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Restaurant Manager APIs
+  // ─────────────────────────────────────────────
+
+  getManagerCoupons(
+    restaurantId: number
+  ): Observable<Coupon[]> {
+    return this.http.get<Coupon[]>(
+      this.managerApiUrl,
+      {
+        params: {
+          restaurantId: String(restaurantId)
+        }
+      }
+    );
+  }
+
+  createManagerCoupon(
+    payload: CouponPayload
+  ): Observable<Coupon> {
+    return this.http.post<Coupon>(
+      this.managerApiUrl,
+      payload
+    );
+  }
+
+  updateManagerCoupon(
+    couponId: number,
+    payload: CouponPayload
+  ): Observable<Coupon> {
+    return this.http.put<Coupon>(
+      `${this.managerApiUrl}/${couponId}`,
+      payload
+    );
+  }
+
+  deleteManagerCoupon(
+    couponId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.managerApiUrl}/${couponId}`
+    );
   }
 }

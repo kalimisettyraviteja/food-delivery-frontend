@@ -59,7 +59,7 @@ export class MenuItems implements OnInit {
 
   ngOnInit() {
     this.restaurantsLoading.set(true);
-    this.svc.getAll().subscribe({
+    this.svc.searchRestaurants().subscribe({
       next: (data: Restaurant[]) => {
         this.restaurants.set(data);
         this.filteredRestaurants.set(data);

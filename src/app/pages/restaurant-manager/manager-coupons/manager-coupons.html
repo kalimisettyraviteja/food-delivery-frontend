@@ -1,0 +1,658 @@
+<section class="coupons-page">
+  <div class="coupons-shell">
+
+    <!-- Page header -->
+    <header class="page-header">
+      <div class="header-left">
+      
+
+        <div class="header-copy">
+          <p class="eyebrow">RESTAURANT OFFERS</p>
+          <h1>Coupons</h1>
+
+          <div class="restaurant-context">
+            <span class="restaurant-dot"></span>
+            <span>{{ restaurantName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="primary-button header-create-button"
+        [disabled]="!restaurantId"
+        (click)="openCreateModal()"
+      >
+        <span class="button-icon">+</span>
+        <span class="desktop-create-label">New coupon</span>
+        <span class="mobile-create-label">Add</span>
+      </button>
+    </header>
+
+    <!-- Alerts -->
+    <div class="error-alert" *ngIf="errorMessage">
+      <span class="alert-icon">!</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <div class="success-alert" *ngIf="successMessage">
+      <span class="alert-icon">✓</span>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="overview-bar" *ngIf="!loading && restaurantId">
+      <div class="summary-item">
+        <span>Total</span>
+        <strong>{{ coupons.length }}</strong>
+      </div>
+
+      <div class="summary-divider"></div>
+
+      <div class="summary-item active-summary">
+        <span>Live</span>
+        <strong>{{ activeCount }}</strong>
+      </div>
+
+      <div class="summary-divider"></div>
+
+      <div class="summary-item inactive-summary">
+        <span>Paused</span>
+        <strong>{{ inactiveCount }}</strong>
+      </div>
+    </div>
+
+    <!-- Search and filter -->
+    <div class="toolbar" *ngIf="restaurantId">
+      <label class="search-box">
+        <span class="search-icon">⌕</span>
+
+        <input
+          type="search"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="Search offers"
+          aria-label="Search coupons"
+        />
+
+        <button
+          *ngIf="searchTerm"
+          type="button"
+          class="clear-search"
+          (click)="searchTerm = ''; applyFilters()"
+          aria-label="Clear search"
+        >
+          ×
+        </button>
+      </label>
+
+      <div
+        class="status-tabs"
+        role="tablist"
+        aria-label="Coupon status"
+      >
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'ALL'"
+          (click)="setStatusFilter('ALL')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'ACTIVE'"
+          (click)="setStatusFilter('ACTIVE')"
+        >
+          Live
+        </button>
+
+        <button
+          type="button"
+          [class.selected]="statusFilter === 'INACTIVE'"
+          (click)="setStatusFilter('INACTIVE')"
+        >
+          Paused
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="loading">
+      <div
+        class="loading-card"
+        *ngFor="let item of [1, 2, 3]"
+      >
+        <div class="loading-line loading-line-wide"></div>
+        <div class="loading-line"></div>
+        <div class="loading-line loading-line-small"></div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div
+      class="empty-state"
+      *ngIf="
+        !loading &&
+        restaurantId &&
+        filteredCoupons.length === 0 &&
+        !errorMessage
+      "
+    >
+      <div class="empty-icon">🏷</div>
+
+      <h2>No offers yet</h2>
+
+      <p>
+        Add a coupon for {{ restaurantName }} to encourage more orders.
+      </p>
+
+      <button
+        type="button"
+        class="primary-button empty-create-button"
+        (click)="openCreateModal()"
+      >
+        <span class="button-icon">+</span>
+        <span>Create first coupon</span>
+      </button>
+    </div>
+
+    <!-- Desktop table -->
+    <div
+      class="table-wrapper"
+      *ngIf="!loading && filteredCoupons.length > 0"
+    >
+      <table class="coupons-table">
+        <thead>
+          <tr>
+            <th>Coupon</th>
+            <th>Offer</th>
+            <th>Min. order</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th class="actions-heading">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let coupon of filteredCoupons;
+              trackBy: trackByCouponId
+            "
+          >
+            <td>
+              <div class="coupon-cell">
+                <div class="coupon-icon">🏷</div>
+
+                <div class="coupon-main">
+                  <span class="coupon-code">{{ coupon.code }}</span>
+
+                  <span class="coupon-description">
+                    {{ getCouponDescription(coupon) }}
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="discount-value">
+                <strong>{{ getDiscountLabel(coupon) }}</strong>
+
+                <span
+                  class="discount-cap"
+                  *ngIf="
+                    coupon.discountType === 'PERCENTAGE' &&
+                    coupon.maxDiscountAmount
+                  "
+                >
+                  Cap ₹{{ coupon.maxDiscountAmount }}
+                </span>
+              </div>
+            </td>
+
+            <td>
+              <span class="amount-label">
+                ₹{{ coupon.minOrderAmount }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="expiry-text"
+                [class.expired]="isExpired(coupon)"
+              >
+                {{ getExpiryLabel(coupon) }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="coupon.active"
+              >
+                <span class="status-dot"></span>
+                {{ coupon.active ? 'Live' : 'Paused' }}
+              </span>
+            </td>
+
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button
+                  type="button"
+                  class="icon-action"
+                  (click)="openEditModal(coupon)"
+                  aria-label="Edit coupon"
+                  title="Edit coupon"
+                >
+                  ✎
+                </button>
+
+                <button
+                  type="button"
+                  class="status-action"
+                  [class.active]="coupon.active"
+                  [disabled]="saving"
+                  (click)="toggleCouponStatus(coupon)"
+                >
+                  {{ coupon.active ? 'Pause' : 'Go live' }}
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-action delete-action"
+                  (click)="askDelete(coupon)"
+                  aria-label="Delete coupon"
+                  title="Delete coupon"
+                >
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile coupon cards -->
+    <div
+      class="coupon-cards"
+      *ngIf="!loading && filteredCoupons.length > 0"
+    >
+      <article
+        class="coupon-card"
+        [class.paused-card]="!coupon.active"
+        *ngFor="
+          let coupon of filteredCoupons;
+          trackBy: trackByCouponId
+        "
+      >
+        <div class="coupon-card-top">
+          <div class="offer-mark">
+            <span>🏷</span>
+          </div>
+
+          <div class="coupon-card-title">
+            <span class="coupon-code">{{ coupon.code }}</span>
+
+            <span class="coupon-description">
+              {{ getCouponDescription(coupon) }}
+            </span>
+          </div>
+
+          <span
+            class="status-badge"
+            [class.active]="coupon.active"
+          >
+            <span class="status-dot"></span>
+            {{ coupon.active ? 'Live' : 'Paused' }}
+          </span>
+        </div>
+
+        <div class="offer-highlight">
+          <span class="offer-label">You offer</span>
+          <strong>{{ getDiscountLabel(coupon) }}</strong>
+
+          <span
+            class="discount-cap"
+            *ngIf="
+              coupon.discountType === 'PERCENTAGE' &&
+              coupon.maxDiscountAmount
+            "
+          >
+            Up to ₹{{ coupon.maxDiscountAmount }}
+          </span>
+        </div>
+
+        <div class="coupon-meta-row">
+          <span>
+            <b>Min order</b>
+            ₹{{ coupon.minOrderAmount }}
+          </span>
+
+          <span
+            [class.expired]="isExpired(coupon)"
+          >
+            <b>Expiry</b>
+            {{ getExpiryLabel(coupon) }}
+          </span>
+        </div>
+
+        <div class="coupon-card-actions">
+          <button
+            type="button"
+            class="mobile-edit-button"
+            (click)="openEditModal(coupon)"
+          >
+            Edit
+          </button>
+
+          <button
+            type="button"
+            class="mobile-status-button"
+            [class.active]="coupon.active"
+            [disabled]="saving"
+            (click)="toggleCouponStatus(coupon)"
+          >
+            {{ coupon.active ? 'Pause offer' : 'Go live' }}
+          </button>
+
+          <button
+            type="button"
+            class="mobile-delete-button"
+            (click)="askDelete(coupon)"
+            aria-label="Delete coupon"
+          >
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <footer
+      class="list-footer"
+      *ngIf="!loading && filteredCoupons.length > 0"
+    >
+      Showing {{ filteredCoupons.length }} of {{ coupons.length }} offers
+    </footer>
+  </div>
+
+  <!-- Create/Edit coupon bottom sheet/modal -->
+  <div
+    class="modal-backdrop"
+    *ngIf="showCouponModal"
+    (click)="closeCouponModal()"
+  >
+    <section
+      class="coupon-modal"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="isEditMode ? 'Edit coupon' : 'Create coupon'"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="sheet-handle"></div>
+
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">
+            {{ isEditMode ? 'EDIT OFFER' : 'NEW OFFER' }}
+          </p>
+
+          <h2>
+            {{ isEditMode ? 'Edit coupon' : 'Create coupon' }}
+          </h2>
+
+          <p class="modal-restaurant-name">
+            {{ restaurantName }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          [disabled]="saving"
+          (click)="closeCouponModal()"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </header>
+
+      <form
+        class="coupon-form"
+        [formGroup]="couponForm"
+        (ngSubmit)="saveCoupon()"
+      >
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Coupon code <b>*</b></span>
+
+            <input
+              type="text"
+              formControlName="code"
+              placeholder="SAVE50"
+              maxlength="30"
+              autocomplete="off"
+            />
+
+            <small
+              class="field-error"
+              *ngIf="hasError('code')"
+            >
+              Use 3–30 letters, numbers, hyphens, or underscores only.
+            </small>
+          </label>
+
+          <label class="form-field">
+            <span>Offer type <b>*</b></span>
+
+            <select formControlName="discountType">
+              <option value="FLAT">Flat amount off</option>
+              <option value="PERCENTAGE">Percentage off</option>
+              <option value="FREE_DELIVERY">Free delivery</option>
+            </select>
+          </label>
+
+          <label class="form-field full-width">
+            <span>Description</span>
+
+            <input
+              type="text"
+              formControlName="description"
+              placeholder="₹50 off on orders above ₹299"
+              maxlength="180"
+            />
+
+            <small
+              class="field-error"
+              *ngIf="hasError('description')"
+            >
+              Description cannot exceed 180 characters.
+            </small>
+          </label>
+
+          <label
+            class="form-field"
+            *ngIf="!isFreeDelivery"
+          >
+            <span>
+              {{
+                isPercentage
+                  ? 'Discount percentage'
+                  : 'Discount amount'
+              }}
+              <b>*</b>
+            </span>
+
+            <div class="input-with-prefix">
+              <span>{{ isPercentage ? '%' : '₹' }}</span>
+
+              <input
+                type="number"
+                formControlName="discountValue"
+                min="1"
+                [max]="isPercentage ? 100 : null"
+                step="1"
+              />
+            </div>
+
+            <small
+              class="field-error"
+              *ngIf="hasError('discountValue')"
+            >
+              Enter a discount value greater than 0.
+            </small>
+          </label>
+
+          <label
+            class="form-field"
+            *ngIf="isPercentage"
+          >
+            <span>Maximum discount cap</span>
+
+            <div class="input-with-prefix">
+              <span>₹</span>
+
+              <input
+                type="number"
+                formControlName="maxDiscountAmount"
+                min="1"
+                step="1"
+                placeholder="Optional"
+              />
+            </div>
+
+            <small class="field-hint">
+              Optional maximum amount.
+            </small>
+
+            <small
+              class="field-error"
+              *ngIf="hasError('maxDiscountAmount')"
+            >
+              Maximum discount must be greater than 0.
+            </small>
+          </label>
+
+          <label class="form-field">
+            <span>Minimum order <b>*</b></span>
+
+            <div class="input-with-prefix">
+              <span>₹</span>
+
+              <input
+                type="number"
+                formControlName="minOrderAmount"
+                min="0"
+                step="1"
+              />
+            </div>
+
+            <small
+              class="field-error"
+              *ngIf="hasError('minOrderAmount')"
+            >
+              Minimum order amount cannot be negative.
+            </small>
+          </label>
+
+          <label class="form-field">
+            <span>Expiry date</span>
+
+            <input
+              type="date"
+              formControlName="expiryDate"
+            />
+
+            <small class="field-hint">
+              Optional — no expiry if blank.
+            </small>
+          </label>
+        </div>
+
+        <label class="active-toggle">
+          <input
+            type="checkbox"
+            formControlName="active"
+          />
+
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+
+          <span>Make this offer live now</span>
+        </label>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="saving"
+            (click)="closeCouponModal()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="saving"
+          >
+            {{
+              saving
+                ? 'Saving…'
+                : isEditMode
+                  ? 'Save changes'
+                  : 'Create coupon'
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Delete confirmation -->
+  <div
+    class="modal-backdrop"
+    *ngIf="couponToDelete"
+    (click)="cancelDelete()"
+  >
+    <section
+      class="delete-modal"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="sheet-handle"></div>
+
+      <div class="modal-icon">!</div>
+
+      <h2>Delete this offer?</h2>
+
+      <p>
+        <strong>{{ couponToDelete.code }}</strong>
+        will be removed permanently. Customers will not be able to apply it.
+      </p>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="deleting"
+          (click)="cancelDelete()"
+        >
+          Keep offer
+        </button>
+
+        <button
+          type="button"
+          class="danger-button"
+          [disabled]="deleting"
+          (click)="confirmDelete()"
+        >
+          {{ deleting ? 'Deleting…' : 'Delete offer' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</section>

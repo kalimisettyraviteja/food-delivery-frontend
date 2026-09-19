@@ -1,0 +1,588 @@
+<div class="tracking-page">
+  <section *ngIf="!loading() && order() as order" class="hero-edge-section">
+    <div class="hero-card">
+      <div class="hero-inner">
+        <div class="hero-simple-top">
+          <button
+            type="button"
+            class="hero-nav-btn"
+            (click)="goBack()"
+            aria-label="Go back">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+
+          <div class="hero-restaurant-name">{{ order.restaurantName }}</div>
+
+          <button
+            type="button"
+            class="hero-nav-btn"
+            (click)="onShareOrder()"
+            aria-label="Share order">
+            <i class="bi bi-share"></i>
+          </button>
+        </div>
+
+        <div class="hero-simple-body">
+          <h1 class="hero-title">{{ getHeroTitle(order.status) }}</h1>
+
+          <div class="hero-status-row">
+            <div class="hero-status-pill">
+              <span>{{ estimatedDeliveryText() }}</span>
+              <span class="hero-dot">•</span>
+              <span>{{ getEtaSubtext(order.status) }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="hero-refresh-btn"
+              (click)="refreshTrackingNow()"
+              aria-label="Refresh tracking">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tracking-shell">
+    <div *ngIf="loading()" class="loading-card">
+      <div class="loading-hero"></div>
+      <div class="loading-map"></div>
+      <div class="loading-list">
+        <div class="loading-row"></div>
+        <div class="loading-row"></div>
+        <div class="loading-row"></div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading() && errorMessage()" class="error-card">
+      <h2 class="error-title">Unable to load tracking</h2>
+      <p class="error-text">{{ errorMessage() }}</p>
+      <button type="button" class="primary-btn" (click)="loadOrder()">Retry</button>
+    </div>
+
+    <ng-container *ngIf="!loading() && order() as order">
+      <section class="desktop-layout">
+        <div class="desktop-left">
+          <section class="progress-card" *ngIf="order.status !== 'CANCELLED'; else cancelledBlock">
+            <div class="progress-track">
+              <div
+                class="progress-step"
+                *ngFor="let step of trackingSteps; let i = index"
+                [class.completed]="isStepCompleted(i)"
+                [class.current]="isStepCurrent(i)">
+                <div class="progress-node"></div>
+                <div class="progress-label">{{ step.label }}</div>
+              </div>
+            </div>
+          </section>
+
+          <ng-template #cancelledBlock>
+            <section class="progress-card cancelled-card">
+              <div class="cancelled-copy">
+                This order was cancelled, so live delivery tracking is not available.
+              </div>
+            </section>
+          </ng-template>
+
+          <section class="map-card">
+            <ng-container *ngIf="hasRouteMapData(); else noMapBlock">
+              <div class="tracking-map-shell">
+                <div #trackingMap class="tracking-map"></div>
+              </div>
+            </ng-container>
+
+            <ng-template #noMapBlock>
+              <div class="empty-note">
+                Route map is not available for this order because coordinates are missing.
+              </div>
+            </ng-template>
+          </section>
+
+          <section class="swiggy-card">
+            <div class="section-strip">All your delivery details in one place</div>
+
+            <!-- Opens the Update Phone Number & Name modal (data-bs-toggle) -->
+            <button
+              type="button"
+              class="detail-row"
+              [attr.data-bs-toggle]="canEditContact() ? 'modal' : null"
+              [attr.data-bs-target]="canEditContact() ? '#updateContactModal' : null"
+              (click)="canEditContact() ? orderTracking_PrepareContactUpdate() : null">
+              <div class="round-icon soft-orange small-icon">
+                <i class="bi bi-telephone"></i>
+              </div>
+
+              <div class="detail-copy">
+                <div class="detail-title">{{ getCustomerName() }}, {{ getCustomerPhone() }}</div>
+                <div class="detail-text">Delivery partner may call this number</div>
+              </div>
+
+              <span class="detail-action" *ngIf="canEditContact()">Edit</span>
+              <span class="detail-action detail-action-muted" *ngIf="!canEditContact()">Locked</span>
+            </button>
+
+            <!-- Opens the Update Delivery Address offcanvas (data-bs-toggle) -->
+            <button
+              type="button"
+              class="detail-row detail-row-last"
+              [attr.data-bs-toggle]="canEditAddress() ? 'offcanvas' : null"
+              [attr.data-bs-target]="canEditAddress() ? '#updateAddressOffcanvas' : null"
+              (click)="canEditAddress() ? orderTracking_PrepareAddressUpdate() : null">
+              <div class="round-icon soft-orange small-icon">
+                <i class="bi bi-house-door"></i>
+              </div>
+
+              <div class="detail-copy">
+                <div class="detail-title">Delivery at {{ getAddressLabel() }}</div>
+                <div class="detail-text">{{ getFullAddress() }}</div>
+              </div>
+
+              <span class="detail-action" *ngIf="canEditAddress()">Edit</span>
+              <span class="detail-action detail-action-muted" *ngIf="!canEditAddress()">Locked</span>
+            </button>
+
+            <div class="inline-note" *ngIf="!canEditAddress() && isOrderActive()">
+              Order is being prepared — changes are no longer possible.
+            </div>
+          </section>
+        </div>
+
+        <div class="desktop-right">
+          <section class="swiggy-card">
+            <div class="card-head">
+              <div class="round-icon soft-pink">
+                <i class="bi bi-person-badge"></i>
+              </div>
+
+              <div class="card-copy">
+                <div class="card-title">{{ getPartnerTitle(order.status) }}</div>
+                <div class="card-subtitle">{{ getPartnerSubtitle(order.status) }}</div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button type="button" class="mini-action-btn" (click)="onChatPartner()">
+                <i class="bi bi-chat-dots"></i>
+                Chat
+              </button>
+
+              <button type="button" class="mini-action-btn" (click)="onPartnerCall()">
+                <i class="bi bi-telephone"></i>
+                Call
+              </button>
+            </div>
+          </section>
+
+          <section class="swiggy-card">
+            <div class="card-head">
+              <div class="round-icon soft-orange">
+                <i class="bi bi-shop"></i>
+              </div>
+
+              <div class="card-copy">
+                <div class="card-title">{{ order.restaurantName }}</div>
+                <div class="card-subtitle">{{ getRestaurantLocationText() }}</div>
+                <div class="card-meta" *ngIf="getRestaurantMetaLine()">{{ getRestaurantMetaLine() }}</div>
+              </div>
+
+              <button
+                type="button"
+                class="mini-circle-btn"
+                (click)="onCallRestaurant()"
+                aria-label="Call restaurant">
+                <i class="bi bi-telephone"></i>
+              </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="order-block">
+              <div class="round-icon soft-orange small-icon">
+                <i class="bi bi-receipt"></i>
+              </div>
+
+              <div class="detail-copy">
+                <div class="order-top-line">
+                  <div>
+                    <div class="detail-title">Order #{{ order.id }}</div>
+                    <div class="detail-text">
+                      {{ getItemsCountText() }} • {{ getPaymentMethodLabel(order.paymentMethod) }} • ₹{{ order.totalAmount }}
+                    </div>
+                  </div>
+
+                  <div class="payment-inline-chip" [ngClass]="getPaymentStatusClass(order.paymentStatus)">
+                    {{ getPaymentStatusLabel(order.paymentStatus) }}
+                  </div>
+                </div>
+
+                <div class="order-item" *ngFor="let item of order.items">
+                  {{ item.quantity }} x {{ item.itemName }}
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- ═══ COOKING INSTRUCTIONS ROW ═══ -->
+            <!-- Three states: -->
+            <!--   1. Instructions exist → read-only display, no badge, no modal -->
+            <!--   2. No instructions + editable (PLACED/CONFIRMED) → "Add" badge, opens modal -->
+            <!--   3. No instructions + locked → "Locked" badge, no modal -->
+            <button
+              type="button"
+              class="detail-row detail-row-last no-pad-bottom"
+              [attr.data-bs-toggle]="canEditInstructions() ? 'modal' : null"
+              [attr.data-bs-target]="canEditInstructions() ? '#cookingInstructionsModal' : null"
+              (click)="canEditInstructions() ? orderTracking_PrepareInstructionsUpdate() : null">
+              <div class="round-icon soft-orange small-icon">
+                <i class="bi bi-cup-hot"></i>
+              </div>
+
+              <div class="detail-copy">
+                <div class="detail-title">Cooking instructions</div>
+                <div class="detail-text">{{ getCookingInstructionsPreview() }}</div>
+              </div>
+
+              <span class="detail-action" *ngIf="canEditInstructions()">Add</span>
+              <span class="detail-action detail-action-muted" *ngIf="!canEditInstructions() && !hasCookingInstructions()">Locked</span>
+            </button>
+
+            <div class="inline-note inline-note-tight" *ngIf="!canEditInstructions() && !hasCookingInstructions() && isOrderActive()">
+              Order is being prepared — changes are no longer possible.
+            </div>
+          </section>
+
+          <section class="swiggy-card">
+            <button type="button" class="support-row" (click)="onHelpSupport()">
+              <div class="support-left">
+                <div class="round-icon soft-blue">
+                  <i class="bi bi-headset"></i>
+                </div>
+
+                <div class="detail-copy">
+                  <div class="detail-title">Need help with your order?</div>
+                  <div class="detail-text">Get help & support</div>
+                </div>
+              </div>
+
+              <i class="bi bi-chevron-right chevron-muted"></i>
+            </button>
+
+            <div class="divider"></div>
+
+            <!-- Opens the Cancel Order modal (data-bs-toggle) -->
+            <button
+              type="button"
+              class="support-row support-row-last"
+              data-bs-toggle="modal"
+              data-bs-target="#cancelOrderModal"
+              *ngIf="canCancelOrder()">
+              <div class="support-left">
+                <div class="round-icon soft-red">
+                  <i class="bi bi-bag-x"></i>
+                </div>
+
+                <div class="detail-copy">
+                  <div class="detail-title">Cancel order</div>
+                  <div class="detail-text">{{ cancelRefundNote() }}</div>
+                </div>
+              </div>
+
+              <i class="bi bi-chevron-right chevron-muted"></i>
+            </button>
+          </section>
+        </div>
+      </section>
+    </ng-container>
+  </div>
+</div>
+
+<!-- ═══════════ CANCEL ORDER MODAL ═══════════ -->
+<div
+  class="modal fade"
+  id="cancelOrderModal"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+  aria-labelledby="cancelOrderModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content tracking-modal-content">
+      <div class="modal-header border-0 pb-0">
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          [disabled]="cancellingOrder()"></button>
+      </div>
+
+      <div class="modal-body text-center pt-0" *ngIf="order() as order">
+        <div class="tracking-modal-icon soft-red">
+          <i class="bi bi-bag-x"></i>
+        </div>
+
+        <h1 class="modal-title fs-5 tracking-modal-title" id="cancelOrderModalLabel">Cancel this order?</h1>
+
+        <p class="tracking-modal-text" *ngIf="isPrePreparing()">
+          No charges will apply. Your payment (if any) will be refunded in full.
+        </p>
+
+        <p class="tracking-modal-text tracking-modal-warning" *ngIf="!isPrePreparing()">
+          This order is already being prepared. Cancelling now will not be refunded.
+        </p>
+
+        <div class="refund-breakdown">
+          <div class="refund-row">
+            <span>Order total</span>
+            <span>₹{{ order.totalAmount.toFixed(2) }}</span>
+          </div>
+          <div class="refund-row refund-row-highlight">
+            <span>Refund amount</span>
+            <span [class.refund-zero]="cancelRefundAmount() === 0">₹{{ cancelRefundAmount().toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn modal-btn-secondary" data-bs-dismiss="modal" [disabled]="cancellingOrder()">
+          Keep Order
+        </button>
+
+        <button
+          type="button"
+          class="btn modal-btn-danger"
+          data-bs-dismiss="modal"
+          (click)="orderTracking_ConfirmCancelOrder()"
+          [disabled]="cancellingOrder()">
+          {{ cancellingOrder() ? 'Cancelling...' : 'Yes, Cancel' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ UPDATE PHONE NUMBER & NAME MODAL ═══════════ -->
+<div
+  class="modal fade"
+  id="updateContactModal"
+  tabindex="-1"
+  aria-labelledby="updateContactModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content tracking-modal-content">
+      <div class="modal-header border-0 pb-0">
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          [disabled]="savingUpdatedContact()"></button>
+      </div>
+
+      <div class="modal-body pt-0">
+        <div class="tracking-modal-icon soft-orange">
+          <i class="bi bi-telephone"></i>
+        </div>
+
+        <h1 class="modal-title fs-5 tracking-modal-title text-center" id="updateContactModalLabel">Edit contact details</h1>
+
+        <p class="tracking-modal-text text-center">
+          Update the receiver name and phone number for this delivery.
+        </p>
+
+        <div class="contact-form">
+          <label class="contact-label">Receiver name</label>
+          <input
+            type="text"
+            class="contact-input"
+            placeholder="Enter receiver name"
+            [value]="updatedReceiverName()"
+            (input)="updatedReceiverName.set($any($event.target).value)" />
+
+          <label class="contact-label">Phone number</label>
+          <input
+            type="tel"
+            class="contact-input"
+            placeholder="Enter 10-digit phone number"
+            maxlength="10"
+            [value]="updatedPhoneNumber()"
+            (input)="updatedPhoneNumber.set($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn modal-btn-secondary" data-bs-dismiss="modal" [disabled]="savingUpdatedContact()">
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="btn modal-btn-primary"
+          data-bs-dismiss="modal"
+          (click)="orderTracking_ConfirmContactUpdate()"
+          [disabled]="savingUpdatedContact()">
+          {{ savingUpdatedContact() ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COOKING INSTRUCTIONS MODAL ═══════════ -->
+<div
+  class="modal fade"
+  id="cookingInstructionsModal"
+  tabindex="-1"
+  aria-labelledby="cookingInstructionsModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content tracking-modal-content">
+      <div class="modal-header border-0 pb-0">
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          [disabled]="savingUpdatedInstructions()"></button>
+      </div>
+
+      <div class="modal-body pt-0">
+        <div class="tracking-modal-icon soft-orange">
+          <i class="bi bi-cup-hot"></i>
+        </div>
+
+        <h1 class="modal-title fs-5 tracking-modal-title text-center" id="cookingInstructionsModalLabel">Cooking instructions</h1>
+
+        <p class="tracking-modal-text text-center">
+          Tell the restaurant how you'd like your food prepared.
+        </p>
+
+        <div class="contact-form">
+          <textarea
+            class="contact-input instructions-textarea"
+            placeholder="e.g. Less spicy, no onions, extra sauce on the side"
+            [maxLength]="cookingInstructionsMaxLength"
+            [value]="updatedCookingInstructions()"
+            (input)="updatedCookingInstructions.set($any($event.target).value)"></textarea>
+
+          <div class="instructions-counter">
+            {{ updatedCookingInstructions().length }} / {{ cookingInstructionsMaxLength }}
+            <span
+              class="instructions-min-hint"
+              *ngIf="updatedCookingInstructions().trim().length > 0 && !canSendInstructions()">
+              — minimum 5 characters required
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn modal-btn-secondary" data-bs-dismiss="modal" [disabled]="savingUpdatedInstructions()">
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="btn modal-btn-primary"
+          data-bs-dismiss="modal"
+          (click)="orderTracking_ConfirmInstructionsUpdate()"
+          [disabled]="savingUpdatedInstructions() || !canSendInstructions()">
+          {{ savingUpdatedInstructions() ? 'Saving...' : 'Send Instructions' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ UPDATE DELIVERY ADDRESS OFFCANVAS ═══════════ -->
+<div
+  class="offcanvas offcanvas-start address-offcanvas"
+  data-bs-scroll="true"
+  tabindex="-1"
+  id="updateAddressOffcanvas"
+  aria-labelledby="updateAddressOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="updateAddressOffcanvasLabel">Change delivery address</h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="offcanvas"
+      aria-label="Close"></button>
+  </div>
+
+  <div class="offcanvas-body">
+    <p class="tracking-modal-text">
+      You can only switch to an address within your current delivery range.
+    </p>
+
+    <div class="address-loading" *ngIf="loadingSavedAddresses()">
+      Loading your saved addresses...
+    </div>
+
+    <div class="address-options" *ngIf="!loadingSavedAddresses()">
+      <button
+        type="button"
+        class="address-option"
+        *ngFor="let address of visibleSavedAddresses()"
+        [class.selected]="isAddressSelected(address)"
+        (click)="orderTracking_SelectAddressOption(address)">
+        <div class="address-option-top">
+          <span class="address-option-label">
+            {{ address.label === 'OTHER' && address.customLabel ? address.customLabel : address.label }}
+          </span>
+          <span class="address-option-badge" *ngIf="address.isDefault">Default</span>
+        </div>
+
+        <div class="address-option-name">{{ address.receiverName }}</div>
+
+        <div class="address-option-line">
+          {{ address.addressLine1 }}, {{ address.city }}, {{ address.state }} {{ address.postalCode }}
+        </div>
+      </button>
+
+      <button type="button" class="address-more-btn" *ngIf="hasMoreSavedAddresses()" (click)="orderTracking_ShowMoreSavedAddresses()">
+        + Show more addresses
+      </button>
+
+      <div class="address-empty" *ngIf="savedAddressList().length === 0">
+        No saved addresses found.
+      </div>
+    </div>
+  </div>
+
+  <div class="offcanvas-footer">
+    <button
+      type="button"
+      class="btn modal-btn-primary w-100"
+      data-bs-dismiss="offcanvas"
+      (click)="orderTracking_ConfirmAddressUpdate()"
+      [disabled]="savingUpdatedAddress() || loadingSavedAddresses()">
+      {{ savingUpdatedAddress() ? 'Saving...' : 'Confirm Address' }}
+    </button>
+  </div>
+</div>
+
+<div class="tracking-toast" *ngIf="toast() as toast">
+  <div
+    class="tracking-toast-icon"
+    [ngClass]="{
+      'toast-success': toast.type === 'success',
+      'toast-info': toast.type === 'info',
+      'toast-warning': toast.type === 'warning',
+      'toast-error': toast.type === 'error'
+    }">
+    <i
+      class="bi"
+      [ngClass]="{
+        'bi-check-circle-fill': toast.type === 'success',
+        'bi-info-circle-fill': toast.type === 'info',
+        'bi-exclamation-triangle-fill': toast.type === 'warning',
+        'bi-x-circle-fill': toast.type === 'error'
+      }"></i>
+  </div>
+
+  <div class="tracking-toast-text">{{ toast.message }}</div>
+</div>

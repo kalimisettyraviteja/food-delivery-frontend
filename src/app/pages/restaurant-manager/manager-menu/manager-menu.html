@@ -1,0 +1,476 @@
+<section class="manager-menu-page">
+  <div class="menu-shell">
+    <header class="menu-header">
+      <div class="header-left">
+        <div class="restaurant-heading">
+          <div class="restaurant-avatar">
+            <img *ngIf="getRestaurantImage()" [src]="getRestaurantImage()"
+              [alt]="restaurant?.name || 'Restaurant image'" />
+
+            <i *ngIf="!getRestaurantImage()" class="bi bi-shop"></i>
+          </div>
+
+          <div>
+            <p class="eyebrow">RESTAURANT MENU</p>
+
+            <h1>{{ restaurant?.name || 'Restaurant menu' }}</h1>
+
+            <p class="restaurant-location">
+              <i class="bi bi-geo-alt"></i>
+              {{ restaurant?.location || 'Loading restaurant location...' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="add-item-button" (click)="openAddMenuItemModal()"
+          [disabled]="restaurant?.isActive === false" [title]="
+            restaurant?.isActive === false
+              ? 'Activate the restaurant before adding menu items'
+              : 'Add menu item'
+          ">
+          <i class="bi bi-plus-circle"></i>
+          <span>Add menu item</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="restaurant-inactive-note" *ngIf="restaurant?.isActive === false">
+      <i class="bi bi-exclamation-triangle"></i>
+      This restaurant is inactive. You can view and edit existing items, but adding new items is disabled.
+    </div>
+
+    <div class="menu-summary-row" *ngIf="!showLoading">
+      <div class="summary-card">
+        <span>Total items</span>
+        <strong>{{ menuItems.length }}</strong>
+      </div>
+
+      <div class="summary-card available-card">
+        <span>Available</span>
+        <strong>{{ availableCount }}</strong>
+      </div>
+
+      <div class="summary-card unavailable-card">
+        <span>Unavailable</span>
+        <strong>{{ unavailableCount }}</strong>
+      </div>
+    </div>
+
+    <div class="loading-section" *ngIf="showLoading">
+      <div class="loading-line wide"></div>
+
+      <div class="menu-skeleton-list">
+        <div class="menu-skeleton" *ngFor="let item of [1, 2, 3, 4]">
+          <div class="skeleton-image"></div>
+
+          <div class="skeleton-content">
+            <div class="skeleton-line title"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!showLoading">
+      <div class="menu-toolbar">
+        <label class="menu-search-box">
+          <i class="bi bi-search"></i>
+
+          <input type="search" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Search dishes"
+            aria-label="Search menu items" />
+        </label>
+
+        <div class="filter-tabs">
+          <button type="button" [class.active]="availabilityFilter === 'ALL'" (click)="setAvailabilityFilter('ALL')">
+            All
+          </button>
+
+          <button type="button" [class.active]="availabilityFilter === 'AVAILABLE'"
+            (click)="setAvailabilityFilter('AVAILABLE')">
+            Available
+          </button>
+
+          <button type="button" [class.active]="availabilityFilter === 'UNAVAILABLE'"
+            (click)="setAvailabilityFilter('UNAVAILABLE')">
+            Unavailable
+          </button>
+        </div>
+
+        <div class="food-filter">
+          <button type="button" [class.active]="foodTypeFilter === 'ALL'" (click)="setFoodTypeFilter('ALL')">
+            All types
+          </button>
+
+          <button type="button" [class.active]="foodTypeFilter === 'VEG'" (click)="setFoodTypeFilter('VEG')">
+            <span class="food-dot veg"></span>
+            Veg
+          </button>
+
+          <button type="button" [class.active]="foodTypeFilter === 'NON_VEG'" (click)="setFoodTypeFilter('NON_VEG')">
+            <span class="food-dot non-veg"></span>
+            Non-veg
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-menu-state" *ngIf="filteredMenuItems.length === 0">
+        <div class="empty-icon">
+          <i class="bi bi-journal-x"></i>
+        </div>
+
+        <h2>No menu items found</h2>
+
+        <p>
+          {{
+          menuItems.length === 0
+          ? 'Start adding dishes to build your restaurant menu.'
+          : 'Try changing your search or filters.'
+          }}
+        </p>
+
+        <button type="button" class="add-item-button" *ngIf="menuItems.length === 0" (click)="openAddMenuItemModal()"
+          [disabled]="restaurant?.isActive === false">
+          <i class="bi bi-plus-circle"></i>
+          Add first menu item
+        </button>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="menu-table-wrapper" *ngIf="filteredMenuItems.length > 0">
+        <table class="menu-table">
+          <thead>
+            <tr>
+              <th>Menu item</th>
+              <th>Food type</th>
+              <th>Price</th>
+              <th>Availability</th>
+              <th class="actions-heading">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let item of filteredMenuItems; trackBy: trackByMenuItemId">
+              <td>
+                <div class="menu-item-main">
+                  <div class="menu-item-image">
+                    <img *ngIf="getItemImage(item)" [src]="getItemImage(item)" [alt]="item.name" />
+
+                    <i *ngIf="!getItemImage(item)" class="bi bi-image"></i>
+
+                    <span class="image-availability-badge" [class.available]="isAvailable(item)">
+                      {{ isAvailable(item) ? 'Available' : 'Unavailable' }}
+                    </span>
+                  </div>
+
+                  <div class="menu-item-content">
+                    <div class="menu-item-name">{{ item.name }}</div>
+
+                    <div class="menu-item-description" *ngIf="item.description" [title]="item.description">
+                      {{ item.description }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <span class="food-type-badge" [class.veg]="item.veg">
+                  <span class="food-dot" [class.veg]="item.veg" [class.non-veg]="!item.veg"></span>
+                  {{ item.veg ? 'Veg' : 'Non-veg' }}
+                </span>
+              </td>
+
+              <td>
+                <strong class="item-price">
+                  ₹{{ item.price | number:'1.2-2' }}
+                </strong>
+              </td>
+
+              <td>
+                <span class="availability-badge" [class.available]="isAvailable(item)">
+                  <span></span>
+                  {{ isAvailable(item) ? 'Available' : 'Unavailable' }}
+                </span>
+              </td>
+
+              <td class="actions-cell">
+                <button type="button" class="dots-button" (click)="toggleActions(item.id, $event)"
+                  [attr.aria-expanded]="openActionId === item.id" aria-label="Menu item actions">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="menu-card-list" *ngIf="filteredMenuItems.length > 0">
+        <article class="menu-item-card" *ngFor="let item of filteredMenuItems; trackBy: trackByMenuItemId">
+          <div class="mobile-item-image">
+            <img *ngIf="getItemImage(item)" [src]="getItemImage(item)" [alt]="item.name" />
+
+            <i *ngIf="!getItemImage(item)" class="bi bi-image"></i>
+
+            <span class="image-availability-badge" [class.available]="isAvailable(item)">
+              {{ isAvailable(item) ? 'Available' : 'Unavailable' }}
+            </span>
+          </div>
+
+          <div class="mobile-item-details">
+            <div class="mobile-item-title-row">
+              <div>
+                <h3>{{ item.name }}</h3>
+
+                <span class="food-type-badge" [class.veg]="item.veg">
+                  <span class="food-dot" [class.veg]="item.veg" [class.non-veg]="!item.veg"></span>
+                  {{ item.veg ? 'Veg' : 'Non-veg' }}
+                </span>
+              </div>
+
+              <button type="button" class="dots-button" (click)="toggleActions(item.id, $event)"
+                [attr.aria-expanded]="openActionId === item.id" aria-label="Menu item actions">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+            </div>
+
+            <p *ngIf="item.description">
+              {{ item.description }}
+            </p>
+
+            <strong class="item-price">
+              ₹{{ item.price | number:'1.2-2' }}
+            </strong>
+          </div>
+        </article>
+      </div>
+
+      <footer class="menu-footer" *ngIf="filteredMenuItems.length > 0">
+        Showing {{ filteredMenuItems.length }} of {{ menuItems.length }} menu items
+      </footer>
+    </ng-container>
+  </div>
+
+  <!-- Floating menu outside all scroll containers -->
+  <div *ngIf="openActionId !== null && activeActionItem" class="floating-action-menu" [style.top.px]="actionMenuTop"
+    [style.left.px]="actionMenuLeft" (click)="$event.stopPropagation()">
+    <button type="button" (click)="openEditMenuItemModal(activeActionItem)">
+      <i class="bi bi-pencil-square"></i>
+      <span>Edit item</span>
+    </button>
+
+    <div class="menu-divider"></div>
+
+    <button type="button" class="delete-action" (click)="askDeleteMenuItem(activeActionItem)">
+      <i class="bi bi-trash3"></i>
+      <span>Delete item</span>
+    </button>
+  </div>
+
+  <!-- Add/Edit Bootstrap modal -->
+  <div class="modal fade" id="menuItemModal" tabindex="-1" aria-labelledby="menuItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered menu-item-modal-dialog">
+      <div class="modal-content menu-item-modal-content">
+        <div class="modal-header border-0">
+          <div>
+            <h1 class="modal-title fs-5" id="menuItemModalLabel">
+              {{ modalTitle }}
+            </h1>
+
+            <p class="modal-subtitle mb-0">
+              {{ modalSubtitle }}
+            </p>
+          </div>
+
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            [disabled]="savingMenuItem"></button>
+        </div>
+
+        <form [formGroup]="menuItemForm" (ngSubmit)="saveMenuItem()">
+          <div class="modal-body">
+            <div class="modal-form-grid">
+              <label class="modal-field">
+                <span>Item name <b>*</b></span>
+
+                <input type="text" class="form-control" formControlName="name"
+                  placeholder="Example: Paneer Butter Masala" maxlength="120" />
+
+                <small class="modal-field-error" *ngIf="
+                    menuItemForm.controls.name.invalid &&
+                    (menuItemForm.controls.name.touched ||
+                      menuItemForm.controls.name.dirty)
+                  ">
+                  Item name is required.
+                </small>
+              </label>
+
+              <label class="modal-field">
+                <span>Price <b>*</b></span>
+
+                <div class="price-input-wrap">
+                  <span>₹</span>
+
+                  <input type="number" class="form-control" formControlName="price" placeholder="0.00" min="1"
+                    step="0.01" />
+                </div>
+
+                <small class="modal-field-error" *ngIf="
+                    menuItemForm.controls.price.invalid &&
+                    (menuItemForm.controls.price.touched ||
+                      menuItemForm.controls.price.dirty)
+                  ">
+                  Enter a valid price greater than 0.
+                </small>
+              </label>
+
+              <label class="modal-field modal-field-full">
+                <span>Description</span>
+
+                <textarea class="form-control" rows="3" formControlName="description"
+                  placeholder="Short description of the dish..." maxlength="500"></textarea>
+              </label>
+
+              <div class="modal-field">
+                <span>Food type</span>
+
+                <div class="segmented-control">
+                  <button type="button" [class.active]="menuItemForm.controls.veg.value"
+                    (click)="menuItemForm.controls.veg.setValue(true); menuItemForm.controls.veg.markAsDirty()">
+                    <span class="food-dot veg"></span>
+                    Veg
+                  </button>
+
+                  <button type="button" [class.active]="!menuItemForm.controls.veg.value"
+                    (click)="menuItemForm.controls.veg.setValue(false); menuItemForm.controls.veg.markAsDirty()">
+                    <span class="food-dot non-veg"></span>
+                    Non-veg
+                  </button>
+                </div>
+              </div>
+
+              <div class="modal-field">
+                <span>Availability</span>
+
+                <label class="availability-switch-row">
+                  <input type="checkbox" formControlName="isAvailable" />
+                  <span class="modal-switch"></span>
+
+                  <span>
+                    {{
+                    menuItemForm.controls.isAvailable.value
+                    ? 'Available'
+                    : 'Unavailable'
+                    }}
+                  </span>
+                </label>
+              </div>
+
+              <div class="modal-field modal-field-full">
+                <span>Item image</span>
+
+                <div class="menu-image-upload-row">
+                  <div class="menu-image-preview">
+                    <img *ngIf="menuImagePreview || existingMenuImage" [src]="menuImagePreview || existingMenuImage"
+                      alt="Menu item preview" />
+
+                    <i *ngIf="!menuImagePreview && !existingMenuImage" class="bi bi-image"></i>
+                  </div>
+
+                  <div class="menu-image-actions">
+                    <label class="choose-image-button">
+                      <input type="file" accept="image/*" (change)="onMenuImageSelected($event)" />
+
+                      <i class="bi bi-cloud-arrow-up"></i>
+                      Choose image
+                    </label>
+
+                    <button type="button" class="remove-image-link" *ngIf="menuImagePreview"
+                      (click)="removeSelectedMenuImage()">
+                      <i class="bi bi-trash3"></i>
+                      Remove new image
+                    </button>
+
+                    <small>PNG, JPG or WEBP. Maximum size: 5 MB.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="button" class="btn modal-cancel-button" data-bs-dismiss="modal" [disabled]="savingMenuItem">
+              Cancel
+            </button>
+
+            <button type="submit" class="btn modal-save-button" [disabled]="!canSaveMenuItem()">
+              <i class="bi" [ngClass]="
+                  savingMenuItem
+                    ? 'bi-arrow-repeat'
+                    : isEditMode
+                      ? 'bi-check2-circle'
+                      : 'bi-plus-circle'
+                "></i>
+
+              {{ submitLabel }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete modal -->
+  <div class="modal fade" id="deleteMenuItemModal" tabindex="-1" aria-labelledby="deleteMenuItemModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered delete-menu-modal-dialog">
+      <div class="modal-content delete-menu-modal-content">
+        <div class="modal-body">
+          <div class="delete-modal-icon">
+            <i class="bi bi-trash3"></i>
+          </div>
+
+          <h2 id="deleteMenuItemModalLabel">Delete menu item?</h2>
+
+          <p>
+            You are about to permanently delete
+            <strong>{{ menuItemToDelete?.name }}</strong>.
+            This action cannot be undone.
+          </p>
+
+          <div class="delete-modal-actions">
+            <button type="button" class="btn delete-cancel-button" data-bs-dismiss="modal"
+              [disabled]="deletingMenuItem">
+              Keep item
+            </button>
+
+            <button type="button" class="btn delete-confirm-button" (click)="confirmDeleteMenuItem()"
+              [disabled]="deletingMenuItem">
+              <i class="bi bi-trash3"></i>
+              {{ deletingMenuItem ? 'Deleting...' : 'Delete item' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="app-toast" *ngIf="toastMessage" [class.success]="toastType === 'success'"
+    [class.error]="toastType === 'error'">
+    <span class="toast-icon">
+      <i class="bi" [ngClass]="
+          toastType === 'success'
+            ? 'bi-check-lg'
+            : 'bi-exclamation-lg'
+        "></i>
+    </span>
+
+    <span>{{ toastMessage }}</span>
+
+    <button type="button" class="toast-close" (click)="toastMessage = ''" aria-label="Close message">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+</section>

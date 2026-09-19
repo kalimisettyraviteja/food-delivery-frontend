@@ -1,8 +1,20 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { MenuItem, Restaurant } from './restaurant';
 
 export interface CartItem {
-  item: any;
+  item: MenuItem;
   qty: number;
+}
+
+export interface CartRestaurantSnapshot {
+  id: number;
+  name: string;
+  location?: string | null;
+  cuisine?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  distanceKm?: number | null;
+  estimatedMinutes?: number | null;
 }
 
 @Injectable({
@@ -12,10 +24,12 @@ export class CartService {
   private readonly CART_KEY = 'food_app_cart';
   private readonly RESTAURANT_ID_KEY = 'food_app_restaurant_id';
   private readonly RESTAURANT_NAME_KEY = 'food_app_restaurant_name';
+  private readonly RESTAURANT_SNAPSHOT_KEY = 'food_app_restaurant_snapshot';
 
   cart = signal<CartItem[]>([]);
   restaurantId = signal<number | null>(null);
   restaurantName = signal<string>('');
+  restaurantSnapshot = signal<CartRestaurantSnapshot | null>(null);
 
   cartCount = computed(() =>
     this.cart().reduce((total, c) => total + c.qty, 0)
@@ -33,6 +47,7 @@ export class CartService {
     const savedCart = localStorage.getItem(this.CART_KEY);
     const savedRestaurantId = localStorage.getItem(this.RESTAURANT_ID_KEY);
     const savedRestaurantName = localStorage.getItem(this.RESTAURANT_NAME_KEY);
+    const savedRestaurantSnapshot = localStorage.getItem(this.RESTAURANT_SNAPSHOT_KEY);
 
     if (savedCart) {
       try {
@@ -48,6 +63,15 @@ export class CartService {
 
     if (savedRestaurantName) {
       this.restaurantName.set(savedRestaurantName);
+    }
+
+    if (savedRestaurantSnapshot) {
+      try {
+        this.restaurantSnapshot.set(JSON.parse(savedRestaurantSnapshot) as CartRestaurantSnapshot);
+      } catch {
+        this.restaurantSnapshot.set(null);
+        localStorage.removeItem(this.RESTAURANT_SNAPSHOT_KEY);
+      }
     }
   }
 
@@ -65,9 +89,28 @@ export class CartService {
     } else {
       localStorage.removeItem(this.RESTAURANT_NAME_KEY);
     }
+
+    if (this.restaurantSnapshot()) {
+      localStorage.setItem(this.RESTAURANT_SNAPSHOT_KEY, JSON.stringify(this.restaurantSnapshot()));
+    } else {
+      localStorage.removeItem(this.RESTAURANT_SNAPSHOT_KEY);
+    }
   }
 
-  addToCart(item: any, restaurant: any) {
+ private buildRestaurantSnapshot(restaurant: Restaurant): CartRestaurantSnapshot {
+  return {
+    id: restaurant.id!,
+    name: restaurant.name,
+    location: restaurant.location ?? '',
+    cuisine: restaurant.cuisine ?? '',
+    latitude: restaurant.latitude ?? null,
+    longitude: restaurant.longitude ?? null,
+    distanceKm: restaurant.distanceKm ?? null,
+    estimatedMinutes: restaurant.estimatedMinutes ?? null
+  };
+}
+
+  addToCart(item: MenuItem, restaurant: Restaurant | null) {
     if (!restaurant?.id) return;
 
     if (this.restaurantId() && this.restaurantId() !== restaurant.id) {
@@ -80,8 +123,11 @@ export class CartService {
       this.clearCart();
     }
 
+    const snapshot = this.buildRestaurantSnapshot(restaurant);
+
     this.restaurantId.set(restaurant.id);
     this.restaurantName.set(restaurant.name);
+    this.restaurantSnapshot.set(snapshot);
 
     const existing = this.cart().find(c => c.item.id === item.id);
 
@@ -119,6 +165,7 @@ export class CartService {
     if (updated.length === 0) {
       this.restaurantId.set(null);
       this.restaurantName.set('');
+      this.restaurantSnapshot.set(null);
     }
 
     this.saveCartToStorage();
@@ -131,6 +178,7 @@ export class CartService {
     if (updated.length === 0) {
       this.restaurantId.set(null);
       this.restaurantName.set('');
+      this.restaurantSnapshot.set(null);
     }
 
     this.saveCartToStorage();
@@ -140,9 +188,11 @@ export class CartService {
     this.cart.set([]);
     this.restaurantId.set(null);
     this.restaurantName.set('');
+    this.restaurantSnapshot.set(null);
 
     localStorage.removeItem(this.CART_KEY);
     localStorage.removeItem(this.RESTAURANT_ID_KEY);
     localStorage.removeItem(this.RESTAURANT_NAME_KEY);
+    localStorage.removeItem(this.RESTAURANT_SNAPSHOT_KEY);
   }
 }

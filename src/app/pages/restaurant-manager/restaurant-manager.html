@@ -1,0 +1,76 @@
+<div class="manager-shell">
+  <div class="manager-content">
+
+    <header class="manager-topbar">
+
+      <!-- Left: clickable brand goes to manager dashboard -->
+      <a
+        routerLink="/restaurant-manager/dashboard"
+        class="manager-brand"
+        aria-label="Go to restaurant manager dashboard"
+      >
+        <img
+          src="assets/logo6.png"
+          alt="Cravyo"
+          class="app-role-logo"
+        />
+
+        <span class="brand-copy">
+          <span class="brand-name">Cravyo</span>
+          <span class="brand-role">Restaurant manager</span>
+        </span>
+      </a>
+
+      <!-- Right: clickable manager profile and logout -->
+      <div class="topbar-right">
+
+        <div
+          *ngIf="loadingUser"
+          class="profile-skeleton"
+          aria-label="Loading manager profile"
+        >
+          <span class="avatar-skeleton"></span>
+          <span class="name-skeleton"></span>
+        </div>
+
+        <button
+          *ngIf="!loadingUser"
+          type="button"
+          class="profile-button"
+          (click)="goToProfile()"
+          aria-label="Open manager profile"
+          title="Open profile"
+        >
+          <span class="topbar-avatar">
+            {{ userName ? userName.charAt(0).toUpperCase() : 'M' }}
+          </span>
+
+          <span class="profile-name">
+            {{ userName || 'Manager' }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="logout-btn"
+          (click)="logout()"
+          aria-label="Logout"
+          title="Logout"
+        >
+          <span class="logout-icon" aria-hidden="true">
+            <span class="logout-door"></span>
+            <span class="logout-arrow"></span>
+          </span>
+
+          <span class="logout-text">Logout</span>
+        </button>
+
+      </div>
+    </header>
+
+    <main class="manager-page-body">
+      <router-outlet />
+    </main>
+
+  </div>
+</div>

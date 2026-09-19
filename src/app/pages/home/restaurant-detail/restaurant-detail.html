@@ -115,39 +115,37 @@
 </ng-container>
 
 <ng-template #loadedPage>
-  <div class="restaurant-top premium-top" *ngIf="restaurant()">
+  <div class="restaurant-top premium-top" *ngIf="restaurant() as currentRestaurant">
     <div class="page-wrap">
       <div class="restaurant-title-row premium-title-row">
         <div class="restaurant-heading-wrap">
-          <h1 class="restaurant-title premium-title">{{ restaurant()!.name }}</h1>
+          <h1 class="restaurant-title premium-title">{{ currentRestaurant.name }}</h1>
 
           <div class="summary-top-left premium-meta-row">
-            <ng-container *ngIf="restaurant()?.rating != null && restaurant()?.rating !== 0; else newTag">
-              <span class="rating-badge premium-rating">⭐ {{ restaurant()!.rating }}</span>
-              <span class="rating-count" *ngIf="restaurant()!.ratingCount != null">
-                {{ restaurant()!.ratingCount }} reviews
+            <ng-container *ngIf="currentRestaurant.rating != null && currentRestaurant.rating !== 0; else newTag">
+              <span class="rating-badge premium-rating">⭐ {{ currentRestaurant.rating }}</span>
+              <span class="rating-count" *ngIf="currentRestaurant.ratingCount != null">
+                {{ currentRestaurant.ratingCount }} reviews
               </span>
             </ng-container>
 
             <ng-template #newTag>
               <span class="new-badge premium-new">
                 <span class="new-dot"></span>
-New              </span>
+                New
+              </span>
             </ng-template>
 
             <span class="meta-dot">•</span>
-            <span class="cuisine-link premium-cuisine">{{ restaurant()!.cuisine }}</span>
+            <span class="cuisine-link premium-cuisine">{{ currentRestaurant.cuisine }}</span>
           </div>
         </div>
 
         <div class="status-right premium-status-wrap">
-          <span
-            class="status-pill premium-status-pill"
-            [class.status-open]="restaurant()!.isActive !== false"
-            [class.status-closed]="restaurant()!.isActive === false"
-          >
+          <span class="status-pill premium-status-pill" [class.status-open]="currentRestaurant.isActive !== false"
+            [class.status-closed]="currentRestaurant.isActive === false">
             <span class="status-indicator-dot"></span>
-            {{ restaurant()!.isActive === false ? 'Temporarily Closed' : 'Open Now' }}
+            {{ currentRestaurant.isActive === false ? 'Temporarily Closed' : 'Open Now' }}
           </span>
         </div>
       </div>
@@ -158,43 +156,48 @@ New              </span>
             <div class="summary-main-info premium-main-info">
               <div class="outlet-row premium-outlet-row">
                 <span class="outlet-label">Outlet</span>
-                <span class="outlet-value">{{ restaurant()!.location || 'Main Outlet' }}</span>
-                <span class="delivery-time premium-time">• {{ restaurant()!.deliveryTime || '20-25' }} mins</span>
+                <span class="outlet-value">{{ currentRestaurant.location || 'Main Outlet' }}</span>
+
+                <span class="delivery-time premium-time" *ngIf="getDisplayDistanceText()">
+                  • {{ getDisplayDistanceText() }}
+                </span>
+
+                <span class="delivery-time premium-time">
+                  • {{ getDisplayEtaText() }} mins
+                </span>
               </div>
             </div>
           </div>
 
-          <div class="summary-offer-row premium-offer-row" *ngIf="visibleCoupon() as coupon">
+          <div class="summary-offer-row premium-offer-row" *ngIf="activeCoupon() as coupon; else noCouponBlock">
             <div class="offer-copy-left premium-offer-copy">
               <span class="offer-mini-label premium-offer-label">Deals for you</span>
               <h3 class="offer-mini-title premium-offer-title">Save more on this restaurant order</h3>
             </div>
 
-            <div
-              class="summary-coupon-strip premium-coupon-strip"
-              (mouseenter)="pauseCouponAutoSlide()"
-              (mouseleave)="resumeCouponAutoSlide()"
-            >
+            <div class="summary-coupon-strip premium-coupon-strip" (mouseenter)="pauseCouponSlider()"
+              (mouseleave)="resumeCouponSlider()">
               <div class="coupon-nav-wrap premium-coupon-nav-wrap">
-                <button
-                  type="button"
-                  class="coupon-nav-btn premium-nav-btn"
-                  (click)="prevCoupon(); pauseCouponAutoSlide()"
-                  aria-label="Previous coupon"
-                  title="Previous coupon"
-                >
+                <button type="button" class="coupon-nav-btn premium-nav-btn"
+                  (click)="showPreviousCoupon(); pauseCouponSlider()" aria-label="Previous coupon"
+                  title="Previous coupon">
                   <i class="bi bi-chevron-left"></i>
                 </button>
 
-                <div class="coupon-strip-inline premium-coupon-inline" (click)="openCouponModal(coupon)">
+                <div class="coupon-strip-inline premium-coupon-inline" (click)="openCouponDetails(coupon)">
                   <div class="coupon-icon-box premium-coupon-icon">
                     <i class="bi bi-percent"></i>
                   </div>
 
                   <div class="coupon-inline-main premium-coupon-main">
                     <div class="coupon-primary-row premium-coupon-primary">
-                      <span class="single-coupon-badge premium-coupon-badge">{{ getCouponTypeLabel(coupon) }}</span>
-                      <span class="best-offer-badge premium-best-badge" *ngIf="coupon.id === bestCouponId()">Best offer</span>
+                      <span class="single-coupon-badge premium-coupon-badge">
+                        {{ getCouponOfferTitle(coupon) }}
+                      </span>
+
+                      <span class="best-offer-badge premium-best-badge" *ngIf="coupon.id === bestCouponId()">
+                        Best offer
+                      </span>
                     </div>
 
                     <div class="coupon-secondary-row premium-coupon-secondary">
@@ -202,33 +205,30 @@ New              </span>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    class="copy-icon-btn premium-copy-btn"
-                    (click)="copyCouponCode(coupon.code, coupon.id, $event)"
-                    aria-label="Copy coupon code"
-                    title="Copy coupon"
-                  >
-                    <i
-                      class="bi"
-                      [class.bi-check2]="copiedCouponId() === coupon.id"
-                      [class.bi-copy]="copiedCouponId() !== coupon.id"
-                    ></i>
+                  <button type="button" class="copy-icon-btn premium-copy-btn"
+                    (click)="copyCouponText(coupon.code, coupon.id, $event)" aria-label="Copy coupon code"
+                    title="Copy coupon">
+                    <i class="bi" [class.bi-check2]="copiedCouponId() === coupon.id"
+                      [class.bi-copy]="copiedCouponId() !== coupon.id"></i>
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  class="coupon-nav-btn premium-nav-btn"
-                  (click)="nextCoupon(); pauseCouponAutoSlide()"
-                  aria-label="Next coupon"
-                  title="Next coupon"
-                >
+                <button type="button" class="coupon-nav-btn premium-nav-btn"
+                  (click)="showNextCoupon(); pauseCouponSlider()" aria-label="Next coupon" title="Next coupon">
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <ng-template #noCouponBlock>
+            <div class="summary-offer-row premium-offer-row">
+              <div class="offer-copy-left premium-offer-copy">
+                <span class="offer-mini-label premium-offer-label">Deals for you</span>
+                <h3 class="offer-mini-title premium-offer-title">No offers available right now</h3>
+              </div>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
@@ -243,44 +243,27 @@ New              </span>
 
         <div class="menu-search-row">
           <div class="menu-search-box">
-            <input
-              type="text"
-              class="menu-search"
-              [value]="searchText()"
-              (input)="onSearch($any($event.target).value)"
-              placeholder="Search for dishes"
-            />
+            <input type="text" class="menu-search" [value]="searchText()"
+              (input)="updateSearchText($any($event.target).value)" placeholder="Search for dishes" />
             <span class="search-icon">🔍</span>
           </div>
 
           <div class="filter-toggle" [attr.data-active]="selectedFilter()">
             <div class="filter-slider"></div>
 
-            <button
-              type="button"
-              class="filter-option"
-              [class.active]="selectedFilter() === 'ALL'"
-              (click)="setFilter('ALL')"
-            >
+            <button type="button" class="filter-option" [class.active]="selectedFilter() === 'ALL'"
+              (click)="changeFilter('ALL')">
               All
             </button>
 
-            <button
-              type="button"
-              class="filter-option veg"
-              [class.active]="selectedFilter() === 'VEG'"
-              (click)="setFilter('VEG')"
-            >
+            <button type="button" class="filter-option veg" [class.active]="selectedFilter() === 'VEG'"
+              (click)="changeFilter('VEG')">
               <span class="filter-icon veg-dot"></span>
               Veg
             </button>
 
-            <button
-              type="button"
-              class="filter-option nonveg"
-              [class.active]="selectedFilter() === 'NON_VEG'"
-              (click)="setFilter('NON_VEG')"
-            >
+            <button type="button" class="filter-option nonveg" [class.active]="selectedFilter() === 'NON_VEG'"
+              (click)="changeFilter('NON_VEG')">
               <span class="filter-icon nonveg-dot"></span>
               Non-Veg
             </button>
@@ -292,8 +275,8 @@ New              </span>
         <div class="menu-item-card" *ngFor="let item of filteredMenuItems()">
           <div class="menu-item-main">
             <div class="item-left">
-              <div class="veg-indicator" [class.veg]="item.veg" [class.non]="!item.veg"></div>
-
+              <div class="food-indicator" [class.food-indicator--veg]="item.veg"
+                [class.food-indicator--nonveg]="!item.veg"></div>
               <div class="menu-info">
                 <div class="item-name">{{ item.name }}</div>
 
@@ -304,10 +287,11 @@ New              </span>
                   <span class="price">₹{{ item.price }}</span>
                 </div>
 
-                <p class="item-desc desc-clamp" *ngIf="item.description; else noDesc">
+                <p class="item-desc desc-clamp" *ngIf="item.description; else noDescription">
                   {{ item.description }}
                 </p>
-                <ng-template #noDesc>
+
+                <ng-template #noDescription>
                   <p class="item-desc muted">No description provided.</p>
                 </ng-template>
               </div>
@@ -315,31 +299,38 @@ New              </span>
           </div>
 
           <div class="menu-item-media">
-            <div class="dish-image-box" *ngIf="item.image; else noImage">
-              <img
-                [src]="item.image"
-                [alt]="item.name"
-                class="dish-image"
-                (click)="openImagePreview(item.image, item.name)"
-              />
+            <div class="dish-image-box" *ngIf="item.image; else noImageTemplate">
+              <img [src]="item.image" [alt]="item.name" class="dish-image"
+                (click)="openDishImagePreview(item.image, item.name)" />
             </div>
 
-            <ng-template #noImage>
+            <ng-template #noImageTemplate>
               <div class="dish-image-box placeholder">
                 <div class="placeholder-icon">🍽️</div>
               </div>
             </ng-template>
 
             <div class="qty-area">
-              <ng-container *ngIf="getItemQty(item.id!) === 0; else qtyControls">
-                <button class="inline-add-btn" type="button" (click)="addToCart(item)">ADD</button>
+              <ng-container *ngIf="getQuantityInCart(item.id!) === 0; else quantityControls">
+                <div class="add-btn-wrap" [attr.title]="isAddDisabled(item) ? getAddButtonTitle(item) : null"
+                  [class.blocked-wrap]="isAddDisabled(item)">
+                  <button class="inline-add-btn" type="button" (click)="addItemToCart(item)"
+                    [disabled]="isAddDisabled(item)" [class.unavailable-btn]="isMenuItemUnavailable(item)"
+                    [class.disabled-add-btn]="!isMenuItemUnavailable(item) && restaurant()?.isActive === false">
+                    {{ getAddButtonText(item) }}
+                  </button>
+                </div>
               </ng-container>
 
-              <ng-template #qtyControls>
+              <ng-template #quantityControls>
                 <div class="qty-control">
-                  <button class="qty-btn" (click)="decreaseQty(item.id!)">-</button>
-                  <span>{{ getItemQty(item.id!) }}</span>
-                  <button class="qty-btn" (click)="increaseQty(item.id!)">+</button>
+                  <button class="qty-btn" type="button" (click)="decreaseItemQuantity(item.id!)">-</button>
+                  <span>{{ getQuantityInCart(item.id!) }}</span>
+                  <button class="qty-btn" type="button" (click)="increaseItemQuantity(item.id!)"
+                    [disabled]="isAddDisabled(item)"
+                    [attr.title]="isAddDisabled(item) ? getAddButtonTitle(item) : null">
+                    +
+                  </button>
                 </div>
               </ng-template>
             </div>
@@ -360,21 +351,11 @@ New              </span>
     <div class="modal-content image-preview-modal">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title fw-bold">{{ previewTitle() }}</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-          (click)="blurActiveElement()"
-        ></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+          (click)="removeFocusFromActiveElement()"></button>
       </div>
       <div class="modal-body pt-2 text-center">
-        <img
-          [src]="previewImage()"
-          class="preview-image-large"
-          [alt]="previewTitle()"
-          *ngIf="previewImage()"
-        />
+        <img [src]="previewImage()" class="preview-image-large" [alt]="previewTitle()" *ngIf="previewImage()" />
       </div>
     </div>
   </div>
@@ -388,37 +369,25 @@ New              </span>
           <div class="coupon-modal-chip-row">
             <span class="coupon-modal-code">{{ coupon.code }}</span>
 
-            <button
-              type="button"
-              class="copy-icon-btn modal-icon-copy"
-              (click)="copyCouponCode(coupon.code, coupon.id, $event)"
-              aria-label="Copy coupon code"
-              title="Copy coupon"
-            >
-              <i
-                class="bi"
-                [class.bi-check2]="copiedCouponId() === coupon.id"
-                [class.bi-copy]="copiedCouponId() !== coupon.id"
-              ></i>
+            <button type="button" class="copy-icon-btn modal-icon-copy"
+              (click)="copyCouponText(coupon.code, coupon.id, $event)" aria-label="Copy coupon code"
+              title="Copy coupon">
+              <i class="bi" [class.bi-check2]="copiedCouponId() === coupon.id"
+                [class.bi-copy]="copiedCouponId() !== coupon.id"></i>
             </button>
           </div>
 
           <span class="best-offer-badge solid" *ngIf="coupon.id === bestCouponId()">Best Offer</span>
         </div>
 
-        <button
-          type="button"
-          class="coupon-modal-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-          (click)="blurActiveElement()"
-        >
+        <button type="button" class="coupon-modal-close" data-bs-dismiss="modal" aria-label="Close"
+          (click)="removeFocusFromActiveElement()">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
 
       <div class="modal-body coupon-sheet-body">
-        <h3 class="coupon-modal-offer">{{ getCouponTypeLabel(coupon) }}</h3>
+        <h3 class="coupon-modal-offer">{{ getCouponOfferTitle(coupon) }}</h3>
 
         <p class="coupon-modal-desc">
           {{ coupon.description }}
@@ -429,28 +398,28 @@ New              </span>
         <h4 class="coupon-tnc-title">Terms and Conditions</h4>
 
         <ul class="coupon-tnc-list">
-          <li>{{ getCouponMinOrderText(coupon) }}</li>
-          <li *ngIf="getCouponMaxDiscountText(coupon)">{{ getCouponMaxDiscountText(coupon) }}</li>
+          <li>{{ getCouponMinimumOrderText(coupon) }}</li>
+          <li *ngIf="getCouponMaximumDiscountText(coupon)">
+            {{ getCouponMaximumDiscountText(coupon) }}
+          </li>
           <li>Apply this coupon during checkout if eligible.</li>
-          <li>{{ getCouponExpiryText(coupon) }}</li>
+          <li>{{ getCouponExpiryDisplayText(coupon) }}</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<button
-  type="button"
-  class="scroll-top-btn"
-  [class.show]="showScrollTop()"
-  (click)="scrollToTop()"
-  aria-label="Scroll to top"
->
-  <i class="fa-solid fa-arrow-up"></i>
+<!-- Back to top -->
+<button type="button" class="app-back-to-top" [class.show]="showScrollTop()" (click)="scrollPageToTop()"
+  aria-label="Back to top">
+  <i class="bi bi-arrow-up"></i>
+  <span>Back to top</span>
 </button>
 
+
 <div class="floating-checkout" *ngIf="cartService.cartCount() > 0">
-  <button class="floating-checkout-btn" (click)="goToCheckout()">
+  <button class="floating-checkout-btn" type="button" (click)="goToCheckoutPage()">
     <div class="floating-checkout-main-wrap">
       <div class="floating-bag-icon">
         <i class="bi bi-bag-check-fill"></i>
