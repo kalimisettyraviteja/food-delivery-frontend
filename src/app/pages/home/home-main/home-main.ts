@@ -75,6 +75,10 @@ export class HomeMain
   loadingActiveOrders = signal(false);
   currentOrderIndex = signal(0);
 
+  /*
+   * Holds exactly one chosen restaurant-specific coupon per restaurant.
+   * The selected coupon remains stable while this Home component exists.
+   */
   restaurantCouponById = signal<Record<number, Coupon | null>>({});
 
   searchText = '';
@@ -111,11 +115,6 @@ export class HomeMain
 
     this.authSub = this.userService.isLoggedIn$.subscribe(
       loggedIn => {
-        /*
-         * Use the BehaviorSubject state directly.
-         * This avoids relying on an old local value
-         * immediately after login or logout.
-         */
         this.isLoggedIn = loggedIn;
 
         if (!loggedIn) {
@@ -353,6 +352,7 @@ export class HomeMain
 
     this.loading.set(true);
     this.hasLoadError = false;
+    this.restaurantCouponById.set({});
 
     this.fetchRestaurants(
       this.buildSearchPayload(address)
@@ -390,9 +390,6 @@ export class HomeMain
           this.applyRestaurantView();
           this.loading.set(false);
 
-          /*
-           * Coupon API calls happen only after login.
-           */
           if (this.userService.isLoggedIn()) {
             this.loadRestaurantCoupons(list);
           } else {
@@ -420,10 +417,6 @@ export class HomeMain
      ================================================= */
 
   onVegOnlyChange(): void {
-    /*
-     * Safety guard: a logged-out user should never have
-     * this filter active even if the value changes manually.
-     */
     if (!this.userService.isLoggedIn()) {
       this.vegOnly = false;
     }
@@ -437,7 +430,7 @@ export class HomeMain
   }
 
   /* =================================================
-     Coupon loading
+     Restaurant coupon loading
      ================================================= */
 
   private loadRestaurantCoupons(
@@ -463,7 +456,10 @@ export class HomeMain
           .pipe(
             map(coupons => ({
               restaurantId: restaurant.id as number,
-              coupon: this.pickBestValidCoupon(coupons ?? [])
+              coupon: this.pickRandomValidRestaurantCoupon(
+                coupons ?? [],
+                restaurant.id as number
+              )
             })),
             catchError(() =>
               of({
@@ -495,24 +491,80 @@ export class HomeMain
     });
   }
 
-  private pickBestValidCoupon(
-    coupons: Coupon[]
+  /*
+   * Picks one random eligible restaurant-specific coupon.
+   *
+   * Global coupons are explicitly excluded even if the API
+   * accidentally returns them in a restaurant coupon response.
+   *
+   * The current map is checked first so the same restaurant
+   * does not keep changing offers during Angular rendering.
+   */
+  private pickRandomValidRestaurantCoupon(
+    coupons: Coupon[],
+    restaurantId: number
   ): Coupon | null {
-    const validCoupons = coupons.filter(coupon =>
-      this.isCouponValid(coupon)
+    const currentCoupon =
+      this.restaurantCouponById()[restaurantId] ?? null;
+
+    const validCoupons = coupons.filter(
+      coupon =>
+        this.isRestaurantCouponForRestaurant(
+          coupon,
+          restaurantId
+        ) &&
+        this.isCouponValid(coupon)
     );
 
     if (validCoupons.length === 0) {
       return null;
     }
 
-    return [...validCoupons].sort(
-      (first, second) =>
-        this.getCouponPriority(second) -
-        this.getCouponPriority(first)
-    )[0];
+    if (
+      currentCoupon &&
+      validCoupons.some(
+        coupon => coupon.id === currentCoupon.id
+      )
+    ) {
+      return currentCoupon;
+    }
+
+    const randomIndex = Math.floor(
+      Math.random() * validCoupons.length
+    );
+
+    return validCoupons[randomIndex];
   }
 
+  /*
+   * Restaurant cards must not display global coupons.
+   * A restaurant coupon must be specifically assigned
+   * to the same restaurant ID as the card.
+   */
+  private isRestaurantCouponForRestaurant(
+    coupon: Coupon,
+    restaurantId: number
+  ): boolean {
+    if (!coupon) {
+      return false;
+    }
+
+    return (
+      coupon.scope === 'RESTAURANT' &&
+      Number(coupon.restaurantId) === Number(restaurantId)
+    );
+  }
+
+  /*
+   * Valid means:
+   * - coupon is active
+   * - coupon has not expired
+   * - an invalid/unparseable expiry date is rejected
+   *
+   * For a LocalDate string such as 2027-12-31, compare using
+   * the end of the local calendar day so it stays usable for
+   * the entire expiry day.
+   */
   private isCouponValid(coupon: Coupon): boolean {
     if (!coupon?.active) {
       return false;
@@ -522,33 +574,19 @@ export class HomeMain
       return true;
     }
 
-    const expiryDate = new Date(coupon.expiryDate);
+    const expiryText = String(coupon.expiryDate)
+      .trim()
+      .slice(0, 10);
+
+    const expiryDate = new Date(
+      `${expiryText}T23:59:59.999`
+    );
 
     if (Number.isNaN(expiryDate.getTime())) {
       return false;
     }
 
-    return expiryDate.getTime() > Date.now();
-  }
-
-  private getCouponPriority(coupon: Coupon): number {
-    if (coupon.discountType === 'FREE_DELIVERY') {
-      return 100000;
-    }
-
-    if (coupon.discountType === 'FLAT') {
-      return Number(coupon.discountValue) || 0;
-    }
-
-    if (coupon.discountType === 'PERCENTAGE') {
-      return (
-        Number(coupon.maxDiscountAmount) ||
-        Number(coupon.discountValue) ||
-        0
-      );
-    }
-
-    return 0;
+    return expiryDate.getTime() >= Date.now();
   }
 
   getRestaurantCoupon(
@@ -573,9 +611,20 @@ export class HomeMain
     }
 
     if (coupon.discountType === 'PERCENTAGE') {
-      return `Flat ${this.formatCouponNumber(
+      const percentage = this.formatCouponNumber(
         coupon.discountValue
-      )}% OFF`;
+      );
+
+      const maxDiscount =
+        Number(coupon.maxDiscountAmount) || 0;
+
+      if (maxDiscount > 0) {
+        return `${percentage}% OFF up to ₹${this.formatCouponNumber(
+          maxDiscount
+        )}`;
+      }
+
+      return `${percentage}% OFF`;
     }
 
     if (coupon.discountType === 'FREE_DELIVERY') {
@@ -583,6 +632,26 @@ export class HomeMain
     }
 
     return coupon.description || 'Special offer';
+  }
+
+  getCouponTooltip(coupon: Coupon): string {
+    const minimumOrder =
+      Number(coupon.minOrderAmount) || 0;
+
+    const minimumOrderText =
+      minimumOrder > 0
+        ? ` · On orders above ₹${this.formatCouponNumber(
+            minimumOrder
+          )}`
+        : '';
+
+    const codeText = coupon.code
+      ? `${coupon.code} · `
+      : '';
+
+    return `${codeText}${this.getCouponLabel(
+      coupon
+    )}${minimumOrderText}`;
   }
 
   private formatCouponNumber(value: number): string {
@@ -683,11 +752,6 @@ export class HomeMain
   }
 
   openRestaurant(restaurant: Restaurant): void {
-    /*
-     * Always query UserService here rather than relying
-     * only on this.isLoggedIn. This immediately handles
-     * clicks after logout without requiring page refresh.
-     */
     const loggedInNow = this.userService.isLoggedIn();
 
     if (!loggedInNow) {
