@@ -21,22 +21,37 @@
     </div>
 
     <div class="search-address-row mx-auto">
-      <div class="search-address-combined" [class.logged-out]="!isLoggedIn">
+      <div
+        class="search-address-combined"
+        [class.logged-out]="!isLoggedIn"
+      >
         <div class="search-address-shell">
 
           <!-- Delivery address selector: visible only after login -->
-          <button *ngIf="isLoggedIn" type="button" class="btn address-trigger" data-bs-toggle="offcanvas"
-            data-bs-target="#addressOffcanvas" aria-controls="addressOffcanvas">
+          <button
+            *ngIf="isLoggedIn"
+            type="button"
+            class="btn address-trigger"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#addressOffcanvas"
+            aria-controls="addressOffcanvas"
+          >
             <span class="address-icon-wrap">
               <i class="bi bi-geo-alt-fill"></i>
             </span>
 
-            <span class="address-content" *ngIf="selectedAddress() as address; else noSelectedAddress">
+            <span
+              class="address-content"
+              *ngIf="
+                selectedAddress() as address;
+                else noSelectedAddress
+              "
+            >
               <span class="address-label">
                 {{
-                address.label === 'OTHER'
-                ? address.customLabel
-                : address.label
+                  address.label === 'OTHER'
+                    ? address.customLabel
+                    : address.label
                 }}
               </span>
 
@@ -68,12 +83,23 @@
               <i class="bi bi-search"></i>
             </span>
 
-            <input type="text" class="form-control form-control-lg"
-              placeholder="Search restaurants, cuisine or location..." [(ngModel)]="searchText"
-              (ngModelChange)="onSearch()" autocomplete="off" />
+            <input
+              type="text"
+              class="form-control form-control-lg"
+              placeholder="Search restaurants, cuisine or location..."
+              [(ngModel)]="searchText"
+              (ngModelChange)="onSearch()"
+              autocomplete="off"
+            />
 
-            <button *ngIf="searchText" type="button" class="clear-search-btn" (click)="clearSearch()"
-              aria-label="Clear restaurant search" title="Clear search">
+            <button
+              *ngIf="searchText"
+              type="button"
+              class="clear-search-btn"
+              (click)="clearSearch()"
+              aria-label="Clear restaurant search"
+              title="Clear search"
+            >
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -82,7 +108,10 @@
       </div>
     </div>
 
-    <div *ngIf="isLoggedIn && selectedAddress()" class="hero-location-note">
+    <div
+      *ngIf="isLoggedIn && selectedAddress()"
+      class="hero-location-note"
+    >
       <i class="bi bi-geo-alt-fill"></i>
       Restaurant results are tailored to your selected delivery address.
     </div>
@@ -94,8 +123,12 @@
      Right-side delivery address offcanvas
      ================================================= -->
 
-<div class="offcanvas offcanvas-end address-offcanvas" tabindex="-1" id="addressOffcanvas"
-  aria-labelledby="addressOffcanvasLabel">
+<div
+  class="offcanvas offcanvas-end address-offcanvas"
+  tabindex="-1"
+  id="addressOffcanvas"
+  aria-labelledby="addressOffcanvasLabel"
+>
   <div class="offcanvas-header address-offcanvas-header">
 
     <div class="address-offcanvas-heading">
@@ -104,7 +137,10 @@
         Delivery location
       </span>
 
-      <h5 class="offcanvas-title" id="addressOffcanvasLabel">
+      <h5
+        class="offcanvas-title"
+        id="addressOffcanvasLabel"
+      >
         Where should we deliver?
       </h5>
 
@@ -113,24 +149,41 @@
       </p>
     </div>
 
-    <button type="button" class="btn-close address-offcanvas-close" data-bs-dismiss="offcanvas"
-      aria-label="Close"></button>
+    <button
+      type="button"
+      class="btn-close address-offcanvas-close"
+      data-bs-dismiss="offcanvas"
+      aria-label="Close"
+    ></button>
 
   </div>
 
   <div class="offcanvas-body address-offcanvas-body">
 
-    <div class="address-list" *ngIf="addresses().length > 0; else noSavedAddressBlock">
-
-      <button type="button" class="address-card" *ngFor="let address of addresses()"
-        [class.active]="selectedAddress()?.id === address.id" (click)="onAddressChange(address)"
-        data-bs-dismiss="offcanvas">
+    <div
+      class="address-list"
+      *ngIf="
+        addresses().length > 0;
+        else noSavedAddressBlock
+      "
+    >
+      <button
+        type="button"
+        class="address-card"
+        *ngFor="let address of addresses()"
+        [class.active]="selectedAddress()?.id === address.id"
+        (click)="onAddressChange(address)"
+        data-bs-dismiss="offcanvas"
+      >
         <span class="address-card-icon">
-          <i class="bi" [ngClass]="
+          <i
+            class="bi"
+            [ngClass]="
               selectedAddress()?.id === address.id
                 ? 'bi-check2-circle'
                 : getAddressLabelIcon(address)
-            "></i>
+            "
+          ></i>
         </span>
 
         <span class="address-card-body">
@@ -138,17 +191,23 @@
           <span class="address-card-top">
             <span class="address-card-label">
               {{
-              address.label === 'OTHER'
-              ? address.customLabel
-              : address.label
+                address.label === 'OTHER'
+                  ? address.customLabel
+                  : address.label
               }}
             </span>
 
-            <span *ngIf="address.isDefault" class="address-default-badge">
+            <span
+              *ngIf="address.isDefault"
+              class="address-default-badge"
+            >
               Default
             </span>
 
-            <span *ngIf="selectedAddress()?.id === address.id" class="selected-address-badge">
+            <span
+              *ngIf="selectedAddress()?.id === address.id"
+              class="selected-address-badge"
+            >
               Selected
             </span>
           </span>
@@ -164,15 +223,23 @@
         </span>
 
         <span class="address-card-check">
-          <i class="bi" [ngClass]="
+          <i
+            class="bi"
+            [ngClass]="
               selectedAddress()?.id === address.id
                 ? 'bi-check-circle-fill'
                 : 'bi-chevron-right'
-            "></i>
+            "
+          ></i>
         </span>
       </button>
 
-      <button type="button" class="manage-address-btn" (click)="goToSavedAddresses()" data-bs-dismiss="offcanvas">
+      <button
+        type="button"
+        class="manage-address-btn"
+        (click)="goToSavedAddresses()"
+        data-bs-dismiss="offcanvas"
+      >
         <span class="manage-address-icon">
           <i class="bi bi-pencil-square"></i>
         </span>
@@ -185,7 +252,10 @@
           </small>
         </span>
 
-        <i class="bi bi-chevron-right manage-address-arrow" aria-hidden="true"></i>
+        <i
+          class="bi bi-chevron-right manage-address-arrow"
+          aria-hidden="true"
+        ></i>
       </button>
 
     </div>
@@ -203,7 +273,12 @@
           Add your delivery address to discover restaurants near you.
         </p>
 
-        <button type="button" class="add-address-sheet-btn" (click)="goToSavedAddresses()" data-bs-dismiss="offcanvas">
+        <button
+          type="button"
+          class="add-address-sheet-btn"
+          (click)="goToSavedAddresses()"
+          data-bs-dismiss="offcanvas"
+        >
           <i class="bi bi-plus-lg"></i>
           Add a delivery address
         </button>
@@ -231,21 +306,21 @@
 
         <h2>
           {{
-          searchText
-          ? 'Search results'
-          : vegOnly
-          ? 'Pure veg restaurants'
-          : 'Restaurants for you'
+            searchText
+              ? 'Search results'
+              : vegOnly
+              ? 'Pure veg restaurants'
+              : 'Restaurants for you'
           }}
         </h2>
 
         <p>
           {{
-          searchText
-          ? 'Restaurants matching your search.'
-          : vegOnly
-          ? 'Explore restaurants serving vegetarian food only.'
-          : 'Explore restaurants, cuisines, and your next favourite meal.'
+            searchText
+              ? 'Restaurants matching your search.'
+              : vegOnly
+              ? 'Explore restaurants serving vegetarian food only.'
+              : 'Explore restaurants, cuisines, and your next favourite meal.'
           }}
         </p>
       </div>
@@ -253,10 +328,18 @@
       <div class="restaurant-header-actions">
 
         <!-- Veg-only option is available only after login -->
-        <label *ngIf="isLoggedIn" class="veg-only-filter" [class.active]="vegOnly"
-          title="Show only pure vegetarian restaurants">
-          <input type="checkbox" [(ngModel)]="vegOnly" (ngModelChange)="onVegOnlyChange()"
-            aria-label="Show only pure vegetarian restaurants" />
+        <label
+          *ngIf="isLoggedIn"
+          class="veg-only-filter"
+          [class.active]="vegOnly"
+          title="Show only pure vegetarian restaurants"
+        >
+          <input
+            type="checkbox"
+            [(ngModel)]="vegOnly"
+            (ngModelChange)="onVegOnlyChange()"
+            aria-label="Show only pure vegetarian restaurants"
+          />
 
           <span class="veg-filter-indicator">
             <span class="veg-filter-dot"></span>
@@ -269,7 +352,10 @@
           <span class="veg-filter-switch"></span>
         </label>
 
-        <div *ngIf="!loading() && !hasLoadError" class="restaurant-count">
+        <div
+          *ngIf="!loading() && !hasLoadError"
+          class="restaurant-count"
+        >
           <strong>{{ filtered().length }}</strong>
           restaurant{{ filtered().length === 1 ? '' : 's' }}
         </div>
@@ -279,9 +365,17 @@
     </div>
 
     <!-- Restaurant loading skeletons -->
-    <div *ngIf="loading()" class="restaurant-grid" aria-label="Loading restaurants">
-      <article class="restaurant-card skeleton-shell" *ngFor="let item of skeletonItems">
+    <div
+      *ngIf="loading()"
+      class="restaurant-grid"
+      aria-label="Loading restaurants"
+    >
+      <article
+        class="restaurant-card skeleton-shell"
+        *ngFor="let item of skeletonItems"
+      >
         <div class="skeleton-media app-skeleton"></div>
+
         <div class="skeleton-content">
           <div class="skeleton-line skeleton-line-lg"></div>
           <div class="skeleton-line skeleton-line-md"></div>
@@ -291,7 +385,10 @@
     </div>
 
     <!-- Restaurant loading error -->
-    <div *ngIf="!loading() && hasLoadError" class="empty-state-wrap">
+    <div
+      *ngIf="!loading() && hasLoadError"
+      class="empty-state-wrap"
+    >
       <div class="empty-state-card empty-state-card-error">
 
         <div class="empty-state-visual">
@@ -311,7 +408,11 @@
         </p>
 
         <div class="empty-state-actions">
-          <button type="button" class="empty-state-btn" (click)="reloadRestaurants()">
+          <button
+            type="button"
+            class="empty-state-btn"
+            (click)="reloadRestaurants()"
+          >
             Try again
           </button>
         </div>
@@ -320,32 +421,60 @@
     </div>
 
     <!-- Restaurant cards -->
-    <div *ngIf="!loading() && !hasLoadError && filtered().length > 0" class="restaurant-grid">
-      <article class="restaurant-card" *ngFor="
+    <div
+      *ngIf="
+        !loading() &&
+        !hasLoadError &&
+        filtered().length > 0
+      "
+      class="restaurant-grid"
+    >
+      <article
+        class="restaurant-card"
+        *ngFor="
           let restaurant of filtered();
           trackBy: trackByRestaurantId
-        " [class.inactive-card]="
+        "
+        [class.inactive-card]="
           isLoggedIn &&
           restaurant.isActive === false
-        " (click)="openRestaurant(restaurant)">
-
+        "
+        (click)="openRestaurant(restaurant)"
+      >
         <div class="restaurant-media">
 
-          <ng-container *ngIf="
+          <ng-container
+            *ngIf="
               hasRestaurantImage(restaurant);
               else defaultImageBlock
-            ">
-            <img class="restaurant-img" [src]="getRestaurantImage(restaurant)" [alt]="restaurant.name" loading="lazy"
-              (error)="onImageError($event)" />
+            "
+          >
+            <img
+              class="restaurant-img"
+              [src]="getRestaurantImage(restaurant)"
+              [alt]="restaurant.name"
+              loading="lazy"
+              (error)="onImageError($event)"
+            />
 
             <div class="media-overlay"></div>
           </ng-container>
 
+          <!-- Default restaurant media when no image is available -->
           <ng-template #defaultImageBlock>
             <div class="restaurant-fallback">
               <div class="fallback-pattern"></div>
 
-              <div class="fallback-content">
+              <!-- Hide generic fallback copy when a restaurant coupon exists -->
+              <div
+                *ngIf="
+                  !(
+                    isLoggedIn &&
+                    getRestaurantCoupon(restaurant)
+                  )
+                "
+                class="fallback-content"
+              >
                 <span class="fallback-icon">🍽️</span>
                 <span>Fresh food, nearby</span>
               </div>
@@ -356,36 +485,37 @@
 
           <div class="restaurant-image-top">
 
-            <span *ngIf="restaurant.isPureVeg" class="veg-badge">
+            <span
+              *ngIf="restaurant.isPureVeg"
+              class="veg-badge"
+            >
               <span class="veg-symbol"></span>
               Pure veg
             </span>
 
-            <span *ngIf="
+            <span
+              *ngIf="
                 isLoggedIn &&
                 restaurant.isActive === false
-              " class="unavailable-badge">
+              "
+              class="unavailable-badge"
+            >
               Currently unavailable
             </span>
 
           </div>
 
-          <!-- Shows only after login and only for valid coupons -->
-          <!-- <div *ngIf="
+          <!-- One random, valid, restaurant-specific coupon per card.
+               Global coupons are intentionally excluded in TypeScript. -->
+          <div
+            *ngIf="
               isLoggedIn &&
               getRestaurantCoupon(restaurant) as coupon
-            " class="coupon-banner">
+            "
+            class="coupon-banner"
+            [title]="getCouponTooltip(coupon)"
+          >
             <i class="bi bi-patch-check-fill"></i>
-            <span>{{ getCouponLabel(coupon) }}</span>
-          </div> -->
-
-          <!-- Logged-in users see one randomly selected valid restaurant coupon.
-     Global coupons are intentionally not displayed on restaurant cards. -->
-          <div *ngIf="
-                isLoggedIn &&
-                getRestaurantCoupon(restaurant) as coupon
-              " class="coupon-banner" [title]="getCouponTooltip(coupon)">
-                        <i class="bi bi-patch-check-fill"></i>
 
             <span>
               {{ getCouponLabel(coupon) }}
@@ -398,46 +528,67 @@
 
           <div class="restaurant-name-row">
 
-            <h3 class="restaurant-name" [title]="restaurant.name">
+            <h3
+              class="restaurant-name"
+              [title]="restaurant.name"
+            >
               {{ restaurant.name }}
             </h3>
 
-            <span *ngIf="(restaurant.ratingCount ?? 0) > 0" class="rating-badge">
+            <span
+              *ngIf="(restaurant.ratingCount ?? 0) > 0"
+              class="rating-badge"
+            >
               {{ restaurant.rating ?? 0 }}
               <i class="bi bi-star-fill"></i>
             </span>
 
-            <span *ngIf="(restaurant.ratingCount ?? 0) === 0" class="new-badge">
+            <span
+              *ngIf="(restaurant.ratingCount ?? 0) === 0"
+              class="new-badge"
+            >
               New
             </span>
 
           </div>
 
-          <p class="restaurant-cuisine" [title]="restaurant.cuisine">
+          <p
+            class="restaurant-cuisine"
+            [title]="restaurant.cuisine"
+          >
             {{ restaurant.cuisine || 'Multiple cuisines' }}
           </p>
 
-          <p class="restaurant-location" [title]="restaurant.location">
+          <p
+            class="restaurant-location"
+            [title]="restaurant.location"
+          >
             <i class="bi bi-geo-alt"></i>
             {{ restaurant.location || 'Location unavailable' }}
           </p>
 
           <div class="restaurant-bottom-row">
 
-            <span *ngIf="isLoggedIn" class="restaurant-delivery">
+            <span
+              *ngIf="isLoggedIn"
+              class="restaurant-delivery"
+            >
               <i class="bi bi-clock"></i>
 
               {{
-              restaurant.estimatedMinutes
-              ? restaurant.estimatedMinutes + ' min'
-              : 'Delivery time unavailable'
+                restaurant.estimatedMinutes
+                  ? restaurant.estimatedMinutes + ' min'
+                  : 'Delivery time unavailable'
               }}
             </span>
 
-            <span *ngIf="
+            <span
+              *ngIf="
                 restaurant.distanceKm !== null &&
                 restaurant.distanceKm !== undefined
-              " class="restaurant-distance">
+              "
+              class="restaurant-distance"
+            >
               {{ restaurant.distanceKm | number:'1.0-1' }} km
             </span>
 
@@ -449,11 +600,14 @@
     </div>
 
     <!-- Empty restaurant/filter state -->
-    <div *ngIf="
+    <div
+      *ngIf="
         !loading() &&
         !hasLoadError &&
         filtered().length === 0
-      " class="empty-state-wrap">
+      "
+      class="empty-state-wrap"
+    >
       <div class="empty-state-card">
 
         <div class="empty-state-visual">
@@ -476,15 +630,17 @@
 
         <h3 class="empty-state-title">
           {{
-          vegOnly
-          ? 'No pure veg restaurants found'
-          : 'We couldn’t find that craving'
+            vegOnly
+              ? 'No pure veg restaurants found'
+              : 'We couldn’t find that craving'
           }}
         </h3>
 
         <p class="empty-state-text">
 
-          <ng-container *ngIf="vegOnly; else noSearchMatch">
+          <ng-container
+            *ngIf="vegOnly; else noSearchMatch"
+          >
             No pure vegetarian restaurants match the current search and location.
           </ng-container>
 
@@ -498,11 +654,21 @@
 
         <div class="empty-state-actions">
 
-          <button *ngIf="vegOnly" type="button" class="empty-state-btn" (click)="clearVegOnlyFilter()">
+          <button
+            *ngIf="vegOnly"
+            type="button"
+            class="empty-state-btn"
+            (click)="clearVegOnlyFilter()"
+          >
             Show all restaurants
           </button>
 
-          <button *ngIf="!vegOnly" type="button" class="empty-state-btn" (click)="clearSearch()">
+          <button
+            *ngIf="!vegOnly"
+            type="button"
+            class="empty-state-btn"
+            (click)="clearSearch()"
+          >
             Show all restaurants
           </button>
 
@@ -519,41 +685,74 @@
      Hidden while any offcanvas is open.
      ================================================= -->
 
-<section *ngIf="
+<section
+  *ngIf="
     isLoggedIn &&
     !isAnyOffcanvasOpen &&
     activeOrders().length > 0
-  " class="sticky-order-layer" aria-label="Active order status">
+  "
+  class="sticky-order-layer"
+  aria-label="Active order status"
+>
   <div class="sticky-orders-shell">
 
-    <div *ngIf="activeOrders().length > 1" class="sticky-orders-nav">
-      <button type="button" class="sticky-order-nav-btn" (click)="scrollOrdersLeft()"
-        aria-label="Previous active order">
+    <div
+      *ngIf="activeOrders().length > 1"
+      class="sticky-orders-nav"
+    >
+      <button
+        type="button"
+        class="sticky-order-nav-btn"
+        (click)="scrollOrdersLeft()"
+        aria-label="Previous active order"
+      >
         <i class="bi bi-chevron-left"></i>
       </button>
 
-      <button type="button" class="sticky-order-nav-btn" (click)="scrollOrdersRight()" aria-label="Next active order">
+      <button
+        type="button"
+        class="sticky-order-nav-btn"
+        (click)="scrollOrdersRight()"
+        aria-label="Next active order"
+      >
         <i class="bi bi-chevron-right"></i>
       </button>
     </div>
 
-    <div #ordersScroller class="sticky-orders-scroller" (scroll)="onOrdersScroll()">
-
-      <article *ngFor="
+    <div
+      #ordersScroller
+      class="sticky-orders-scroller"
+      (scroll)="onOrdersScroll()"
+    >
+      <article
+        *ngFor="
           let order of activeOrders();
           trackBy: trackByOrderId
-        " class="sticky-order-slide">
-        <button type="button" class="sticky-order-card" (click)="openOrderTracking(order.id)">
-
+        "
+        class="sticky-order-slide"
+      >
+        <button
+          type="button"
+          class="sticky-order-card"
+          (click)="openOrderTracking(order.id)"
+        >
           <span class="sticky-order-icon">
-            <i class="bi" [ngClass]="getStickyOrderIcon(order.status)"></i>
+            <i
+              class="bi"
+              [ngClass]="getStickyOrderIcon(order.status)"
+            ></i>
           </span>
 
           <span class="sticky-order-content">
 
             <span class="sticky-order-topline">
 
-              <span class="sticky-order-status" [ngClass]="getActiveOrderStatusClass(order.status)">
+              <span
+                class="sticky-order-status"
+                [ngClass]="
+                  getActiveOrderStatusClass(order.status)
+                "
+              >
                 {{ formatOrderStatus(order.status) }}
               </span>
 
@@ -575,16 +774,22 @@
           <span class="sticky-order-arrow">
             <i class="bi bi-arrow-right"></i>
           </span>
-
         </button>
       </article>
-
     </div>
 
-    <div *ngIf="activeOrders().length > 1" class="sticky-order-dots">
-      <button type="button" class="sticky-order-dot" *ngFor="let index of getVisibleDotIndexes()"
-        [class.active]="currentOrderIndex() === index" (click)="goToOrderSlide(index)"
-        [attr.aria-label]="'View active order ' + (index + 1)"></button>
+    <div
+      *ngIf="activeOrders().length > 1"
+      class="sticky-order-dots"
+    >
+      <button
+        type="button"
+        class="sticky-order-dot"
+        *ngFor="let index of getVisibleDotIndexes()"
+        [class.active]="currentOrderIndex() === index"
+        (click)="goToOrderSlide(index)"
+        [attr.aria-label]="'View active order ' + (index + 1)"
+      ></button>
     </div>
 
   </div>
@@ -594,8 +799,13 @@
      Back to top
      ================================================= -->
 
-<button type="button" class="app-back-to-top" [class.show]="showScrollTop" (click)="scrollToTop()"
-  aria-label="Back to top">
+<button
+  type="button"
+  class="app-back-to-top"
+  [class.show]="showScrollTop"
+  (click)="scrollToTop()"
+  aria-label="Back to top"
+>
   <i class="bi bi-arrow-up"></i>
   <span>Back to top</span>
 </button>
@@ -604,9 +814,18 @@
      Sign-in toast
      ================================================= -->
 
-<div class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap">
-  <div #signInToast id="signInToast" class="toast custom-toast align-items-center border-0" role="alert"
-    aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+<div
+  class="toast-container position-fixed bottom-0 end-0 p-3 app-toast-wrap"
+>
+  <div
+    #signInToast
+    id="signInToast"
+    class="toast custom-toast align-items-center border-0"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+    data-bs-delay="2500"
+  >
     <div class="d-flex">
 
       <div class="toast-body">
@@ -614,8 +833,12 @@
         Please sign in to view restaurant details.
       </div>
 
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-        aria-label="Close"></button>
+      <button
+        type="button"
+        class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"
+        aria-label="Close"
+      ></button>
 
     </div>
   </div>
@@ -630,8 +853,12 @@
     <p class="mb-0 text-muted small">
       © 2026 FoodDelivery · Built with ❤️ in Chennai ·
       Contact:
-      <a href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com" target="_blank"
-        rel="noopener noreferrer" class="footer-mail">
+      <a
+        href="https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=cravyosupport@gmail.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-mail"
+      >
         cravyosupport@gmail.com
       </a>
     </p>
