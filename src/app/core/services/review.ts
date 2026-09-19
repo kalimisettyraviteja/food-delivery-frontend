@@ -37,14 +37,16 @@ export class ReviewService {
    * POST /api/reviews
    * GET  /api/reviews/orders/{orderId}
    */
-  private readonly customerApiUrl = 'http://localhost:8080/api/reviews';
+  private readonly localCustomerApiUrl = 'http://localhost:8080/api/reviews';
+  private readonly customerApiUrl = 'https://api-gateway-ftbf.onrender.com/api/reviews';
 
   /*
    * Restaurant manager review APIs:
    * GET /api/manager/reviews?restaurantId={restaurantId}
    * GET /api/manager/reviews/summary?restaurantId={restaurantId}
    */
-  private readonly managerApiUrl = 'http://localhost:8080/api/manager/reviews';
+      private readonly localManagerApiUrl = 'http://localhost:8080/api/manager/reviews';
+      private readonly managerApiUrl = 'https://api-gateway-ftbf.onrender.com/api/manager/reviews';
 
   // -----------------------------------------------
   // Customer review APIs

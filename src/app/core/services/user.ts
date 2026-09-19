@@ -167,7 +167,8 @@ interface OsrmRouteResponse {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http = inject(HttpClient);
-  private base = 'http://localhost:8080/api/users';
+  private localBase = 'http://localhost:8080/api/users';
+  private base = 'https://api-gateway-ftbf.onrender.com/api/users';
 
   private _isLoggedIn$ = new BehaviorSubject<boolean>(this.isLoggedIn());
   readonly isLoggedIn$ = this._isLoggedIn$.asObservable();
