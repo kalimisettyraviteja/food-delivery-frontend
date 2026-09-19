@@ -371,12 +371,25 @@
           </div>
 
           <!-- Shows only after login and only for valid coupons -->
-          <div *ngIf="
+          <!-- <div *ngIf="
               isLoggedIn &&
               getRestaurantCoupon(restaurant) as coupon
             " class="coupon-banner">
             <i class="bi bi-patch-check-fill"></i>
             <span>{{ getCouponLabel(coupon) }}</span>
+          </div> -->
+
+          <!-- Logged-in users see one randomly selected valid restaurant coupon.
+     Global coupons are intentionally not displayed on restaurant cards. -->
+          <div *ngIf="
+                isLoggedIn &&
+                getRestaurantCoupon(restaurant) as coupon
+              " class="coupon-banner" [title]="getCouponTooltip(coupon)">
+                        <i class="bi bi-patch-check-fill"></i>
+
+            <span>
+              {{ getCouponLabel(coupon) }}
+            </span>
           </div>
 
         </div>
