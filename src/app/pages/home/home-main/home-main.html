@@ -411,7 +411,7 @@
 
           <div class="restaurant-bottom-row">
 
-            <span class="restaurant-delivery">
+            <span *ngIf="isLoggedIn" class="restaurant-delivery">
               <i class="bi bi-clock"></i>
 
               {{
